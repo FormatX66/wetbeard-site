@@ -23,6 +23,15 @@ jobs:
       - name: Check out site files
         uses: actions/checkout@v4
 
+      - name: Create deployment version marker
+        shell: bash
+        run: |
+          deployed_at_utc="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          printf '{\n  "commit_sha": "%s",\n  "deployed_at_utc": "%s",\n  "status": "deployed"\n}\n' \
+            "$GITHUB_SHA" \
+            "$deployed_at_utc" \
+            > deploy-version.json
+
       - name: Configure secure Bluehost connection
         env:
           BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
@@ -52,6 +61,7 @@ jobs:
           BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
         run: |
           tar -czf - \
+            deploy-version.json \
             index.html \
             admin.html \
             quests.html \
@@ -69,6 +79,17 @@ jobs:
           ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 \
             "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
             'tar -xzf - -C public_html/wetbeard'
+
+      - name: Verify the deployed commit
+        shell: bash
+        run: |
+          curl --fail --silent --show-error \
+            --header 'Cache-Control: no-cache' \
+            --output deploy-version-live.json \
+            'https://madmorrigan.com/wetbeard/deploy-version.json'
+          python3 -c 'import json, sys; data=json.load(open(sys.argv[1], encoding="utf-8")); expected=sys.argv[2]; actual=data.get("commit_sha"); status=data.get("status"); sys.exit(0 if actual == expected and status == "deployed" else f"Deploy verification failed: expected {expected}, got {actual!r}, status {status!r}")' \
+            deploy-version-live.json \
+            "$GITHUB_SHA"
 
       - name: Verify the live API still answers
         run: |

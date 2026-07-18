@@ -1,6 +1,9 @@
 name: Deploy Wet Beard to Bluehost
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:

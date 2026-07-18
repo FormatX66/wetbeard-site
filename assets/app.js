@@ -1,9 +1,54 @@
 const $ = (selector) => document.querySelector(selector);
+const DEVICE_TOKEN_KEY = 'wbDevice';
+
+function validDeviceToken(value) {
+  return typeof value === 'string' && /^[a-f0-9]{32}$/i.test(value);
+}
+
+function readDeviceToken() {
+  try {
+    const value = localStorage.getItem(DEVICE_TOKEN_KEY);
+    if (validDeviceToken(value)) return value;
+  } catch {
+    // Some phone privacy modes disable localStorage. The cookie fallback below
+    // keeps the same rider connected between page loads in those browsers.
+  }
+
+  const prefix = `${DEVICE_TOKEN_KEY}=`;
+  const value = document.cookie
+    .split(';')
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(prefix))
+    ?.slice(prefix.length);
+  return validDeviceToken(value) ? value : null;
+}
+
+function createDeviceToken() {
+  if (!globalThis.crypto?.getRandomValues) {
+    throw new Error('A secure browser connection is required to create a rider key.');
+  }
+
+  const bytes = new Uint8Array(16);
+  globalThis.crypto.getRandomValues(bytes);
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function saveDeviceToken(value) {
+  try {
+    localStorage.setItem(DEVICE_TOKEN_KEY, value);
+    return;
+  } catch {
+    // Fall through to a first-party cookie when localStorage is unavailable.
+  }
+
+  document.cookie = `${DEVICE_TOKEN_KEY}=${value}; Max-Age=31536000; Path=/; SameSite=Lax; Secure`;
+}
+
 const token = (() => {
-  let value = localStorage.wbDevice;
+  let value = readDeviceToken();
   if (!value) {
-    value = crypto.randomUUID().replaceAll('-', '');
-    localStorage.wbDevice = value;
+    value = createDeviceToken();
+    saveDeviceToken(value);
   }
   return value;
 })();

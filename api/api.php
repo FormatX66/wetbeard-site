@@ -2,15 +2,19 @@
 require __DIR__ . '/bootstrap.php';
 require __DIR__ . '/quest-store.php';
 
-$pdo = db();
 $action = (string)($_GET['action'] ?? 'state');
+
+if ($action === 'health') {
+    db();
+    respond(['ok' => true, 'php' => PHP_VERSION, 'time' => date(DATE_ATOM)]);
+}
+
+$pdo = db();
 $data = body();
 $token = device_token();
 $rider = rider($pdo, $token);
 $riderId = (int)$rider['id'];
 $questSchemaReady = quest_management_schema_ready($pdo);
-
-if ($action === 'health') respond(['ok' => true, 'php' => PHP_VERSION, 'time' => date(DATE_ATOM)]);
 
 if ($action === 'state') {
     $rides = $pdo->query("SELECT r.*, (SELECT COUNT(*) FROM reservations x WHERE x.ride_id=r.id) reserved_count FROM rides r WHERE r.ends_at >= NOW() ORDER BY r.starts_at ASC LIMIT 12")->fetchAll();

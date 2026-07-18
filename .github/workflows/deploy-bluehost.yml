@@ -73,5 +73,5 @@ jobs:
       - name: Verify the live API still answers
         run: |
           curl --fail --silent --show-error \
-            'https://madmorrigan.com/wetbeard/api/api.php?action=health&device_token=githubdeploy123' \
+            'https://madmorrigan.com/wetbeard/api/api.php?action=health' \
             > /dev/null

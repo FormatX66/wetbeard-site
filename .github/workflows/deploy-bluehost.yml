@@ -1,0 +1,64 @@
+name: Deploy Wet Beard to Bluehost
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wetbeard-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Publish madmorrigan.com/wetbeard
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Check out site files
+        uses: actions/checkout@v4
+
+      - name: Configure secure Bluehost connection
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+          BLUEHOST_SSH_PRIVATE_KEY: ${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}
+        run: |
+          test -n "$BLUEHOST_HOST"
+          test -n "$BLUEHOST_USERNAME"
+          test -n "$BLUEHOST_SSH_PRIVATE_KEY"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$BLUEHOST_SSH_PRIVATE_KEY" > "$HOME/.ssh/bluehost_deploy"
+          chmod 600 "$HOME/.ssh/bluehost_deploy"
+          ssh-keyscan -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts"
+
+      - name: Confirm the production folder is safe to update
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        run: |
+          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 \
+            "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            'test -d public_html/wetbeard && test -f public_html/wetbeard/config.php'
+
+      - name: Deploy the current front end without touching PHP or the database
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        run: |
+          tar -czf - \
+            index.html \
+            assets/app.js \
+            assets/style.css \
+            assets/img | \
+          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 \
+            "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            'tar -xzf - -C public_html/wetbeard'
+
+      - name: Verify the live API still answers
+        run: |
+          curl --fail --silent --show-error \
+            'https://madmorrigan.com/wetbeard/api/api.php?action=health&device_token=githubdeploy123' \
+            > /dev/null

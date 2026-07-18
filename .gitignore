@@ -1,0 +1,11 @@
+# Never commit production credentials or private keys.
+config.php
+.env
+*.pem
+*.key
+
+# Server-created or local working files.
+backups/
+*.log
+.DS_Store
+Thumbs.db

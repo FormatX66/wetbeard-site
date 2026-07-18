@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#8c5b2e">
+  <title>Wet Beard — Keeper of Quests</title>
+  <link rel="stylesheet" href="assets/style.css?v=20260718-2">
+</head>
+<body>
+  <main class="map-shell">
+    <header class="masthead parchment-edge">
+      <button class="icon-button" id="profileToggle" aria-label="Pirate profile"><span></span><span></span><span></span></button>
+      <div class="brand-lockup">
+        <div class="brand-mark" aria-hidden="true"></div>
+        <div>
+          <div class="brand-title">WET BEARD</div>
+          <div class="brand-subtitle">Keeper of Quests</div>
+        </div>
+      </div>
+      <div class="score-box" aria-label="Your gold stars">
+        <span class="coin"></span>
+        <strong id="points">0</strong>
+        <small>GOLD STARS</small>
+      </div>
+      <button class="share-button" id="shareSite" aria-label="Share Wet Beard" title="Share Wet Beard">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.7 10.7 6.6-4.1M8.7 13.3l6.6 4.1"></path></svg>
+      </button>
+    </header>
+
+    <section id="profilePanel" class="profile-panel hidden" aria-label="Pirate profile">
+      <input id="name" maxlength="32" placeholder="Choose pirate name" autocomplete="nickname">
+      <button id="saveName">Save Name</button>
+      <span id="status" class="connection">Loading…</span>
+    </section>
+
+    <section class="podium wood-board" aria-label="Top three pirates">
+      <div class="board-title">Top Pirates</div>
+      <div id="leaders" class="podium-grid"><div class="empty-copy">No scores yet</div></div>
+    </section>
+
+    <section id="live" class="live-banner hidden"></section>
+
+    <section class="quest-wrap">
+      <div class="quest-ribbon"><small>QUEST</small><strong id="questNumber">—</strong></div>
+      <article class="quest-card torn-paper">
+        <div class="quest-heading">Today's Quest</div>
+        <div id="quest" class="quest-list">Roll your first quest.</div>
+        <div class="quest-footer">
+          <span>PROGRESS</span>
+          <strong id="progress">0 / 3</strong>
+          <button id="draw" class="reroll-button">Roll New Card</button>
+        </div>
+        <span class="anchor-stamp" aria-hidden="true"></span>
+      </article>
+    </section>
+
+    <section id="rideAction" class="ride-action hidden"></section>
+
+    <section class="victory-strip torn-paper-small" aria-label="Recent achievements">
+      <div class="strip-title">Recent Achievements</div>
+      <div class="victory-viewport">
+        <div id="recent" class="victory-track"><span class="empty-copy">No victories yet.</span></div>
+      </div>
+      <div id="recentDots" class="ticker-dots" aria-hidden="true"></div>
+    </section>
+
+    <section class="feature-grid">
+      <details class="wood-panel feature-panel" id="cardCollectionPanel">
+        <summary><span class="nav-icon card-stack-icon">🂠</span><span>Quest Card Collection<small>Completed cards</small></span></summary>
+        <div class="panel-body">
+          <div id="collectionStats" class="collection-stats"></div>
+          <div id="questCollection" class="card-collection"></div>
+        </div>
+      </details>
+
+      <details class="wood-panel feature-panel" id="trophyRoomPanel">
+        <summary><span class="nav-icon">🏆</span><span>Trophy Room<small>Your cabin</small></span></summary>
+        <div id="trophyRoom" class="panel-body trophy-room"></div>
+      </details>
+    </section>
+
+    <details class="wood-panel">
+      <summary><span class="nav-icon">⛵</span><span>Upcoming Rides</span></summary>
+      <div id="rides" class="panel-body">No rides scheduled.</div>
+    </details>
+
+    <details class="wood-panel">
+      <summary><span class="nav-icon coin mini"></span><span>Badge Collection<small>Pirate medallions</small></span></summary>
+      <div class="panel-body empty-copy">Badges earned during future voyages will appear here.</div>
+    </details>
+
+    <details class="wood-panel">
+      <summary><span class="nav-icon">🏴‍☠️</span><span>Full Leaderboard</span></summary>
+      <div id="leaderboardFull" class="panel-body"></div>
+    </details>
+
+    <details class="wood-panel">
+      <summary><span class="nav-icon">✉</span><span>Pirate Log<small>Messages</small></span></summary>
+      <div class="panel-body">
+        <div class="quick-messages">
+          <button data-msg="👍 Nice!">👍</button>
+          <button data-msg="🏴‍☠️ Ahoy!">🏴‍☠️</button>
+          <button data-msg="✅ Quest complete!">✅</button>
+          <button data-msg="⚓ Full steam!">⚓</button>
+        </div>
+        <div class="message-compose">
+          <input id="message" maxlength="180" placeholder="Write in the pirate log…">
+          <button id="send">Send</button>
+        </div>
+        <div id="messages" class="messages"></div>
+      </div>
+    </details>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <footer>Ride. Quest. Earn Kudos. Be Legendary.</footer>
+  </main>
+  <script src="assets/app.js?v=20260718-2"></script>
+</body>
+</html>

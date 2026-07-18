@@ -8,8 +8,8 @@ const token = (() => {
   return value;
 })();
 
-const COLLECTION_KEY = 'wetBeardQuestCollectionV2';
 let currentState = null;
+let currentCollection = [];
 let loading = false;
 let tickerIndex = 0;
 let tickerTimer = null;
@@ -52,36 +52,10 @@ function showToast(message) {
   showToast.timer = setTimeout(() => toast.classList.remove('show'), 2200);
 }
 
-function getCollection() {
-  try {
-    const value = JSON.parse(localStorage.getItem(COLLECTION_KEY) || '[]');
-    return Array.isArray(value) ? value : [];
-  } catch { return []; }
-}
-
-function saveCompletedCard(card) {
-  if (!card?.length) return;
-  const collection = getCollection();
-  const cardId = Number(card[0].card_id);
-  const existing = collection.find((item) => Number(item.cardId) === cardId);
-  const record = {
-    cardId,
-    title: card[0].title || `Quest Card #${cardId}`,
-    tasks: card.map((task) => ({text: task.task_text, points: Number(task.points || 0)})),
-    totalPoints: card.reduce((sum, task) => sum + Number(task.points || 0), 0),
-    completedAt: new Date().toISOString(),
-    completions: (existing?.completions || 0) + 1
-  };
-  const next = collection.filter((item) => Number(item.cardId) !== cardId);
-  next.unshift(record);
-  localStorage.setItem(COLLECTION_KEY, JSON.stringify(next.slice(0, 120)));
-  renderCollection();
-}
-
 function renderCollection() {
-  const collection = getCollection();
-  const totalCompletions = collection.reduce((sum, card) => sum + Number(card.completions || 1), 0);
-  const totalStars = collection.reduce((sum, card) => sum + Number(card.totalPoints || 0) * Number(card.completions || 1), 0);
+  const collection = currentCollection;
+  const totalCompletions = collection.length;
+  const totalStars = collection.reduce((sum, card) => sum + Number(card.total_points || 0), 0);
   $('#collectionStats').innerHTML = `
     <div><strong>${collection.length}</strong><span>Unique Cards</span></div>
     <div><strong>${totalCompletions}</strong><span>Total Clears</span></div>
@@ -89,11 +63,11 @@ function renderCollection() {
 
   $('#questCollection').innerHTML = collection.length ? collection.map((card) => `
     <article class="collected-card">
-      <div class="collection-card-number">#${card.cardId}</div>
+      <div class="collection-card-number">#${card.card_id}</div>
       <div class="collection-stamp">COMPLETE</div>
       <h3>${esc(card.title)}</h3>
       <ol>${card.tasks.map((task) => `<li>${esc(task.text)}</li>`).join('')}</ol>
-      <footer><span>${new Date(card.completedAt).toLocaleDateString()}</span><span>${coin(card.totalPoints, 'tiny')}</span>${card.completions > 1 ? `<b>×${card.completions}</b>` : ''}</footer>
+      <footer><span>${new Date(String(card.completed_at).replace(' ', 'T')).toLocaleDateString()}</span><span>${coin(card.total_points, 'tiny')}</span></footer>
     </article>`).join('') : '<div class="empty-copy">Finish all three tasks on a card to add it to your collection.</div>';
 
   const milestones = [
@@ -232,6 +206,7 @@ async function load() {
     renderRides(state);
     renderRecent(state.recent);
     renderMessages(state.messages);
+    currentCollection = Array.isArray(state.collection) ? state.collection : [];
     renderCollection();
   } catch (error) {
     $('#status').textContent = 'Offline';
@@ -247,7 +222,6 @@ window.completeTask = async (taskId) => {
     const completed = new Set(fresh.completed_task_ids.map(Number));
     const allComplete = card?.length && card.every((task) => completed.has(Number(task.task_id)));
     if (allComplete) {
-      saveCompletedCard(card);
       showToast('Quest card added to your collection!');
       renderQuest(fresh);
       await new Promise((resolve) => setTimeout(resolve, 900));

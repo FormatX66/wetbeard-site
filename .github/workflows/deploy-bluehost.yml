@@ -44,9 +44,9 @@ jobs:
         run: |
           ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 \
             "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
-            'test -d public_html/wetbeard && test -f public_html/wetbeard/config.php'
+            'test -d public_html/wetbeard && test -f public_html/wetbeard/config.php && test -f public_html/wetbeard/api/bootstrap.php'
 
-      - name: Deploy the current front end without touching PHP or the database
+      - name: Deploy site files without touching configuration or the database
         env:
           BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
           BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
@@ -54,9 +54,13 @@ jobs:
           tar -czf - \
             index.html \
             admin.html \
+            riders.html \
             assets/app.js \
             assets/admin.js \
+            assets/riders.js \
             assets/style.css \
+            api/api.php \
+            api/admin.php \
             assets/img | \
           ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 \
             "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \

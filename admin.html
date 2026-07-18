@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#8c5b2e">
   <meta name="robots" content="noindex,nofollow">
   <title>Wet Beard — Captain's Quarters</title>
-  <link rel="stylesheet" href="assets/style.css?v=20260719-2">
+  <link rel="stylesheet" href="assets/style.css?v=20260719-3">
 </head>
 <body class="admin-body">
   <main class="map-shell admin-shell">
@@ -37,7 +37,10 @@
     <div id="dash" class="admin-dashboard hidden">
       <div class="admin-session-bar wood-board">
         <span><span class="pulse"></span> Captain connected</span>
-        <button id="lockAdmin" type="button">Lock</button>
+        <div class="admin-session-actions">
+          <a href="riders.html">Rider Editor</a>
+          <button id="lockAdmin" type="button">Lock</button>
+        </div>
       </div>
 
       <section class="admin-stats" aria-label="Wet Beard statistics">
@@ -48,50 +51,56 @@
 
       <div id="adminNotice" class="admin-notice" role="status" aria-live="polite"></div>
 
-      <section class="admin-panel">
-        <div class="admin-panel-heading">
-          <span class="admin-panel-icon">⛵</span>
-          <div><h2>Schedule a Ride</h2><small>Set the start and end of a voyage</small></div>
-        </div>
-        <div class="admin-form-grid">
-          <label class="admin-field admin-field-wide"><span>Ride title</span><input id="rideTitle" maxlength="120" placeholder="Friday Night Voyage"></label>
-          <label class="admin-field admin-field-wide"><span>Meetup location</span><input id="rideLocation" maxlength="180" placeholder="Where the crew gathers"></label>
-          <label class="admin-field admin-field-date"><span>Starts</span><input id="rideStart" type="datetime-local"></label>
-          <label class="admin-field admin-field-date"><span>Ends</span><input id="rideEnd" type="datetime-local"></label>
-          <label class="admin-field admin-field-wide"><span>Description</span><textarea id="rideDescription" rows="3" maxlength="1000" placeholder="Ride notes and details"></textarea></label>
-        </div>
-        <button id="saveRide" class="admin-primary-button admin-full-button" type="button">Create Ride</button>
-      </section>
+      <div class="admin-columns">
+        <div class="admin-column">
+          <section class="admin-panel">
+            <div class="admin-panel-heading">
+              <span class="admin-panel-icon">⛵</span>
+              <div><h2>Schedule a Ride</h2><small>Set the start and end of a voyage</small></div>
+            </div>
+            <div class="admin-form-grid">
+              <label class="admin-field admin-field-wide"><span>Ride title</span><input id="rideTitle" maxlength="120" placeholder="Friday Night Voyage"></label>
+              <label class="admin-field admin-field-wide"><span>Meetup location</span><input id="rideLocation" maxlength="180" placeholder="Where the crew gathers"></label>
+              <label class="admin-field admin-field-date"><span>Starts</span><input id="rideStart" type="datetime-local"></label>
+              <label class="admin-field admin-field-date"><span>Ends</span><input id="rideEnd" type="datetime-local"></label>
+              <label class="admin-field admin-field-wide"><span>Description</span><textarea id="rideDescription" rows="3" maxlength="1000" placeholder="Ride notes and details"></textarea></label>
+            </div>
+            <button id="saveRide" class="admin-primary-button admin-full-button" type="button">Create Ride</button>
+          </section>
 
-      <section class="admin-panel">
-        <div class="admin-panel-heading">
-          <span class="admin-panel-icon">🧭</span>
-          <div><h2>Scheduled Rides</h2><small>Current and past voyages</small></div>
+          <section class="admin-panel">
+            <div class="admin-panel-heading">
+              <span class="admin-panel-icon">🧭</span>
+              <div><h2>Scheduled Rides</h2><small>Current and past voyages</small></div>
+            </div>
+            <div id="adminRides" class="admin-list"><div class="empty-copy">Loading rides…</div></div>
+          </section>
         </div>
-        <div id="adminRides" class="admin-list"><div class="empty-copy">Loading rides…</div></div>
-      </section>
 
-      <section class="admin-panel">
-        <div class="admin-panel-heading">
-          <span class="admin-panel-icon">🗺️</span>
-          <div><h2>Add a Quest Card</h2><small>One task at each difficulty</small></div>
-        </div>
-        <div class="admin-form-grid">
-          <label class="admin-field admin-field-wide"><span>Card title</span><input id="cardTitle" maxlength="120" placeholder="Card title"></label>
-          <label class="admin-field admin-field-wide"><span>Easy · 10 stars</span><textarea id="easy" rows="2" maxlength="500" placeholder="Easy task"></textarea></label>
-          <label class="admin-field admin-field-wide"><span>Medium · 20 stars</span><textarea id="medium" rows="2" maxlength="500" placeholder="Medium task"></textarea></label>
-          <label class="admin-field admin-field-wide"><span>Hard · 30 stars</span><textarea id="hard" rows="2" maxlength="500" placeholder="Hard task"></textarea></label>
-        </div>
-        <button id="addCard" class="admin-primary-button admin-full-button" type="button">Add Quest Card</button>
-      </section>
+        <div class="admin-column">
+          <section class="admin-panel">
+            <div class="admin-panel-heading">
+              <span class="admin-panel-icon">🗺️</span>
+              <div><h2>Add a Quest Card</h2><small>One task at each difficulty</small></div>
+            </div>
+            <div class="admin-form-grid">
+              <label class="admin-field admin-field-wide"><span>Card title</span><input id="cardTitle" maxlength="120" placeholder="Card title"></label>
+              <label class="admin-field admin-field-wide"><span>Easy · 10 stars</span><textarea id="easy" rows="2" maxlength="500" placeholder="Easy task"></textarea></label>
+              <label class="admin-field admin-field-wide"><span>Medium · 20 stars</span><textarea id="medium" rows="2" maxlength="500" placeholder="Medium task"></textarea></label>
+              <label class="admin-field admin-field-wide"><span>Hard · 30 stars</span><textarea id="hard" rows="2" maxlength="500" placeholder="Hard task"></textarea></label>
+            </div>
+            <button id="addCard" class="admin-primary-button admin-full-button" type="button">Add Quest Card</button>
+          </section>
 
-      <section class="admin-panel">
-        <div class="admin-panel-heading">
-          <span class="admin-panel-icon">🂠</span>
-          <div><h2>Quest Library</h2><small>Enable or disable cards in the draw</small></div>
+          <section class="admin-panel">
+            <div class="admin-panel-heading">
+              <span class="admin-panel-icon">🂠</span>
+              <div><h2>Quest Library</h2><small>Enable or disable cards in the draw</small></div>
+            </div>
+            <div id="cards" class="admin-list"><div class="empty-copy">Loading quest cards…</div></div>
+          </section>
         </div>
-        <div id="cards" class="admin-list"><div class="empty-copy">Loading quest cards…</div></div>
-      </section>
+      </div>
     </div>
 
     <footer>Wet Beard · Keeper of Quests</footer>

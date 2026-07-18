@@ -53,7 +53,9 @@ jobs:
         run: |
           tar -czf - \
             index.html \
+            admin.html \
             assets/app.js \
+            assets/admin.js \
             assets/style.css \
             assets/img | \
           ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 \

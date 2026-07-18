@@ -54,13 +54,17 @@ jobs:
           tar -czf - \
             index.html \
             admin.html \
+            quests.html \
             riders.html \
             assets/app.js \
             assets/admin.js \
+            assets/quests.js \
             assets/riders.js \
             assets/style.css \
             api/api.php \
             api/admin.php \
+            api/quests.php \
+            api/quest-store.php \
             assets/img | \
           ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 \
             "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \

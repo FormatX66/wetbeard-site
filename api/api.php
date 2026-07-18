@@ -1,5 +1,6 @@
 <?php
 require __DIR__ . '/bootstrap.php';
+require __DIR__ . '/quest-store.php';
 
 $pdo = db();
 $action = (string)($_GET['action'] ?? 'state');
@@ -7,6 +8,7 @@ $data = body();
 $token = device_token();
 $rider = rider($pdo, $token);
 $riderId = (int)$rider['id'];
+$questSchemaReady = quest_management_schema_ready($pdo);
 
 if ($action === 'health') respond(['ok' => true, 'php' => PHP_VERSION, 'time' => date(DATE_ATOM)]);
 
@@ -17,7 +19,17 @@ if ($action === 'state') {
     $recent = $pdo->query("SELECT c.id,c.completed_at,c.points_awarded,qt.task_text,r.display_name FROM completions c JOIN quest_tasks qt ON qt.id=c.quest_task_id JOIN riders r ON r.id=c.rider_id ORDER BY c.completed_at DESC LIMIT 12")->fetchAll();
     $messages = $pdo->query("SELECT m.id,m.message,m.created_at,r.display_name FROM messages m JOIN riders r ON r.id=m.rider_id ORDER BY m.created_at DESC LIMIT 30")->fetchAll();
 
-    $query = $pdo->prepare("SELECT qc.id card_id,qc.title,qt.id task_id,qt.task_text,qt.points FROM rider_current_quests rcq JOIN quest_cards qc ON qc.id=rcq.quest_card_id JOIN quest_tasks qt ON qt.quest_card_id=qc.id WHERE rcq.rider_id=? ORDER BY qt.difficulty,qt.id");
+    $query = $questSchemaReady
+        ? $pdo->prepare(
+            "SELECT qc.id card_id,qc.title,qcs.quest_task_id task_id,q.title task_text,q.star_value points
+             FROM rider_current_quests rcq
+             JOIN quest_cards qc ON qc.id=rcq.quest_card_id
+             JOIN quest_card_slots qcs ON qcs.quest_card_id=qc.id
+             JOIN quests q ON q.id=qcs.quest_id
+             WHERE rcq.rider_id=?
+             ORDER BY qcs.slot_number"
+        )
+        : $pdo->prepare("SELECT qc.id card_id,qc.title,qt.id task_id,qt.task_text,qt.points FROM rider_current_quests rcq JOIN quest_cards qc ON qc.id=rcq.quest_card_id JOIN quest_tasks qt ON qt.quest_card_id=qc.id WHERE rcq.rider_id=? ORDER BY qt.difficulty,qt.id");
     $query->execute([$riderId]);
     $currentQuest = $query->fetchAll();
 
@@ -29,23 +41,43 @@ if ($action === 'state') {
     $query->execute([$riderId]);
     $completedTaskIds = array_map('intval', array_column($query->fetchAll(), 'quest_task_id'));
 
-    $query = $pdo->prepare(
-        "SELECT qc.id card_id,qc.title,MAX(c.completed_at) completed_at,COUNT(qt.id) task_count,COUNT(c.id) completed_tasks,SUM(qt.points) total_points
-         FROM quest_cards qc
-         JOIN quest_tasks qt ON qt.quest_card_id=qc.id
-         LEFT JOIN completions c ON c.quest_task_id=qt.id AND c.rider_id=?
-         GROUP BY qc.id,qc.title
-         HAVING completed_tasks=task_count AND task_count>0
-         ORDER BY completed_at DESC
-         LIMIT 120"
-    );
+    $query = $questSchemaReady
+        ? $pdo->prepare(
+            "SELECT qc.id card_id,qc.title,MAX(c.completed_at) completed_at,COUNT(qcs.quest_task_id) task_count,COUNT(c.id) completed_tasks,SUM(q.star_value) total_points
+             FROM quest_cards qc
+             JOIN quest_card_slots qcs ON qcs.quest_card_id=qc.id
+             JOIN quests q ON q.id=qcs.quest_id
+             LEFT JOIN completions c ON c.quest_task_id=qcs.quest_task_id AND c.rider_id=?
+             GROUP BY qc.id,qc.title
+             HAVING completed_tasks=task_count AND task_count>0
+             ORDER BY completed_at DESC
+             LIMIT 120"
+        )
+        : $pdo->prepare(
+            "SELECT qc.id card_id,qc.title,MAX(c.completed_at) completed_at,COUNT(qt.id) task_count,COUNT(c.id) completed_tasks,SUM(qt.points) total_points
+             FROM quest_cards qc
+             JOIN quest_tasks qt ON qt.quest_card_id=qc.id
+             LEFT JOIN completions c ON c.quest_task_id=qt.id AND c.rider_id=?
+             GROUP BY qc.id,qc.title
+             HAVING completed_tasks=task_count AND task_count>0
+             ORDER BY completed_at DESC
+             LIMIT 120"
+        );
     $query->execute([$riderId]);
     $collection = $query->fetchAll();
     $collectionIds = array_map('intval', array_column($collection, 'card_id'));
     $tasksByCard = [];
     if ($collectionIds) {
         $placeholders = implode(',', array_fill(0, count($collectionIds), '?'));
-        $query = $pdo->prepare("SELECT quest_card_id,task_text,points FROM quest_tasks WHERE quest_card_id IN ($placeholders) ORDER BY quest_card_id,difficulty,id");
+        $query = $questSchemaReady
+            ? $pdo->prepare(
+                "SELECT qcs.quest_card_id,q.title task_text,q.star_value points
+                 FROM quest_card_slots qcs
+                 JOIN quests q ON q.id=qcs.quest_id
+                 WHERE qcs.quest_card_id IN ($placeholders)
+                 ORDER BY qcs.quest_card_id,qcs.slot_number"
+            )
+            : $pdo->prepare("SELECT quest_card_id,task_text,points FROM quest_tasks WHERE quest_card_id IN ($placeholders) ORDER BY quest_card_id,difficulty,id");
         $query->execute($collectionIds);
         foreach ($query->fetchAll() as $task) {
             $tasksByCard[(int)$task['quest_card_id']][] = [
@@ -106,7 +138,19 @@ if ($action === 'unreserve') {
 }
 
 if ($action === 'draw_quest') {
-    $card = $pdo->query('SELECT id FROM quest_cards WHERE active=1 ORDER BY RAND() LIMIT 1')->fetch();
+    $card = $questSchemaReady
+        ? $pdo->query(
+            'SELECT qc.id
+             FROM quest_cards qc
+             JOIN quest_card_slots qcs ON qcs.quest_card_id=qc.id
+             JOIN quests q ON q.id=qcs.quest_id
+             WHERE qc.active=1
+             GROUP BY qc.id
+             HAVING COUNT(qcs.slot_number)=3 AND SUM(q.active=1)=3
+             ORDER BY RAND()
+             LIMIT 1'
+        )->fetch()
+        : $pdo->query('SELECT id FROM quest_cards WHERE active=1 ORDER BY RAND() LIMIT 1')->fetch();
     if (!$card) respond(['ok' => false, 'error' => 'No active quest cards'], 409);
     $query = $pdo->prepare('INSERT INTO rider_current_quests(rider_id,quest_card_id) VALUES(?,?) ON DUPLICATE KEY UPDATE quest_card_id=VALUES(quest_card_id),assigned_at=CURRENT_TIMESTAMP');
     $query->execute([$riderId, (int)$card['id']]);
@@ -116,7 +160,9 @@ if ($action === 'draw_quest') {
 if ($action === 'complete_task') {
     require_fields($data, ['task_id']);
     $taskId = (int)$data['task_id'];
-    $query = $pdo->prepare('SELECT points FROM quest_tasks WHERE id=?');
+    $query = $questSchemaReady
+        ? $pdo->prepare('SELECT q.star_value points FROM quest_card_slots qcs JOIN quests q ON q.id=qcs.quest_id WHERE qcs.quest_task_id=?')
+        : $pdo->prepare('SELECT points FROM quest_tasks WHERE id=?');
     $query->execute([$taskId]);
     $task = $query->fetch();
     if (!$task) respond(['ok' => false, 'error' => 'Quest task not found'], 404);

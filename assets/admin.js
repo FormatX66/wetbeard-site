@@ -92,26 +92,11 @@ function renderRides(rides = []) {
   }).join('') : '<div class="admin-empty">No voyages scheduled.</div>';
 }
 
-function renderCards(cards = []) {
-  $('#cards').innerHTML = cards.length ? cards.map((card) => {
-    const active = Number(card.active) === 1;
-    return `<article class="admin-list-card admin-card-row ${active ? '' : 'is-disabled'}">
-      <span class="admin-card-number">#${Number(card.id)}</span>
-      <div class="admin-card-copy">
-        <strong>${escapeHtml(card.title)}</strong>
-        <small>${Number(card.task_count || 0)} tasks · ${active ? 'Included in draws' : 'Not included in draws'}</small>
-      </div>
-      <button class="admin-toggle-button ${active ? 'active' : ''}" type="button" data-toggle-card="${Number(card.id)}">${active ? 'Disable' : 'Enable'}</button>
-    </article>`;
-  }).join('') : '<div class="admin-empty">No quest cards have been added.</div>';
-}
-
 async function loadDashboard() {
   const state = await adminApi('dashboard');
   dashboardState = state;
   renderStats(state.stats);
   renderRides(state.rides);
-  renderCards(state.cards);
   $('#loginPanel').classList.add('hidden');
   $('#dash').classList.remove('hidden');
   $('#adminError').textContent = '';
@@ -189,35 +174,6 @@ $('#saveRide').addEventListener('click', async () => {
   }
 });
 
-$('#addCard').addEventListener('click', async () => {
-  const button = $('#addCard');
-  const fields = {
-    title: $('#cardTitle').value.trim(),
-    easy: $('#easy').value.trim(),
-    medium: $('#medium').value.trim(),
-    hard: $('#hard').value.trim()
-  };
-
-  if (Object.values(fields).some((value) => !value)) {
-    showNotice('Complete the title and all three quest tasks.', 'error');
-    return;
-  }
-
-  setBusy(button, true, 'Adding Card…');
-  try {
-    await adminApi('add_card', fields);
-    ['#cardTitle', '#easy', '#medium', '#hard'].forEach((selector) => {
-      $(selector).value = '';
-    });
-    await loadDashboard();
-    showNotice('Quest card added to the draw.');
-  } catch (error) {
-    showNotice(error.message, 'error');
-  } finally {
-    setBusy(button, false, 'Adding Card…');
-  }
-});
-
 $('#adminRides').addEventListener('click', async (event) => {
   const button = event.target.closest('[data-delete-ride]');
   if (!button) return;
@@ -232,20 +188,5 @@ $('#adminRides').addEventListener('click', async (event) => {
   } catch (error) {
     showNotice(error.message, 'error');
     setBusy(button, false, 'Deleting…');
-  }
-});
-
-$('#cards').addEventListener('click', async (event) => {
-  const button = event.target.closest('[data-toggle-card]');
-  if (!button) return;
-
-  setBusy(button, true, 'Saving…');
-  try {
-    await adminApi('toggle_card', {id: Number(button.dataset.toggleCard)});
-    await loadDashboard();
-    showNotice('Quest card updated.');
-  } catch (error) {
-    showNotice(error.message, 'error');
-    setBusy(button, false, 'Saving…');
   }
 });

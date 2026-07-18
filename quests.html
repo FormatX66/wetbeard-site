@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#8c5b2e">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Wet Beard — Quest Editor</title>
+  <link rel="stylesheet" href="assets/style.css?v=20260719-4">
+</head>
+<body class="admin-body">
+  <main class="map-shell admin-shell quest-editor-shell">
+    <header class="masthead admin-masthead">
+      <div class="brand-lockup">
+        <div class="brand-mark" aria-hidden="true"></div>
+        <div>
+          <div class="brand-title">WET BEARD</div>
+          <div class="brand-subtitle">Quest Editor</div>
+        </div>
+      </div>
+      <a class="admin-home-button" href="admin.html">← Admin</a>
+    </header>
+
+    <section id="loginPanel" class="admin-login">
+      <span class="admin-anchor" aria-hidden="true"></span>
+      <p class="admin-kicker">Restricted waters</p>
+      <h1>Quest Editor</h1>
+      <p>Enter the captain's password to manage quests and assemble quest cards.</p>
+      <div class="admin-login-row">
+        <label class="sr-only" for="pw">Admin password</label>
+        <input id="pw" type="password" placeholder="Admin password" autocomplete="current-password">
+        <button id="login" class="admin-primary-button" type="button">Open</button>
+      </div>
+      <div id="adminError" class="admin-notice error" role="alert" aria-live="polite"></div>
+    </section>
+
+    <div id="dash" class="quest-editor-dashboard hidden">
+      <div class="admin-session-bar wood-board">
+        <span><span class="pulse"></span> Captain connected</span>
+        <div class="admin-session-actions">
+          <a href="admin.html">Admin Home</a>
+          <a href="riders.html">Rider Editor</a>
+          <button id="lockAdmin" type="button">Lock</button>
+        </div>
+      </div>
+
+      <section class="admin-stats" aria-label="Quest statistics">
+        <div><strong id="statQuests">0</strong><span>Total Quests</span></div>
+        <div><strong id="statActiveQuests">0</strong><span>Active Quests</span></div>
+        <div><strong id="statReadyCards">0</strong><span>Ready Cards</span></div>
+      </section>
+
+      <div id="editorNotice" class="admin-notice" role="status" aria-live="polite"></div>
+
+      <div class="quest-admin-columns">
+        <div class="admin-column">
+          <section id="questFormPanel" class="admin-panel">
+            <div class="admin-panel-heading">
+              <span class="admin-panel-icon">⚓</span>
+              <div><h2 id="questFormTitle">Create a Quest</h2><small>Reusable tasks for quest cards</small></div>
+            </div>
+            <div class="admin-form-grid">
+              <label class="admin-field admin-field-wide"><span>Quest title</span><input id="questTitle" maxlength="500" placeholder="Visit a new harbor"></label>
+              <label class="admin-field admin-field-wide"><span>Description</span><textarea id="questDescription" rows="3" maxlength="1000" placeholder="Optional details for the captain"></textarea></label>
+              <label class="admin-field"><span>Difficulty</span><select id="questDifficulty"><option value="1">Easy</option><option value="2">Medium</option><option value="3">Hard</option></select></label>
+              <label class="admin-field"><span>Gold Nautical Stars</span><input id="questStars" type="number" min="0" max="100000" step="1" value="10"></label>
+              <label class="admin-check-field admin-field-wide"><input id="questActive" type="checkbox" checked><span>Active and available for new cards</span></label>
+            </div>
+            <div class="admin-form-actions">
+              <button id="saveQuest" class="admin-primary-button" type="button">Create Quest</button>
+              <button id="cancelQuestEdit" class="admin-secondary-button hidden" type="button">Cancel Edit</button>
+            </div>
+          </section>
+
+          <section class="admin-panel quest-library-panel">
+            <div class="admin-panel-heading">
+              <span class="admin-panel-icon">☷</span>
+              <div><h2>Quest Library</h2><small>Edit, duplicate, disable, or delete quests</small></div>
+            </div>
+            <label class="admin-field quest-search"><span>Search quests</span><input id="questSearch" type="search" placeholder="Title or description" autocomplete="off"></label>
+            <div id="questRows" class="admin-record-list"><div class="admin-empty">Loading quests…</div></div>
+          </section>
+        </div>
+
+        <div class="admin-column">
+          <section id="cardFormPanel" class="admin-panel">
+            <div class="admin-panel-heading">
+              <span class="admin-panel-icon">🂠</span>
+              <div><h2 id="cardFormTitle">Create a Quest Card</h2><small>Assign one quest to each difficulty slot</small></div>
+            </div>
+            <div class="admin-form-grid">
+              <label class="admin-field admin-field-wide"><span>Card title</span><input id="cardTitle" maxlength="120" placeholder="Harbor Run"></label>
+              <label class="admin-field admin-field-wide"><span>Easy slot</span><select id="cardEasy"></select></label>
+              <label class="admin-field admin-field-wide"><span>Medium slot</span><select id="cardMedium"></select></label>
+              <label class="admin-field admin-field-wide"><span>Hard slot</span><select id="cardHard"></select></label>
+              <label class="admin-check-field admin-field-wide"><input id="cardActive" type="checkbox" checked><span>Active and available in the public draw</span></label>
+            </div>
+            <div class="admin-form-actions">
+              <button id="saveCard" class="admin-primary-button" type="button">Create Card</button>
+              <button id="cancelCardEdit" class="admin-secondary-button hidden" type="button">Cancel Edit</button>
+            </div>
+          </section>
+
+          <section class="admin-panel quest-card-library-panel">
+            <div class="admin-panel-heading">
+              <span class="admin-panel-icon">🗺️</span>
+              <div><h2>Quest Cards</h2><small>Edit slot assignments and draw status</small></div>
+            </div>
+            <div id="cardRows" class="admin-record-list"><div class="admin-empty">Loading quest cards…</div></div>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <footer>Wet Beard · Keeper of Quests</footer>
+  </main>
+  <script src="assets/quests.js?v=20260719-1"></script>
+</body>
+</html>

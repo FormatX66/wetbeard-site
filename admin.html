@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#8c5b2e">
   <meta name="robots" content="noindex,nofollow">
   <title>Wet Beard — Captain's Quarters</title>
-  <link rel="stylesheet" href="assets/style.css?v=20260719-3">
+  <link rel="stylesheet" href="assets/style.css?v=20260719-4">
 </head>
 <body class="admin-body">
   <main class="map-shell admin-shell">
@@ -38,6 +38,7 @@
       <div class="admin-session-bar wood-board">
         <span><span class="pulse"></span> Captain connected</span>
         <div class="admin-session-actions">
+          <a href="quests.html">Quest Editor</a>
           <a href="riders.html">Rider Editor</a>
           <button id="lockAdmin" type="button">Lock</button>
         </div>
@@ -78,26 +79,13 @@
         </div>
 
         <div class="admin-column">
-          <section class="admin-panel">
+          <section class="admin-panel admin-tool-panel">
             <div class="admin-panel-heading">
               <span class="admin-panel-icon">🗺️</span>
-              <div><h2>Add a Quest Card</h2><small>One task at each difficulty</small></div>
+              <div><h2>Quest &amp; Card Editor</h2><small>Build the quest library and assemble cards</small></div>
             </div>
-            <div class="admin-form-grid">
-              <label class="admin-field admin-field-wide"><span>Card title</span><input id="cardTitle" maxlength="120" placeholder="Card title"></label>
-              <label class="admin-field admin-field-wide"><span>Easy · 10 stars</span><textarea id="easy" rows="2" maxlength="500" placeholder="Easy task"></textarea></label>
-              <label class="admin-field admin-field-wide"><span>Medium · 20 stars</span><textarea id="medium" rows="2" maxlength="500" placeholder="Medium task"></textarea></label>
-              <label class="admin-field admin-field-wide"><span>Hard · 30 stars</span><textarea id="hard" rows="2" maxlength="500" placeholder="Hard task"></textarea></label>
-            </div>
-            <button id="addCard" class="admin-primary-button admin-full-button" type="button">Add Quest Card</button>
-          </section>
-
-          <section class="admin-panel">
-            <div class="admin-panel-heading">
-              <span class="admin-panel-icon">🂠</span>
-              <div><h2>Quest Library</h2><small>Enable or disable cards in the draw</small></div>
-            </div>
-            <div id="cards" class="admin-list"><div class="empty-copy">Loading quest cards…</div></div>
+            <p class="admin-tool-copy">Create reusable quests, set their Gold Nautical Star values, and choose the easy, medium, and hard quest assigned to every card.</p>
+            <a class="admin-primary-button admin-tool-link" href="quests.html">Open Quest Editor</a>
           </section>
         </div>
       </div>
@@ -105,6 +93,6 @@
 
     <footer>Wet Beard · Keeper of Quests</footer>
   </main>
-  <script src="assets/admin.js?v=20260719-1"></script>
+  <script src="assets/admin.js?v=20260719-2"></script>
 </body>
 </html>

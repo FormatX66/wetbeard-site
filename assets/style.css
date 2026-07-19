@@ -154,3 +154,15 @@ html,body{background:#181817;color:var(--ink)}
 .admin-table-wrap,.rider-table-wrap{border-color:#333;background:#e7e4dc}.rider-table thead{background:#292928;color:#f3f1eb}.rider-table tbody tr:nth-child(even){background:#d8d5cd}.rider-table tbody tr.selected{background:#c5c2ba;box-shadow:inset 4px 0 #222}
 .live-banner{background:#e5e2da;color:#252524;border-color:#555}.pulse{background:#555;box-shadow:0 0 6px #777}
 footer{color:#343330;text-shadow:0 1px #f5f2e9}
+
+
+/* Quest-first layout refinement. */
+.site-masthead .header-logo{aspect-ratio:1000/336;max-height:172px}.site-masthead .header-logo img{object-fit:cover}
+.site-masthead .rider-strip>strong{font-family:Georgia,"Times New Roman",serif;font-size:15px;letter-spacing:.2px}.site-masthead .rider-star-balance{font-size:14px}.site-masthead .rider-star-balance small{font-size:7px}
+.podium{margin:3px 1px 4px;padding:1px 4px 3px}.board-title{font:900 10px/1.1 system-ui;letter-spacing:1.3px;margin-bottom:1px}.rank-medal{width:23px;height:23px;font-size:12px}.rank-1 .rank-medal{width:27px;height:27px}.rider-name{font:800 11px/1.1 system-ui}.rider-score{font:800 9px/1 system-ui}.rider-score .coin{width:14px;height:14px}
+.quest-wrap{margin:8px 7px 9px}.quest-card{isolation:isolate;min-height:285px;padding:17px 16px 13px 72px;border:4px double #181817;border-radius:6px;background-color:#ece9e1;background-image:linear-gradient(#f5f3edcc,#e7e3dac7),url("img/map-bleached.webp"),url("img/parchment-bleached.webp");background-position:center,center 42%,center;background-size:auto,cover,100% 100%;box-shadow:inset 0 0 0 2px #aaa69e,inset 0 0 25px #55534f38;filter:drop-shadow(0 5px 4px #1b1b1a99)}
+.quest-card:before{content:"N\A▲\A S";white-space:pre;position:absolute;z-index:-1;right:18px;top:48px;width:44px;height:44px;display:grid;place-items:center;border:2px solid #252524;border-radius:50%;color:#252524;text-align:center;font:900 8px/1 Georgia;opacity:.16;transform:rotate(7deg)}
+.quest-heading{margin-bottom:7px;padding-bottom:5px;border-bottom:3px double #55534f;font:1000 clamp(25px,7.5vw,34px)/1 Georgia,"Times New Roman",serif;letter-spacing:.2px}
+.quest-task{min-height:55px;border-bottom:2px dashed #77746e}.task-copy{padding:3px 7px;font:800 clamp(17px,4.8vw,21px)/1.16 Georgia,"Times New Roman",serif;letter-spacing:.1px}.task-value{font:800 10px/1.1 system-ui}.drawn-box{width:29px;height:29px}.quest-footer{margin-top:8px}.quest-footer>span{font:900 10px system-ui}.quest-footer strong{font-size:23px}.anchor-stamp{width:67px;height:67px;right:17px;bottom:32px;opacity:.16}
+.quest-ribbon{left:-5px;top:-9px;width:63px;padding-top:8px}.quest-ribbon small{font-size:10px}.quest-ribbon strong{font-size:20px}
+@media(max-width:390px){.site-masthead .header-logo{max-height:154px}.site-masthead .rider-strip>strong{font-size:13px}.quest-card{min-height:270px;padding-left:65px;padding-right:11px}.quest-task{min-height:52px}.task-copy{font-size:17px}.quest-heading{font-size:25px}.quest-ribbon{width:57px}}

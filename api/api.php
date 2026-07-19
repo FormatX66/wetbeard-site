@@ -16,12 +16,58 @@ $rider = rider($pdo, $token);
 $riderId = (int)$rider['id'];
 $questSchemaReady = quest_management_schema_ready($pdo);
 
+function ensure_star_schema(PDO $pdo): void {
+    $pdo->exec("CREATE TABLE IF NOT EXISTS star_transfers (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        sender_rider_id INT NOT NULL,
+        recipient_rider_id INT NOT NULL,
+        amount INT UNSIGNED NOT NULL,
+        reason VARCHAR(180) NOT NULL DEFAULT '',
+        completion_id INT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_star_sender_day (sender_rider_id,created_at),
+        INDEX idx_star_recipient (recipient_rider_id,created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS card_holdings (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        quest_card_id INT NOT NULL,
+        owner_rider_id INT NOT NULL,
+        acquired_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        acquisition_type VARCHAR(20) NOT NULL DEFAULT 'quest',
+        UNIQUE KEY uq_owner_card (owner_rider_id,quest_card_id),
+        INDEX idx_holding_owner (owner_rider_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS card_listings (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        holding_id BIGINT UNSIGNED NOT NULL,
+        seller_rider_id INT NOT NULL,
+        price INT UNSIGNED NOT NULL,
+        status VARCHAR(20) NOT NULL DEFAULT 'active',
+        buyer_rider_id INT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        completed_at TIMESTAMP NULL,
+        UNIQUE KEY uq_active_holding (holding_id,status),
+        INDEX idx_listing_status (status,created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS site_settings (setting_key VARCHAR(80) PRIMARY KEY,setting_value TEXT NOT NULL,updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+}
+
+ensure_star_schema($pdo);
+$dailyStarLimit = (int)($pdo->query("SELECT setting_value FROM site_settings WHERE setting_key='daily_star_limit'")->fetchColumn() ?: 100);
+$dailyStarLimit = max(1, min(1000, $dailyStarLimit));
+$tradingEnabled = ($pdo->query("SELECT setting_value FROM site_settings WHERE setting_key='trading_enabled'")->fetchColumn() ?: '1') !== '0';
+
 if ($action === 'state') {
     $rides = $pdo->query("SELECT r.*, (SELECT COUNT(*) FROM reservations x WHERE x.ride_id=r.id) reserved_count FROM rides r WHERE r.ends_at >= NOW() ORDER BY r.starts_at ASC LIMIT 12")->fetchAll();
     $liveRide = $pdo->query("SELECT * FROM rides WHERE starts_at<=NOW() AND ends_at>=NOW() AND status<>'cancelled' ORDER BY starts_at LIMIT 1")->fetch() ?: null;
     $leaderboard = $pdo->query("SELECT display_name,points FROM riders WHERE display_name<>'New Pirate' ORDER BY points DESC, updated_at ASC LIMIT 20")->fetchAll();
-    $recent = $pdo->query("SELECT c.id,c.completed_at,c.points_awarded,qt.task_text,r.display_name FROM completions c JOIN quest_tasks qt ON qt.id=c.quest_task_id JOIN riders r ON r.id=c.rider_id ORDER BY c.completed_at DESC LIMIT 12")->fetchAll();
+    $recent = $pdo->query("SELECT c.id,c.rider_id recipient_rider_id,c.completed_at,c.points_awarded,qt.task_text,r.display_name FROM completions c JOIN quest_tasks qt ON qt.id=c.quest_task_id JOIN riders r ON r.id=c.rider_id ORDER BY c.completed_at DESC LIMIT 12")->fetchAll();
     $messages = $pdo->query("SELECT m.id,m.message,m.created_at,r.display_name FROM messages m JOIN riders r ON r.id=m.rider_id ORDER BY m.created_at DESC LIMIT 30")->fetchAll();
+    $starSentTodayQuery = $pdo->prepare('SELECT COALESCE(SUM(amount),0) FROM star_transfers WHERE sender_rider_id=? AND created_at>=CURRENT_DATE');
+    $starSentTodayQuery->execute([$riderId]);
+    $starSentToday = (int)$starSentTodayQuery->fetchColumn();
+    $starHistoryQuery = $pdo->prepare('SELECT st.amount,st.reason,st.created_at,r.display_name recipient_name FROM star_transfers st JOIN riders r ON r.id=st.recipient_rider_id WHERE st.sender_rider_id=? ORDER BY st.created_at DESC LIMIT 20');
+    $starHistoryQuery->execute([$riderId]);
 
     $query = $questSchemaReady
         ? $pdo->prepare(
@@ -97,6 +143,12 @@ if ($action === 'state') {
         $card['tasks'] = $tasksByCard[$cardId] ?? [];
     }
     unset($card);
+    foreach ($collection as $card) {
+        $pdo->prepare("INSERT IGNORE INTO card_holdings(quest_card_id,owner_rider_id,acquisition_type) VALUES(?,?,'quest')")->execute([(int)$card['card_id'], $riderId]);
+    }
+    $inventoryQuery = $pdo->prepare("SELECT h.id holding_id,h.quest_card_id card_id,qc.title,l.id listing_id,l.price FROM card_holdings h JOIN quest_cards qc ON qc.id=h.quest_card_id LEFT JOIN card_listings l ON l.holding_id=h.id AND l.status='active' WHERE h.owner_rider_id=? ORDER BY h.acquired_at DESC");
+    $inventoryQuery->execute([$riderId]);
+    $market = $pdo->query("SELECT l.id listing_id,l.price,h.quest_card_id card_id,qc.title,r.display_name seller_name,l.seller_rider_id FROM card_listings l JOIN card_holdings h ON h.id=l.holding_id JOIN quest_cards qc ON qc.id=h.quest_card_id JOIN riders r ON r.id=l.seller_rider_id WHERE l.status='active' ORDER BY l.created_at DESC LIMIT 100")->fetchAll();
 
     respond([
         'ok' => true,
@@ -110,7 +162,89 @@ if ($action === 'state') {
         'reserved_ride_ids' => $reservedRideIds,
         'completed_task_ids' => $completedTaskIds,
         'collection' => $collection,
+        'star_sending' => [
+            'daily_limit' => $dailyStarLimit,
+            'sent_today' => $starSentToday,
+            'remaining_today' => max(0, $dailyStarLimit - $starSentToday),
+            'resets_at' => date('Y-m-d 00:00:00', strtotime('tomorrow')),
+            'history' => $starHistoryQuery->fetchAll(),
+        ],
+        'card_inventory' => $inventoryQuery->fetchAll(),
+        'card_market' => $market,
+        'trading_enabled' => $tradingEnabled,
     ]);
+}
+
+if ($action === 'list_card') {
+    if (!$tradingEnabled) respond(['ok'=>false,'error'=>'Quest card trading is currently disabled.'],409);
+    require_fields($data, ['holding_id','price']);
+    $holdingId=(int)$data['holding_id']; $price=filter_var($data['price'],FILTER_VALIDATE_INT);
+    if($price===false||$price<1||$price>1000000) respond(['ok'=>false,'error'=>'Choose a price from 1 to 1,000,000 Gold Nautical Stars.'],422);
+    $q=$pdo->prepare('SELECT id FROM card_holdings WHERE id=? AND owner_rider_id=?');$q->execute([$holdingId,$riderId]);
+    if(!$q->fetch()) respond(['ok'=>false,'error'=>'Card not found in your collection.'],404);
+    $pdo->prepare("INSERT INTO card_listings(holding_id,seller_rider_id,price,status) VALUES(?,?,?,'active')")->execute([$holdingId,$riderId,$price]);
+    respond(['ok'=>true]);
+}
+
+if ($action === 'cancel_listing') {
+    $pdo->prepare("UPDATE card_listings SET status='cancelled',completed_at=NOW() WHERE id=? AND seller_rider_id=? AND status='active'")->execute([(int)($data['listing_id']??0),$riderId]);
+    respond(['ok'=>true]);
+}
+
+if ($action === 'buy_card') {
+    if (!$tradingEnabled) respond(['ok'=>false,'error'=>'Quest card trading is currently disabled.'],409);
+    require_fields($data,['listing_id']);
+    try {
+        $pdo->beginTransaction();
+        $q=$pdo->prepare("SELECT l.*,h.quest_card_id FROM card_listings l JOIN card_holdings h ON h.id=l.holding_id WHERE l.id=? AND l.status='active' FOR UPDATE");$q->execute([(int)$data['listing_id']]);$listing=$q->fetch();
+        if(!$listing) throw new RuntimeException('This card is no longer available.');
+        if((int)$listing['seller_rider_id']===$riderId) throw new RuntimeException('You already own this card.');
+        $balanceQ=$pdo->prepare('SELECT points FROM riders WHERE id=? FOR UPDATE');$balanceQ->execute([$riderId]);$balance=(int)$balanceQ->fetchColumn();
+        if($balance<(int)$listing['price']) throw new RuntimeException('You do not have enough Gold Nautical Stars.');
+        $ownedQ=$pdo->prepare('SELECT id FROM card_holdings WHERE owner_rider_id=? AND quest_card_id=?');$ownedQ->execute([$riderId,(int)$listing['quest_card_id']]);
+        if($ownedQ->fetch()) throw new RuntimeException('You already have this quest card.');
+        $pdo->prepare('UPDATE riders SET points=points-? WHERE id=?')->execute([(int)$listing['price'],$riderId]);
+        $pdo->prepare('UPDATE riders SET points=points+? WHERE id=?')->execute([(int)$listing['price'],(int)$listing['seller_rider_id']]);
+        $pdo->prepare("UPDATE card_holdings SET owner_rider_id=?,acquisition_type='trade',acquired_at=NOW() WHERE id=?")->execute([$riderId,(int)$listing['holding_id']]);
+        $pdo->prepare("UPDATE card_listings SET status='sold',buyer_rider_id=?,completed_at=NOW() WHERE id=?")->execute([$riderId,(int)$listing['id']]);
+        $pdo->commit(); respond(['ok'=>true]);
+    } catch(RuntimeException $error){if($pdo->inTransaction())$pdo->rollBack();respond(['ok'=>false,'error'=>$error->getMessage()],409);} catch(Throwable $error){if($pdo->inTransaction())$pdo->rollBack();throw $error;}
+}
+
+if ($action === 'send_stars') {
+    require_fields($data, ['recipient_rider_id', 'amount']);
+    $recipientId = (int)$data['recipient_rider_id'];
+    $amount = filter_var($data['amount'], FILTER_VALIDATE_INT);
+    $reason = trim((string)($data['reason'] ?? ''));
+    $completionId = !empty($data['completion_id']) ? (int)$data['completion_id'] : null;
+    if ($recipientId < 1 || $recipientId === $riderId) respond(['ok' => false, 'error' => 'Choose another rider.'], 422);
+    if ($amount === false || $amount < 1 || $amount > $dailyStarLimit) respond(['ok' => false, 'error' => "Send between 1 and {$dailyStarLimit} Gold Nautical Stars."], 422);
+    if (mb_strlen($reason) > 180) respond(['ok' => false, 'error' => 'Reason is too long.'], 422);
+    try {
+        $pdo->beginTransaction();
+        $senderQuery = $pdo->prepare('SELECT points FROM riders WHERE id=? FOR UPDATE');
+        $senderQuery->execute([$riderId]);
+        $senderBalance = (int)$senderQuery->fetchColumn();
+        $recipientQuery = $pdo->prepare('SELECT id FROM riders WHERE id=? FOR UPDATE');
+        $recipientQuery->execute([$recipientId]);
+        if (!$recipientQuery->fetchColumn()) throw new RuntimeException('Recipient not found.');
+        $sentQuery = $pdo->prepare('SELECT COALESCE(SUM(amount),0) FROM star_transfers WHERE sender_rider_id=? AND created_at>=CURRENT_DATE');
+        $sentQuery->execute([$riderId]);
+        $sentToday = (int)$sentQuery->fetchColumn();
+        if ($sentToday + $amount > $dailyStarLimit) throw new RuntimeException("That exceeds your {$dailyStarLimit}-star daily sending limit.");
+        if ($senderBalance < $amount) throw new RuntimeException('You do not have enough Gold Nautical Stars.');
+        $pdo->prepare('UPDATE riders SET points=points-? WHERE id=?')->execute([$amount, $riderId]);
+        $pdo->prepare('UPDATE riders SET points=points+? WHERE id=?')->execute([$amount, $recipientId]);
+        $pdo->prepare('INSERT INTO star_transfers(sender_rider_id,recipient_rider_id,amount,reason,completion_id) VALUES(?,?,?,?,?)')->execute([$riderId, $recipientId, $amount, $reason, $completionId]);
+        $pdo->commit();
+        respond(['ok' => true, 'remaining_today' => $dailyStarLimit - $sentToday - $amount]);
+    } catch (RuntimeException $error) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        respond(['ok' => false, 'error' => $error->getMessage()], 409);
+    } catch (Throwable $error) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        throw $error;
+    }
 }
 
 if ($action === 'set_name') {
@@ -189,17 +323,6 @@ if ($action === 'message') {
     $message = trim((string)$data['message']);
     if (mb_strlen($message) > 180) respond(['ok' => false, 'error' => 'Message is too long'], 422);
     $pdo->prepare('INSERT INTO messages(rider_id,message) VALUES(?,?)')->execute([$riderId, $message]);
-    respond(['ok' => true]);
-}
-
-if ($action === 'kudos') {
-    require_fields($data, ['completion_id']);
-    try {
-        $pdo->prepare('INSERT INTO kudos(completion_id,giver_rider_id) VALUES(?,?)')->execute([(int)$data['completion_id'], $riderId]);
-    } catch (PDOException $error) {
-        if ($error->getCode() === '23000') respond(['ok' => false, 'error' => 'Already gave kudos'], 409);
-        throw $error;
-    }
     respond(['ok' => true]);
 }
 

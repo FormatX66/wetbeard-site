@@ -20,6 +20,34 @@ function require_rider(PDO $pdo, int $riderId): array {
     return $rider;
 }
 
+function ensure_advanced_schema(PDO $pdo): void {
+    $pdo->exec("CREATE TABLE IF NOT EXISTS site_settings (setting_key VARCHAR(80) PRIMARY KEY, setting_value TEXT NOT NULL, updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS star_transfers (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,sender_rider_id INT NOT NULL,recipient_rider_id INT NOT NULL,amount INT UNSIGNED NOT NULL,reason VARCHAR(180) NOT NULL DEFAULT '',completion_id INT NULL,created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,INDEX idx_star_sender_day (sender_rider_id,created_at),INDEX idx_star_recipient (recipient_rider_id,created_at)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+}
+
+ensure_advanced_schema($pdo);
+
+if ($action === 'advanced') {
+    $settings = [];
+    foreach ($pdo->query('SELECT setting_key,setting_value FROM site_settings')->fetchAll() as $row) $settings[$row['setting_key']] = $row['setting_value'];
+    $transfers = $pdo->query('SELECT st.id,st.amount,st.reason,st.created_at,s.display_name sender_name,r.display_name recipient_name FROM star_transfers st JOIN riders s ON s.id=st.sender_rider_id JOIN riders r ON r.id=st.recipient_rider_id ORDER BY st.created_at DESC LIMIT 250')->fetchAll();
+    $economy = [
+        'stars_in_circulation' => (int)$pdo->query('SELECT COALESCE(SUM(points),0) FROM riders')->fetchColumn(),
+        'stars_sent_today' => (int)$pdo->query('SELECT COALESCE(SUM(amount),0) FROM star_transfers WHERE created_at>=CURRENT_DATE')->fetchColumn(),
+        'transfers' => (int)$pdo->query('SELECT COUNT(*) FROM star_transfers')->fetchColumn(),
+    ];
+    respond(['ok' => true, 'settings' => $settings, 'transfers' => $transfers, 'economy' => $economy]);
+}
+
+if ($action === 'save_settings') {
+    $allowed = ['site_announcement','maintenance_mode','trading_enabled','daily_star_limit','timezone'];
+    $query = $pdo->prepare('INSERT INTO site_settings(setting_key,setting_value) VALUES(?,?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)');
+    foreach ($allowed as $key) {
+        if (array_key_exists($key, $data)) $query->execute([$key, trim((string)$data[$key])]);
+    }
+    respond(['ok' => true]);
+}
+
 if ($action === 'dashboard') {
     $rides = $pdo->query('SELECT * FROM rides ORDER BY starts_at DESC LIMIT 50')->fetchAll();
     $cards = $pdo->query('SELECT qc.*,COUNT(qt.id) task_count FROM quest_cards qc LEFT JOIN quest_tasks qt ON qt.quest_card_id=qc.id GROUP BY qc.id ORDER BY qc.id DESC LIMIT 200')->fetchAll();

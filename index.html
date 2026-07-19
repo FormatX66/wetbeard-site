@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#8c5b2e">
   <title>Wet Beard — Keeper of Quests</title>
-  <link rel="stylesheet" href="assets/style.css?v=20260718-2">
+  <link rel="stylesheet" href="assets/style.css?v=20260719-5">
 </head>
 <body>
   <main class="map-shell">
@@ -21,7 +21,7 @@
       <div class="score-box" aria-label="Your gold stars">
         <span class="coin"></span>
         <strong id="points">0</strong>
-        <small>GOLD STARS</small>
+        <small>GOLD NAUTICAL STARS</small>
       </div>
       <button class="share-button" id="shareSite" aria-label="Share Wet Beard" title="Share Wet Beard">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.7 10.7 6.6-4.1M8.7 13.3l6.6 4.1"></path></svg>
@@ -33,6 +33,19 @@
       <button id="saveName">Save Name</button>
       <span id="status" class="connection">Loading…</span>
     </section>
+
+    <details class="wood-panel" id="starLedgerPanel">
+      <summary><span class="nav-icon coin mini"></span><span>Send Gold Nautical Stars<small id="starSendSummary">Up to 100 per day</small></span></summary>
+      <div class="panel-body">
+        <div class="star-send-status"><strong id="starSendRemaining">100</strong><span>available to send today</span><small id="starResetCountdown"></small></div>
+        <div id="starHistory" class="messages"><div class="empty-copy">No stars sent yet.</div></div>
+      </div>
+    </details>
+
+    <details class="wood-panel" id="cardMarketPanel">
+      <summary><span class="nav-icon">⚖️</span><span>Quest Card Market<small>Trade cards for Gold Nautical Stars</small></span></summary>
+      <div class="panel-body"><div id="cardMarket" class="card-market"><div class="empty-copy">No cards listed.</div></div></div>
+    </details>
 
     <section class="podium wood-board" aria-label="Top three pirates">
       <div class="board-title">Top Pirates</div>
@@ -113,8 +126,8 @@
     </details>
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <footer>Ride. Quest. Earn Kudos. Be Legendary.</footer>
+    <footer>Ride. Quest. Earn Gold Nautical Stars. Be Legendary.</footer>
   </main>
-  <script src="assets/app.js?v=20260719-1"></script>
+  <script src="assets/app.js?v=20260719-2"></script>
 </body>
 </html>

@@ -64,10 +64,12 @@ jobs:
             deploy-version.json \
             index.html \
             admin.html \
+            advanced.html \
             quests.html \
             riders.html \
             assets/app.js \
             assets/admin.js \
+            assets/advanced.js \
             assets/quests.js \
             assets/riders.js \
             assets/style.css \

@@ -221,12 +221,39 @@ function startTicker() {
 function renderRecent(recent) {
   const items = recent.slice(0, 12);
   $('#recent').innerHTML = items.length ? items.map((item) => `
-    <article class="victory-card"><button class="kudos-button" onclick="kudos(${item.id}, event)" aria-label="Send a gold star">${coin()}</button><div><strong>${esc(item.display_name)}</strong><span>${esc(item.task_text)}</span></div></article>`).join('') : '<span class="empty-copy">No victories yet.</span>';
+    <article class="victory-card"><button class="kudos-button" onclick="sendStars(${item.recipient_rider_id}, ${item.id}, '${encodeURIComponent(String(item.display_name))}', event)" aria-label="Send Gold Nautical Stars">${coin()}</button><div><strong>${esc(item.display_name)}</strong><span>${esc(item.task_text)}</span></div></article>`).join('') : '<span class="empty-copy">No victories yet.</span>';
   tickerIndex = 0;
   const count = Math.max(0, items.length - visibleAchievementCount() + 1);
   $('#recentDots').innerHTML = count > 1 ? Array.from({length: count}, (_, i) => `<button type="button" aria-label="Achievement page ${i + 1}" class="${i === 0 ? 'active' : ''}" onclick="jumpTicker(${i})"></button>`).join('') : '';
   updateTicker();
   startTicker();
+}
+
+function renderStarSending(starSending) {
+  const sending = starSending || {remaining_today: 100, daily_limit: 100, history: []};
+  $('#starSendRemaining').textContent = sending.remaining_today;
+  $('#starSendSummary').textContent = `${sending.remaining_today} of ${sending.daily_limit} available today`;
+  $('#starHistory').innerHTML = sending.history?.length ? sending.history.map((item) => `
+    <div class="star-history-row"><strong>${esc(item.recipient_name)}</strong><span>${coin(item.amount, 'tiny')}</span><small>${esc(item.reason || 'Gold Nautical Stars sent')} · ${formatDate(item.created_at)}</small></div>`).join('') : '<div class="empty-copy">No Gold Nautical Stars sent yet.</div>';
+  const resetAt = sending.resets_at ? new Date(String(sending.resets_at).replace(' ', 'T')) : null;
+  const updateCountdown = () => {
+    if (!resetAt) return;
+    const seconds = Math.max(0, Math.floor((resetAt - new Date()) / 1000));
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    $('#starResetCountdown').textContent = `Daily sending limit resets in ${hours}h ${minutes}m`;
+  };
+  updateCountdown();
+  clearInterval(renderStarSending.timer);
+  renderStarSending.timer = setInterval(updateCountdown, 60000);
+}
+
+function renderCardMarket(state) {
+  const inventory = state.card_inventory || [];
+  const listings = state.card_market || [];
+  const mine = inventory.length ? `<h3>Your tradeable cards</h3>${inventory.map(card => `<div class="market-card"><strong>#${card.card_id} ${esc(card.title)}</strong><span>${card.listing_id ? `Listed for ${coin(card.price,'tiny')}` : 'Available to sell'}</span>${card.listing_id ? `<button onclick="cancelListing(${card.listing_id})">Cancel</button>` : `<button onclick="listCard(${card.holding_id}, '${encodeURIComponent(String(card.title))}')">List</button>`}</div>`).join('')}` : '<div class="empty-copy">Complete a quest card to sell or trade it.</div>';
+  const market = listings.length ? `<h3>Cards for sale</h3>${listings.map(card => `<div class="market-card"><strong>#${card.card_id} ${esc(card.title)}</strong><span>Seller: ${esc(card.seller_name)}</span><small>${coin(card.price,'tiny')} Gold Nautical Stars</small><button onclick="buyCard(${card.listing_id}, ${card.price}, '${encodeURIComponent(String(card.title))}')" ${Number(card.seller_rider_id)===Number(state.rider.id)?'disabled':''}>${Number(card.seller_rider_id)===Number(state.rider.id)?'Yours':'Buy'}</button></div>`).join('')}` : '<div class="empty-copy">No quest cards are listed for sale.</div>';
+  $('#cardMarket').innerHTML = `${mine}${market}`;
 }
 
 window.jumpTicker = (index) => { tickerIndex = index; updateTicker(); startTicker(); };
@@ -251,6 +278,8 @@ async function load() {
     renderRides(state);
     renderRecent(state.recent);
     renderMessages(state.messages);
+    renderStarSending(state.star_sending);
+    renderCardMarket(state);
     currentCollection = Array.isArray(state.collection) ? state.collection : [];
     renderCollection();
   } catch (error) {
@@ -277,7 +306,28 @@ window.completeTask = async (taskId) => {
 };
 
 window.reserve = async (rideId, reserved) => { try { await api(reserved ? 'unreserve' : 'reserve', {ride_id: rideId}); await load(); } catch (error) { alert(error.message); } };
-window.kudos = async (completionId, clickEvent) => { try { await api('kudos', {completion_id: completionId}); clickEvent?.currentTarget?.classList.add('sent'); showToast('Gold-star kudos sent!'); } catch (error) { alert(error.message); } };
+window.sendStars = async (recipientRiderId, completionId, encodedRiderName, clickEvent) => {
+  const riderName = decodeURIComponent(encodedRiderName);
+  if (Number(recipientRiderId) === Number(currentState?.rider?.id)) return alert('You cannot send Gold Nautical Stars to yourself.');
+  const available = Math.min(Number(currentState?.rider?.points || 0), Number(currentState?.star_sending?.remaining_today || 0));
+  if (available < 1) return alert('You have no Gold Nautical Stars available to send today.');
+  const rawAmount = prompt(`Send Gold Nautical Stars to ${riderName}\nEnter 1–${available}:`, '1');
+  if (rawAmount === null) return;
+  const amount = Number(rawAmount);
+  if (!Number.isInteger(amount) || amount < 1 || amount > available) return alert(`Enter a whole number from 1 to ${available}.`);
+  const reason = prompt('Optional reason:', 'Great quest!');
+  if (reason === null) return;
+  if (!confirm(`Send ${amount} Gold Nautical Star${amount === 1 ? '' : 's'} to ${riderName}?`)) return;
+  try {
+    await api('send_stars', {recipient_rider_id: recipientRiderId, completion_id: completionId, amount, reason});
+    clickEvent?.currentTarget?.classList.add('sent');
+    showToast(`${amount} Gold Nautical Star${amount === 1 ? '' : 's'} sent!`);
+    await load();
+  } catch (error) { alert(error.message); }
+};
+window.listCard = async (holdingId, encodedTitle) => { const title=decodeURIComponent(encodedTitle); const raw=prompt(`List “${title}” for how many Gold Nautical Stars?`,'25'); if(raw===null)return; const price=Number(raw); if(!Number.isInteger(price)||price<1)return alert('Enter a whole-number price.'); try{await api('list_card',{holding_id:holdingId,price});showToast('Quest card listed!');await load()}catch(e){alert(e.message)} };
+window.cancelListing = async (listingId) => { if(!confirm('Remove this card from the market?'))return; try{await api('cancel_listing',{listing_id:listingId});showToast('Listing removed.');await load()}catch(e){alert(e.message)} };
+window.buyCard = async (listingId,price,encodedTitle) => { const title=decodeURIComponent(encodedTitle); if(!confirm(`Buy “${title}” for ${price} Gold Nautical Stars?`))return; try{await api('buy_card',{listing_id:listingId});showToast('Quest card purchased!');await load()}catch(e){alert(e.message)} };
 
 $('#saveName').onclick = async () => { try { await api('set_name', {display_name: $('#name').value}); $('#profilePanel').classList.add('hidden'); await load(); } catch (error) { alert(error.message); } };
 $('#draw').onclick = async () => { try { await api('draw_quest'); await load(); } catch (error) { alert(error.message); } };

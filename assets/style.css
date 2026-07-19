@@ -120,3 +120,15 @@ footer{text-align:center;margin:7px 0 2px;color:#3c2514;font-size:8px;font-weigh
 .site-masthead .rider-star-balance{display:inline-flex;align-items:center;gap:3px;min-width:0;white-space:nowrap;color:#f4bd2c;font:900 13px/1 Georgia,serif}
 .site-masthead .rider-star-balance .coin{width:19px;height:19px}.site-masthead .rider-star-balance small{color:#d5b981;font:800 7px/1 system-ui;text-transform:uppercase;letter-spacing:.4px}
 @media(max-width:360px){.site-masthead{grid-template-columns:38px minmax(0,1fr) 38px;grid-template-rows:104px 34px;padding-inline:6px}.site-masthead .header-logo{width:68px;height:99px}.site-masthead .icon-button,.site-masthead .share-button{width:35px;height:35px}.site-masthead .rider-strip{padding-inline:19px}.site-masthead .rider-strip>strong{max-width:54%;font-size:12px}.site-masthead .rider-star-balance small{display:none}}
+
+
+/* Horizontal top rocker supplied by the captain. */
+.site-masthead{grid-template-columns:40px minmax(0,1fr) 40px;grid-template-rows:auto 38px;gap:0 5px;padding:0 4px 3px;background:transparent;filter:drop-shadow(0 4px 4px #1d0e07)}
+.site-masthead:before{display:none}.site-masthead:after{z-index:0;left:0;right:0;bottom:0;height:39px;border:1px solid #120905;border-radius:4px;background:#2d1709 url("img/wood-board.webp") center/cover;box-shadow:inset 0 0 0 1px #80603a;opacity:1;transform:none}
+.site-masthead .header-logo{grid-column:1/-1;grid-row:1;justify-self:stretch;width:100%;height:auto;aspect-ratio:1000/396;border:0;border-radius:7px;background:#f6f0e4;box-shadow:0 2px 6px #26120888}
+.site-masthead .header-logo img{object-fit:contain}
+.site-masthead .icon-button,.site-masthead .share-button{position:relative;z-index:2;grid-row:2;align-self:center;width:32px;height:32px;margin:auto;border-radius:4px;box-shadow:none}
+.site-masthead .icon-button{grid-column:1;padding:7px}.site-masthead .share-button{grid-column:3;padding:6px}
+.site-masthead .rider-strip{grid-column:2;grid-row:2;z-index:2;width:100%;min-width:0;margin:0;padding:5px 4px;border:0;background:transparent;box-shadow:none;clip-path:none}
+.site-masthead .rider-strip>strong{max-width:58%;font-size:13px}.site-masthead .rider-star-balance small{font-size:6px}
+@media(max-width:360px){.site-masthead{grid-template-columns:36px minmax(0,1fr) 36px;grid-template-rows:auto 36px;padding-inline:2px}.site-masthead:after{height:37px}.site-masthead .header-logo{width:100%;height:auto}.site-masthead .icon-button,.site-masthead .share-button{width:30px;height:30px}.site-masthead .rider-strip{padding-inline:2px}.site-masthead .rider-strip>strong{max-width:55%;font-size:11px}}

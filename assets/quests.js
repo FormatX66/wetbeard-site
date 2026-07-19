@@ -4,6 +4,87 @@ let adminPassword = '';
 let questState = {quests: [], cards: [], stats: {}};
 let editingQuestId = null;
 let editingCardId = null;
+let ideaFilter = 0;
+const DISMISSED_IDEAS_KEY = 'wetbeardDismissedQuestIdeas';
+const DISMISSED_CARD_IDEAS_KEY = 'wetbeardDismissedCardIdeas';
+
+const questIdeas = [
+  {id:'e01', difficulty:1, stars:5, title:'Give another rider a genuine compliment', description:'Build the crew up anywhere the ride takes you.'},
+  {id:'e02', difficulty:1, stars:5, title:'Spot a motorcycle from a brand you have never owned', description:'Name the brand to another rider.'},
+  {id:'e03', difficulty:1, stars:5, title:'Find something on the ride that matches your bike', description:'Match by color, shape, name, or attitude.'},
+  {id:'e04', difficulty:1, stars:5, title:'Learn another rider’s road name or nickname', description:'Ask how they got the name if they want to share.'},
+  {id:'e05', difficulty:1, stars:5, title:'Notice one custom detail on another motorcycle', description:'Tell its rider what caught your eye.'},
+  {id:'e06', difficulty:1, stars:5, title:'Share your favorite motorcycle song with the crew', description:'A title is enough; no music playback required.'},
+  {id:'e07', difficulty:1, stars:5, title:'Name one road you would happily ride again', description:'Share what makes that road memorable.'},
+  {id:'e08', difficulty:1, stars:5, title:'Thank someone who helped make the ride happen', description:'Recognize an organizer, road captain, helper, or riding partner.'},
+  {id:'m01', difficulty:2, stars:10, title:'Introduce two riders who have not met', description:'Help two people in the crew make a new connection.'},
+  {id:'m02', difficulty:2, stars:10, title:'Learn the story behind another rider’s motorcycle', description:'Ask why they chose it or what makes it special.'},
+  {id:'m03', difficulty:2, stars:10, title:'Find three different motorcycle makes on the ride', description:'Identify three distinct manufacturers.'},
+  {id:'m04', difficulty:2, stars:10, title:'Share one useful riding tip with another rider', description:'Keep it friendly, practical, and safety-minded.'},
+  {id:'m05', difficulty:2, stars:10, title:'Ask a rider about their favorite ride of all time', description:'Listen for the place, people, or story that made it great.'},
+  {id:'m06', difficulty:2, stars:10, title:'Help check another rider’s lights or signals', description:'Only while safely parked before or after riding.'},
+  {id:'m07', difficulty:2, stars:10, title:'Find a rider with more years of experience than you', description:'Ask what lesson took them longest to learn.'},
+  {id:'m08', difficulty:2, stars:10, title:'Find a rider with fewer years of experience than you', description:'Welcome them and ask what they enjoy most so far.'},
+  {id:'h01', difficulty:3, stars:20, title:'Ride with someone you have never ridden beside before', description:'Make a new riding connection while following the group formation.'},
+  {id:'h02', difficulty:3, stars:20, title:'Help a new rider feel included in the crew', description:'Introduce yourself, include them in conversation, and connect them with another rider.'},
+  {id:'h03', difficulty:3, stars:20, title:'Learn three riders’ motorcycle origin stories', description:'Ask what first inspired each person to ride.'},
+  {id:'h04', difficulty:3, stars:20, title:'Share a meaningful road story with the crew', description:'Tell a short story about a ride that changed or taught you something.'},
+  {id:'h05', difficulty:3, stars:20, title:'Find five unique custom details across the motorcycles', description:'Look for paint, lighting, controls, luggage, exhaust, or handmade touches.'},
+  {id:'h06', difficulty:3, stars:20, title:'Make three positive introductions during the ride', description:'Connect riders using something they have in common.'},
+  {id:'h07', difficulty:3, stars:20, title:'Collect three pieces of local road knowledge', description:'Ask riders about roads, hazards, views, or routes worth remembering.'},
+  {id:'h08', difficulty:3, stars:20, title:'Recognize three different people who supported the ride', description:'Thank riders or helpers for specific things they contributed.'}
+];
+
+const cardIdeas = [
+  {id:'animal-friend', title:'Animal Friend', quests:[
+    {difficulty:1, stars:5, title:'Pet a friendly dog', description:'Only with the owner’s permission and when safely off the motorcycle.'},
+    {difficulty:2, stars:10, title:'Meet and pet a friendly cat', description:'Let the cat approach and get the owner’s permission first.'},
+    {difficulty:3, stars:20, title:'Meet an exotic or unusual pet', description:'Safely meet a bird, reptile, farm animal, or other uncommon companion with permission.'}]},
+  {id:'crew-builder', title:'Crew Builder', quests:[
+    {difficulty:1, stars:5, title:'Learn a rider’s name', description:'Introduce yourself and learn the name they prefer to use.'},
+    {difficulty:2, stars:10, title:'Introduce two riders who have not met', description:'Help two people in the crew make a new connection.'},
+    {difficulty:3, stars:20, title:'Make three positive introductions', description:'Connect riders using something they have in common.'}]},
+  {id:'machine-spotter', title:'Machine Spotter', quests:[
+    {difficulty:1, stars:5, title:'Spot a motorcycle brand you have never owned', description:'Identify the manufacturer.'},
+    {difficulty:2, stars:10, title:'Find three different motorcycle makes', description:'Identify three distinct manufacturers represented on the ride.'},
+    {difficulty:3, stars:20, title:'Find five unique custom motorcycle details', description:'Look for paint, lighting, controls, luggage, exhaust, or handmade touches.'}]},
+  {id:'road-stories', title:'Road Stories', quests:[
+    {difficulty:1, stars:5, title:'Name a road you would happily ride again', description:'Share what makes that road memorable.'},
+    {difficulty:2, stars:10, title:'Ask a rider about their favorite ride', description:'Listen for the place, people, or story that made it great.'},
+    {difficulty:3, stars:20, title:'Share a meaningful road story', description:'Tell the crew about a ride that changed or taught you something.'}]},
+  {id:'safety-watch', title:'Safety Watch', quests:[
+    {difficulty:1, stars:5, title:'Check your motorcycle before riding', description:'Give tires, lights, controls, fluids, and stands a quick visual check.'},
+    {difficulty:2, stars:10, title:'Help check another rider’s lights and signals', description:'Only while safely parked before or after riding.'},
+    {difficulty:3, stars:20, title:'Share three useful safety reminders with the crew', description:'Keep them practical, friendly, and appropriate for today’s ride.'}]},
+  {id:'local-knowledge', title:'Local Knowledge', quests:[
+    {difficulty:1, stars:5, title:'Learn the name of a road you have not ridden', description:'Ask another rider for one local road name.'},
+    {difficulty:2, stars:10, title:'Learn one local road hazard', description:'Ask about a curve, surface, crossing, or traffic pattern worth remembering.'},
+    {difficulty:3, stars:20, title:'Collect three pieces of local road knowledge', description:'Ask riders about roads, hazards, views, or routes worth remembering.'}]},
+  {id:'good-vibes', title:'Good Vibes', quests:[
+    {difficulty:1, stars:5, title:'Give another rider a genuine compliment', description:'Build the crew up anywhere the ride takes you.'},
+    {difficulty:2, stars:10, title:'Recognize someone’s contribution to the ride', description:'Thank them for one specific thing they did.'},
+    {difficulty:3, stars:20, title:'Recognize three people who supported the ride', description:'Thank riders or helpers for specific things they contributed.'}]},
+  {id:'rider-roots', title:'Rider Roots', quests:[
+    {difficulty:1, stars:5, title:'Ask someone what motorcycle they first rode', description:'Learn the make or model if they remember it.'},
+    {difficulty:2, stars:10, title:'Learn the story behind another rider’s motorcycle', description:'Ask why they chose it or what makes it special.'},
+    {difficulty:3, stars:20, title:'Learn three riders’ motorcycle origin stories', description:'Ask what first inspired each person to ride.'}]},
+  {id:'road-soundtrack', title:'Road Soundtrack', quests:[
+    {difficulty:1, stars:5, title:'Share your favorite motorcycle song', description:'A song title is enough; no music playback required.'},
+    {difficulty:2, stars:10, title:'Collect three songs for a crew playlist', description:'Ask three riders for one road-song recommendation each.'},
+    {difficulty:3, stars:20, title:'Build a ten-song ride playlist with the crew', description:'Collect ten unique song recommendations from riders.'}]},
+  {id:'welcome-aboard', title:'Welcome Aboard', quests:[
+    {difficulty:1, stars:5, title:'Welcome someone you have not met before', description:'Introduce yourself and make room in the conversation.'},
+    {difficulty:2, stars:10, title:'Ride near someone you have not ridden with before', description:'Follow the group formation and road captain’s directions.'},
+    {difficulty:3, stars:20, title:'Help a new rider feel included in the crew', description:'Introduce them to others and include them in conversation.'}]},
+  {id:'style-scout', title:'Style Scout', quests:[
+    {difficulty:1, stars:5, title:'Notice one custom detail on a motorcycle', description:'Tell its rider what caught your eye.'},
+    {difficulty:2, stars:10, title:'Find three different motorcycle styles', description:'Examples include cruiser, touring, sport, standard, adventure, or trike.'},
+    {difficulty:3, stars:20, title:'Find five motorcycles with distinct personalities', description:'Identify what makes each machine’s look or setup unique.'}]},
+  {id:'wisdom-run', title:'Wisdom Run', quests:[
+    {difficulty:1, stars:5, title:'Share one useful riding tip', description:'Keep it friendly, practical, and safety-minded.'},
+    {difficulty:2, stars:10, title:'Ask an experienced rider for one lesson', description:'Find out what lesson took them longest to learn.'},
+    {difficulty:3, stars:20, title:'Trade riding wisdom with three different riders', description:'Give or receive one useful lesson in each conversation.'}]}
+];
 
 const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (character) => ({
   '&': '&amp;',
@@ -65,6 +146,42 @@ function renderStats() {
   $('#statQuests').textContent = Number(questState.stats.quests || 0).toLocaleString();
   $('#statActiveQuests').textContent = Number(questState.stats.active_quests || 0).toLocaleString();
   $('#statReadyCards').textContent = Number(questState.stats.ready_cards || 0).toLocaleString();
+}
+
+function dismissedIdeaIds() {
+  try { return new Set(JSON.parse(localStorage.getItem(DISMISSED_IDEAS_KEY) || '[]')); }
+  catch { return new Set(); }
+}
+
+function saveDismissedIdeaIds(ids) {
+  localStorage.setItem(DISMISSED_IDEAS_KEY, JSON.stringify([...ids]));
+}
+
+function dismissedCardIdeaIds() {
+  try { return new Set(JSON.parse(localStorage.getItem(DISMISSED_CARD_IDEAS_KEY) || '[]')); }
+  catch { return new Set(); }
+}
+
+function renderCardIdeas() {
+  const dismissed = dismissedCardIdeaIds();
+  const existingCards = new Set(questState.cards.map((card) => String(card.title || '').trim().toLowerCase()));
+  const ideas = cardIdeas.filter((idea) => !dismissed.has(idea.id) && !existingCards.has(idea.title.toLowerCase()));
+  $('#cardIdeas').innerHTML = ideas.length ? ideas.map((idea) => `
+    <article class="card-idea-card">
+      <div class="card-idea-copy"><strong>${escapeHtml(idea.title)}</strong><ol>${idea.quests.map((quest) => `<li><b>${difficultyNames[quest.difficulty]}</b><span>${escapeHtml(quest.title)}</span><small>${quest.stars} Stars</small></li>`).join('')}</ol></div>
+      <div class="quest-idea-actions"><button class="idea-approve" type="button" data-approve-card-idea="${idea.id}" aria-label="Add this quest card and its quests">👍</button><button class="idea-dismiss" type="button" data-dismiss-card-idea="${idea.id}" aria-label="Dismiss this card idea">👎</button></div>
+    </article>`).join('') : '<div class="admin-empty">No unused card ideas remain. Restore dismissed ideas to review them again.</div>';
+}
+
+function renderQuestIdeas() {
+  const dismissed = dismissedIdeaIds();
+  const existing = new Set(questState.quests.map((quest) => String(quest.title || '').trim().toLowerCase()));
+  const ideas = questIdeas.filter((idea) => !dismissed.has(idea.id) && !existing.has(idea.title.toLowerCase()) && (!ideaFilter || idea.difficulty === ideaFilter));
+  $('#questIdeas').innerHTML = ideas.length ? ideas.map((idea) => `
+    <article class="quest-idea-card difficulty-${idea.difficulty}">
+      <div><span>${difficultyNames[idea.difficulty]}</span><strong>${escapeHtml(idea.title)}</strong><p>${escapeHtml(idea.description)}</p><small>${idea.stars} Gold Nautical Stars</small></div>
+      <div class="quest-idea-actions"><button class="idea-approve" type="button" data-approve-idea="${idea.id}" aria-label="Add this quest">👍</button><button class="idea-dismiss" type="button" data-dismiss-idea="${idea.id}" aria-label="Dismiss this idea">👎</button></div>
+    </article>`).join('') : '<div class="admin-empty">No unused ideas in this group. Restore dismissed ideas or choose another difficulty.</div>';
 }
 
 function filteredQuests() {
@@ -143,6 +260,8 @@ function renderCards() {
 
 function renderState() {
   renderStats();
+  renderQuestIdeas();
+  renderCardIdeas();
   renderQuests();
   populateCardSelects();
   renderCards();
@@ -247,6 +366,63 @@ $('#lockAdmin').addEventListener('click', () => {
 });
 
 $('#questSearch').addEventListener('input', renderQuests);
+document.querySelector('.quest-idea-filters').addEventListener('click', (event) => {
+  const button = event.target.closest('[data-idea-filter]');
+  if (!button) return;
+  ideaFilter = Number(button.dataset.ideaFilter);
+  document.querySelectorAll('[data-idea-filter]').forEach((item) => item.classList.toggle('active', item === button));
+  renderQuestIdeas();
+});
+$('#restoreIdeas').addEventListener('click', () => { localStorage.removeItem(DISMISSED_IDEAS_KEY); renderQuestIdeas(); showNotice('Dismissed ideas restored.'); });
+$('#restoreCardIdeas').addEventListener('click', () => { localStorage.removeItem(DISMISSED_CARD_IDEAS_KEY); renderCardIdeas(); showNotice('Dismissed card ideas restored.'); });
+$('#questIdeas').addEventListener('click', async (event) => {
+  const approve = event.target.closest('[data-approve-idea]');
+  const dismiss = event.target.closest('[data-dismiss-idea]');
+  const ideaId = approve?.dataset.approveIdea || dismiss?.dataset.dismissIdea;
+  if (!ideaId) return;
+  const idea = questIdeas.find((item) => item.id === ideaId);
+  if (!idea) return;
+  if (dismiss) {
+    const ids = dismissedIdeaIds();
+    ids.add(idea.id);
+    saveDismissedIdeaIds(ids);
+    renderQuestIdeas();
+    return;
+  }
+  setBusy(approve, true, '…');
+  try {
+    await questApi('create_quest', {title:idea.title, description:idea.description, difficulty:idea.difficulty, active:1, star_value:idea.stars});
+    await loadState();
+    showNotice(`Quest added: ${idea.title}`);
+  } catch (error) {
+    showNotice(error.message, 'error');
+    setBusy(approve, false, '…');
+  }
+});
+$('#cardIdeas').addEventListener('click', async (event) => {
+  const approve = event.target.closest('[data-approve-card-idea]');
+  const dismiss = event.target.closest('[data-dismiss-card-idea]');
+  const ideaId = approve?.dataset.approveCardIdea || dismiss?.dataset.dismissCardIdea;
+  if (!ideaId) return;
+  const idea = cardIdeas.find((item) => item.id === ideaId);
+  if (!idea) return;
+  if (dismiss) {
+    const ids = dismissedCardIdeaIds();
+    ids.add(idea.id);
+    localStorage.setItem(DISMISSED_CARD_IDEAS_KEY, JSON.stringify([...ids]));
+    renderCardIdeas();
+    return;
+  }
+  setBusy(approve, true, '…');
+  try {
+    await questApi('create_card_bundle', {title:idea.title, quests:idea.quests});
+    await loadState();
+    showNotice(`Quest card added: ${idea.title}`);
+  } catch (error) {
+    showNotice(error.message, 'error');
+    setBusy(approve, false, '…');
+  }
+});
 $('#cancelQuestEdit').addEventListener('click', resetQuestForm);
 $('#cancelCardEdit').addEventListener('click', resetCardForm);
 

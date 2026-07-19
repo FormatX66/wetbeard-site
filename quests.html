@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#8c5b2e">
   <meta name="robots" content="noindex,nofollow">
   <title>Wet Beard — Quest Editor</title>
-  <link rel="stylesheet" href="assets/style.css?v=20260719-12">
+  <link rel="stylesheet" href="assets/style.css?v=20260719-13">
 </head>
 <body class="admin-body">
   <main class="map-shell admin-shell quest-editor-shell">
@@ -46,6 +46,30 @@
       </section>
 
       <div id="editorNotice" class="admin-notice" role="status" aria-live="polite"></div>
+
+      <section class="admin-panel quest-idea-panel">
+        <div class="admin-panel-heading quest-idea-heading">
+          <span class="admin-panel-icon">💡</span>
+          <div><h2>Quest Idea Deck</h2><small>Ride-anywhere ideas that do not depend on scheduled stops</small></div>
+          <button id="restoreIdeas" class="admin-secondary-button" type="button">Restore Dismissed</button>
+        </div>
+        <div class="quest-idea-filters" role="group" aria-label="Filter quest ideas">
+          <button class="active" type="button" data-idea-filter="0">All</button>
+          <button type="button" data-idea-filter="1">Easy</button>
+          <button type="button" data-idea-filter="2">Medium</button>
+          <button type="button" data-idea-filter="3">Hard</button>
+        </div>
+        <div id="questIdeas" class="quest-idea-list"></div>
+      </section>
+
+      <section class="admin-panel quest-idea-panel card-idea-panel">
+        <div class="admin-panel-heading quest-idea-heading">
+          <span class="admin-panel-icon">🗺️</span>
+          <div><h2>Quest Card Idea Deck</h2><small>Themed cards with one related Easy, Medium, and Hard quest</small></div>
+          <button id="restoreCardIdeas" class="admin-secondary-button" type="button">Restore Dismissed</button>
+        </div>
+        <div id="cardIdeas" class="card-idea-list"></div>
+      </section>
 
       <div class="quest-admin-columns">
         <div class="admin-column">
@@ -109,6 +133,6 @@
 
     <footer>Wet Beard · Keeper of Quests</footer>
   </main>
-  <script src="assets/quests.js?v=20260719-1"></script>
+  <script src="assets/quests.js?v=20260719-2"></script>
 </body>
 </html>

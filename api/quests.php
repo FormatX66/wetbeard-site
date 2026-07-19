@@ -106,6 +106,50 @@ if ($action === 'create_quest') {
     respond(['ok' => true, 'id' => (int)$pdo->lastInsertId()]);
 }
 
+if ($action === 'create_card_bundle') {
+    $title = trim((string)($data['title'] ?? ''));
+    $submitted = is_array($data['quests'] ?? null) ? $data['quests'] : [];
+    if ($title === '' || mb_strlen($title) > 120) respond(['ok' => false, 'error' => 'Add a valid quest-card title.'], 422);
+    if (count($submitted) !== 3) respond(['ok' => false, 'error' => 'A card bundle needs exactly three quests.'], 422);
+    $byDifficulty = [];
+    foreach ($submitted as $quest) {
+        if (!is_array($quest)) respond(['ok' => false, 'error' => 'Invalid quest-card bundle.'], 422);
+        $fields = validated_quest_fields(array_merge($quest, [
+            'star_value' => $quest['stars'] ?? null,
+            'active' => 1,
+        ]));
+        if (isset($byDifficulty[$fields['difficulty']])) respond(['ok' => false, 'error' => 'Use one Easy, Medium, and Hard quest.'], 422);
+        $byDifficulty[$fields['difficulty']] = $fields;
+    }
+    ksort($byDifficulty);
+    if (array_keys($byDifficulty) !== [1, 2, 3]) respond(['ok' => false, 'error' => 'Use one Easy, Medium, and Hard quest.'], 422);
+    $duplicate = $pdo->prepare('SELECT id FROM quest_cards WHERE LOWER(title)=LOWER(?) LIMIT 1');
+    $duplicate->execute([$title]);
+    if ($duplicate->fetch()) respond(['ok' => false, 'error' => 'A quest card with this title already exists.'], 409);
+    $pdo->beginTransaction();
+    try {
+        $pdo->prepare('INSERT INTO quest_cards(title,active) VALUES(?,1)')->execute([$title]);
+        $cardId = (int)$pdo->lastInsertId();
+        $insertQuest = $pdo->prepare('INSERT INTO quests(title,description,difficulty,active,star_value) VALUES(?,?,?,?,?)');
+        $insertSlot = $pdo->prepare('INSERT INTO quest_card_slots(quest_card_id,slot_number,quest_id,quest_task_id) VALUES(?,?,?,?)');
+        foreach ($byDifficulty as $difficulty => $fields) {
+            $insertQuest->execute([$fields['title'], $fields['description'], $difficulty, 1, $fields['star_value']]);
+            $questId = (int)$pdo->lastInsertId();
+            $taskId = quest_management_insert_compatibility_task(
+                $pdo,
+                $cardId,
+                array_merge(['id' => $questId], $fields)
+            );
+            $insertSlot->execute([$cardId, $difficulty, $questId, $taskId]);
+        }
+        $pdo->commit();
+        respond(['ok' => true, 'id' => $cardId]);
+    } catch (Throwable $error) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        respond(['ok' => false, 'error' => 'The quest card bundle could not be created.'], 500);
+    }
+}
+
 if ($action === 'update_quest') {
     $questId = requested_quest_id($data);
     $current = quest_management_quest($pdo, $questId);

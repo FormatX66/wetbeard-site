@@ -132,3 +132,25 @@ footer{text-align:center;margin:7px 0 2px;color:#3c2514;font-size:8px;font-weigh
 .site-masthead .rider-strip{grid-column:2;grid-row:2;z-index:2;width:100%;min-width:0;margin:0;padding:5px 4px;border:0;background:transparent;box-shadow:none;clip-path:none}
 .site-masthead .rider-strip>strong{max-width:58%;font-size:13px}.site-masthead .rider-star-balance small{font-size:6px}
 @media(max-width:360px){.site-masthead{grid-template-columns:36px minmax(0,1fr) 36px;grid-template-rows:auto 36px;padding-inline:2px}.site-masthead:after{height:37px}.site-masthead .header-logo{width:100%;height:auto}.site-masthead .icon-button,.site-masthead .share-button{width:30px;height:30px}.site-masthead .rider-strip{padding-inline:2px}.site-masthead .rider-strip>strong{max-width:55%;font-size:11px}}
+
+
+/* Bleached driftwood system — muted white, charcoal and weathered ink. */
+:root{--ink:#171716;--red:#5b5a56;--gold:#a48d55;--paper:#ece9e1;--wood:#272726}
+html,body{background:#181817;color:var(--ink)}
+.map-shell{background:#d5d2ca url("img/map-bleached.webp") center top/cover fixed;box-shadow:0 0 40px #000,inset 0 0 48px #57565066}
+.map-shell:before{background:linear-gradient(90deg,#22222038,transparent 10%,transparent 90%,#22222038)}
+.wood-board,.wood-panel,.site-masthead:after,.site-masthead .icon-button,.site-masthead .share-button,.admin-session-bar,.admin-stats div,.admin-secondary-button,.admin-home-button{border-color:#151514;background:#d8d5cd url("img/driftwood-white.webp") center/cover;color:#171716;box-shadow:0 3px 6px #0007,inset 0 0 0 1px #f8f6ef}
+.site-masthead .icon-button span{background:#171716}.site-masthead .share-button svg{fill:#171716;stroke:#171716}.site-masthead .rider-strip>strong{color:#171716;text-shadow:0 1px #fff}.site-masthead .rider-star-balance{color:#343330}.site-masthead .rider-star-balance small{color:#55534f}
+.board-title,.wood-panel summary{color:#171716;border-color:#77746e}.wood-panel summary small,.feature-panel summary small{color:#595853}.wood-panel summary:after{color:#171716}
+.quest-card,.victory-strip,.panel-body,.admin-panel,.admin-login{background-color:#ece9e1;background-image:url("img/parchment-bleached.webp");color:#171716;filter:drop-shadow(0 4px 3px #24242280)}
+.quest-heading,.quest-task,.quest-footer strong,.task-copy,.leader-row,.victory-card,.collected-card,.ride-card,.market-card,.star-send-status,.admin-list-card,.admin-record,.rider-table tr{color:#171716}
+.quest-heading,.quest-task,.leader-row,.victory-card{border-color:#77746e}.quest-ribbon,.reroll-button,.ride-action button,.profile-panel button,.admin-primary-button,.admin-danger-button{border-color:#151514;background:linear-gradient(#4d4d4b,#222221);color:#f4f2ec}
+.profile-panel,.toast{border-color:#111;background:#292928 url("img/driftwood-white.webp") center/cover;color:#171716}.profile-panel.first-visit{background-color:#d8d5cd;box-shadow:0 0 0 100vmax #111111d1,0 12px 28px #000}.profile-panel.first-visit:before{color:#171716}
+.panel-body,.ride-card,.market-card,.star-send-status,.admin-list-card,.admin-record,.rider-table tr,.rider-lock-field,.rider-data-tools>div{background-color:#e9e6de}
+.star-wallet,.collection-stats div,.trophy,.rider-record-summary div{border-color:#44433f;background:#333331;color:#efede7}.star-wallet strong,.admin-stats strong{color:#ece9df}
+.trophy-room{background:#333331 url("img/driftwood-white.webp") center/cover;color:#171716}.trophy{background:#e0ddd5;color:#171716;box-shadow:inset 0 -8px 0 #aaa7a0}.trophy small{color:#55534f}
+.admin-body input,.admin-body textarea,.admin-body select,.message-compose input{border-color:#6b6963;background:#f5f3ee;color:#171716}.admin-body input:focus,.admin-body textarea:focus,.admin-body select:focus{border-color:#222;box-shadow:0 0 0 3px #5553}
+.admin-session-bar button,.admin-session-bar a,.admin-toggle-button,.admin-record-actions button,.market-card button,.collection-market-actions button{border-color:#222;background:#292928;color:#f0eee8}.admin-toggle-button.active,.admin-record-actions button.active{background:#55534f;color:#fff}
+.admin-table-wrap,.rider-table-wrap{border-color:#333;background:#e7e4dc}.rider-table thead{background:#292928;color:#f3f1eb}.rider-table tbody tr:nth-child(even){background:#d8d5cd}.rider-table tbody tr.selected{background:#c5c2ba;box-shadow:inset 4px 0 #222}
+.live-banner{background:#e5e2da;color:#252524;border-color:#555}.pulse{background:#555;box-shadow:0 0 6px #777}
+footer{color:#343330;text-shadow:0 1px #f5f2e9}

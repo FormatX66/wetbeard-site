@@ -62,7 +62,7 @@ if ($action === 'state') {
     $liveRide = $pdo->query("SELECT * FROM rides WHERE starts_at<=NOW() AND ends_at>=NOW() AND status<>'cancelled' ORDER BY starts_at LIMIT 1")->fetch() ?: null;
     $leaderboard = $pdo->query("SELECT display_name,points FROM riders WHERE display_name<>'New Pirate' ORDER BY points DESC, updated_at ASC LIMIT 20")->fetchAll();
     $recent = $pdo->query("SELECT c.id,c.rider_id recipient_rider_id,c.completed_at,c.points_awarded,qt.task_text,r.display_name FROM completions c JOIN quest_tasks qt ON qt.id=c.quest_task_id JOIN riders r ON r.id=c.rider_id ORDER BY c.completed_at DESC LIMIT 12")->fetchAll();
-    $messages = $pdo->query("SELECT m.id,m.message,m.created_at,r.display_name FROM messages m JOIN riders r ON r.id=m.rider_id ORDER BY m.created_at DESC LIMIT 30")->fetchAll();
+    $messages = $pdo->query("SELECT m.id,m.rider_id,m.message,m.created_at,r.display_name FROM messages m JOIN riders r ON r.id=m.rider_id ORDER BY m.created_at DESC LIMIT 30")->fetchAll();
     $starSentTodayQuery = $pdo->prepare('SELECT COALESCE(SUM(amount),0) FROM star_transfers WHERE sender_rider_id=? AND created_at>=CURRENT_DATE');
     $starSentTodayQuery->execute([$riderId]);
     $starSentToday = (int)$starSentTodayQuery->fetchColumn();
@@ -157,7 +157,7 @@ if ($action === 'state') {
         'live_ride' => $liveRide,
         'leaderboard' => $leaderboard,
         'recent' => $recent,
-        'messages' => array_reverse($messages),
+        'messages' => $messages,
         'current_quest' => $currentQuest,
         'reserved_ride_ids' => $reservedRideIds,
         'completed_task_ids' => $completedTaskIds,

@@ -78,6 +78,7 @@ async function api(action, data = {}) {
 const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
 }[char]));
+const inlineEncode = (value) => encodeURIComponent(String(value ?? '')).replace(/'/g, '%27');
 
 function formatDate(value) {
   if (!value) return '';
@@ -222,7 +223,7 @@ function startTicker() {
 function renderRecent(recent) {
   const items = recent.slice(0, 12);
   $('#recent').innerHTML = items.length ? items.map((item) => `
-    <article class="victory-card"><button class="kudos-button" onclick="sendStars(${item.recipient_rider_id}, ${item.id}, '${encodeURIComponent(String(item.display_name))}', event)" aria-label="Send Gold Nautical Stars">${coin()}</button><div><strong>${esc(item.display_name)}</strong><span>${esc(item.task_text)}</span></div></article>`).join('') : '<span class="empty-copy">No victories yet.</span>';
+    <article class="victory-card"><button class="kudos-button" onclick="sendStars(${item.recipient_rider_id}, ${item.id}, '${inlineEncode(item.display_name)}', event)" aria-label="Send Gold Nautical Stars">${coin()}</button><div><strong>${esc(item.display_name)}</strong><span>${esc(item.task_text)}</span></div></article>`).join('') : '<span class="empty-copy">No victories yet.</span>';
   tickerIndex = 0;
   const count = Math.max(0, items.length - visibleAchievementCount() + 1);
   $('#recentDots').innerHTML = count > 1 ? Array.from({length: count}, (_, i) => `<button type="button" aria-label="Achievement page ${i + 1}" class="${i === 0 ? 'active' : ''}" onclick="jumpTicker(${i})"></button>`).join('') : '';
@@ -252,15 +253,18 @@ function renderStarSending(starSending) {
 function renderCardMarket(state) {
   const inventory = state.card_inventory || [];
   const listings = state.card_market || [];
-  const mine = inventory.length ? `<h3>Your tradeable cards</h3>${inventory.map(card => `<div class="market-card"><strong>#${card.card_id} ${esc(card.title)}</strong><span>${card.listing_id ? `Listed for ${coin(card.price,'tiny')}` : 'Available to sell'}</span>${card.listing_id ? `<button onclick="cancelListing(${card.listing_id})">Cancel</button>` : `<button onclick="listCard(${card.holding_id}, '${encodeURIComponent(String(card.title))}')">List</button>`}</div>`).join('')}` : '<div class="empty-copy">Complete a quest card to sell or trade it.</div>';
-  const market = listings.length ? `<h3>Cards for sale</h3>${listings.map(card => `<div class="market-card"><strong>#${card.card_id} ${esc(card.title)}</strong><span>Seller: ${esc(card.seller_name)}</span><small>${coin(card.price,'tiny')} Gold Nautical Stars</small><button onclick="buyCard(${card.listing_id}, ${card.price}, '${encodeURIComponent(String(card.title))}')" ${Number(card.seller_rider_id)===Number(state.rider.id)?'disabled':''}>${Number(card.seller_rider_id)===Number(state.rider.id)?'Yours':'Buy'}</button></div>`).join('')}` : '<div class="empty-copy">No quest cards are listed for sale.</div>';
+  const mine = inventory.length ? `<h3>Your tradeable cards</h3>${inventory.map(card => `<div class="market-card"><strong>#${card.card_id} ${esc(card.title)}</strong><span>${card.listing_id ? `Listed for ${coin(card.price,'tiny')}` : 'Available to sell'}</span>${card.listing_id ? `<button onclick="cancelListing(${card.listing_id})">Cancel</button>` : `<button onclick="listCard(${card.holding_id}, '${inlineEncode(card.title)}')">List</button>`}</div>`).join('')}` : '<div class="empty-copy">Complete a quest card to sell or trade it.</div>';
+  const market = listings.length ? `<h3>Cards for sale</h3>${listings.map(card => `<div class="market-card"><strong>#${card.card_id} ${esc(card.title)}</strong><span>Seller: ${esc(card.seller_name)}</span><small>${coin(card.price,'tiny')} Gold Nautical Stars</small><button onclick="buyCard(${card.listing_id}, ${card.price}, '${inlineEncode(card.title)}')" ${Number(card.seller_rider_id)===Number(state.rider.id)?'disabled':''}>${Number(card.seller_rider_id)===Number(state.rider.id)?'Yours':'Buy'}</button></div>`).join('')}` : '<div class="empty-copy">No quest cards are listed for sale.</div>';
   $('#cardMarket').innerHTML = `${mine}${market}`;
 }
 
 window.jumpTicker = (index) => { tickerIndex = index; updateTicker(); startTicker(); };
 
 function renderMessages(messages) {
-  $('#messages').innerHTML = messages.length ? messages.map((item) => `<div class="log-entry"><strong>${esc(item.display_name)}</strong><span>${esc(item.message)}</span><small>${formatDate(item.created_at)}</small></div>`).join('') : '<div class="empty-copy">The log is quiet.</div>';
+  $('#messages').innerHTML = messages.length ? messages.map((item) => {
+    const isSelf = Number(item.rider_id) === Number(currentState?.rider?.id);
+    return `<div class="log-entry"><strong>${esc(item.display_name)}</strong><span>${esc(item.message)}</span><small>${formatDate(item.created_at)}</small>${isSelf ? '' : `<button class="log-star-button" onclick="sendOneStar(${item.rider_id}, '${inlineEncode(item.display_name)}', event)" aria-label="Send 1 Gold Nautical Star to ${esc(item.display_name)}">${coin(1, 'tiny')}</button>`}</div>`;
+  }).join('') : '<div class="empty-copy">The log is quiet.</div>';
 }
 
 async function load() {
@@ -276,6 +280,7 @@ async function load() {
     $('#name').disabled = Boolean(Number(state.rider.name_locked));
     $('#saveName').disabled = Boolean(Number(state.rider.name_locked));
     $('#points').textContent = state.rider.points;
+    $('#walletPoints').textContent = state.rider.points;
     if (isNewPirate && !namePromptShown) {
       namePromptShown = true;
       $('#profilePanel').classList.remove('hidden');
@@ -333,6 +338,20 @@ window.sendStars = async (recipientRiderId, completionId, encodedRiderName, clic
     showToast(`${amount} Gold Nautical Star${amount === 1 ? '' : 's'} sent!`);
     await load();
   } catch (error) { alert(error.message); }
+};
+window.sendOneStar = async (recipientRiderId, encodedRiderName, clickEvent) => {
+  const riderName = decodeURIComponent(encodedRiderName);
+  const button = clickEvent?.currentTarget;
+  if (button?.disabled) return;
+  try {
+    if (button) button.disabled = true;
+    await api('send_stars', {recipient_rider_id: recipientRiderId, amount: 1, reason: `Liked ${riderName}'s message`});
+    showToast(`1 Gold Nautical Star sent to ${riderName}!`);
+    await load();
+  } catch (error) {
+    if (button) button.disabled = false;
+    alert(error.message);
+  }
 };
 window.listCard = async (holdingId, encodedTitle) => { const title=decodeURIComponent(encodedTitle); const raw=prompt(`List “${title}” for how many Gold Nautical Stars?`,'25'); if(raw===null)return; const price=Number(raw); if(!Number.isInteger(price)||price<1)return alert('Enter a whole-number price.'); try{await api('list_card',{holding_id:holdingId,price});showToast('Quest card listed!');await load()}catch(e){alert(e.message)} };
 window.cancelListing = async (listingId) => { if(!confirm('Remove this card from the market?'))return; try{await api('cancel_listing',{listing_id:listingId});showToast('Listing removed.');await load()}catch(e){alert(e.message)} };

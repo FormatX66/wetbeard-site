@@ -18,12 +18,12 @@
           <div class="brand-subtitle">Keeper of Quests</div>
         </div>
       </div>
-      <button class="rider-badge" id="riderBadge" type="button" aria-label="Open pirate profile">
-        <small>CAPTAIN</small>
-        <strong id="riderName">New Pirate</strong>
-      </button>
       <button class="share-button" id="shareSite" aria-label="Share Wet Beard" title="Share Wet Beard">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.7 10.7 6.6-4.1M8.7 13.3l6.6 4.1"></path></svg>
+      </button>
+      <button class="rider-strip" id="riderBadge" type="button" aria-label="Open pirate profile">
+        <strong id="riderName">New Pirate</strong>
+        <span class="rider-star-balance"><span class="coin tiny"></span><b id="points">0</b></span>
       </button>
     </header>
 
@@ -87,7 +87,7 @@
     <details class="wood-panel" id="starLedgerPanel">
       <summary><span class="nav-icon coin mini"></span><span>Send Gold Nautical Stars<small id="starSendSummary">Up to 100 per day</small></span></summary>
       <div class="panel-body">
-        <div class="star-wallet"><span class="coin"></span><div><strong id="points">0</strong><small>Your Gold Nautical Stars</small></div></div>
+        <div class="star-wallet"><span class="coin"></span><div><strong id="walletPoints">0</strong><small>Your Gold Nautical Stars</small></div></div>
         <div class="star-send-status"><strong id="starSendRemaining">100</strong><span>available to send today</span><small id="starResetCountdown"></small></div>
         <div id="starHistory" class="messages"><div class="empty-copy">No stars sent yet.</div></div>
       </div>
@@ -128,6 +128,6 @@
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <footer>Ride. Quest. Earn Gold Nautical Stars. Be Legendary.</footer>
   </main>
-  <script src="assets/app.js?v=20260719-3"></script>
+  <script src="assets/app.js?v=20260719-4"></script>
 </body>
 </html>

@@ -162,16 +162,20 @@ function renderQuest(state) {
   const card = getCurrentCard(state);
   if (!card) {
     $('#questNumber').textContent = '—';
+    $('#questTitle').textContent = 'Quest Card';
     $('#quest').innerHTML = '<div class="empty-quest">No quest card drawn.</div>';
     $('#progress').textContent = '0 / 3';
     $('#draw').hidden = false;
+    $('#draw').textContent = '↻ Draw Quest Card';
     return;
   }
   const completed = new Set(state.completed_task_ids.map(Number));
   const doneCount = card.filter((task) => completed.has(Number(task.task_id))).length;
   $('#questNumber').textContent = `#${card[0].card_id}`;
+  $('#questTitle').textContent = card[0].title || `Quest Card #${card[0].card_id}`;
   $('#progress').textContent = `${doneCount} / ${card.length}`;
-  $('#draw').hidden = doneCount > 0 && doneCount < card.length;
+  $('#draw').hidden = false;
+  $('#draw').textContent = '↻ Skip This Card';
   $('#quest').innerHTML = card.map((task) => {
     const done = completed.has(Number(task.task_id));
     return `<button class="quest-task ${done ? 'done' : ''}" ${done ? 'disabled' : ''} onclick="completeTask(${task.task_id})">
@@ -364,7 +368,11 @@ window.cancelListing = async (listingId) => { if(!confirm('Remove this card from
 window.buyCard = async (listingId,price,encodedTitle) => { const title=decodeURIComponent(encodedTitle); if(!confirm(`Buy “${title}” for ${price} Gold Nautical Stars?`))return; try{await api('buy_card',{listing_id:listingId});showToast('Quest card purchased!');await load()}catch(e){alert(e.message)} };
 
 $('#saveName').onclick = async () => { try { await api('set_name', {display_name: $('#name').value}); $('#profilePanel').classList.remove('first-visit'); $('#profilePanel').classList.add('hidden'); await load(); } catch (error) { alert(error.message); } };
-$('#draw').onclick = async () => { try { await api('draw_quest'); await load(); } catch (error) { alert(error.message); } };
+$('#draw').onclick = async () => {
+  const hasCard = Boolean(currentState && getCurrentCard(currentState));
+  if (hasCard && !confirm('Skip this quest card and draw a different one? Current progress on this card will be cleared.')) return;
+  try { await api('draw_quest'); await load(); } catch (error) { alert(error.message); }
+};
 $('#send').onclick = async () => { try { const message = $('#message').value.trim(); if (!message) return; await api('message', {message}); $('#message').value = ''; await load(); } catch (error) { alert(error.message); } };
 function toggleProfile() {
   if ($('#profilePanel').classList.contains('first-visit')) return;

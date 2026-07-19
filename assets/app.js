@@ -58,6 +58,7 @@ let currentCollection = [];
 let loading = false;
 let tickerIndex = 0;
 let tickerTimer = null;
+let namePromptShown = false;
 
 async function api(action, data = {}) {
   const hasBody = Object.keys(data).length > 0;
@@ -269,10 +270,18 @@ async function load() {
     $('#status').textContent = 'Online';
     const state = await api('state');
     currentState = state;
-    $('#name').value = state.rider.display_name === 'New Pirate' ? '' : state.rider.display_name;
+    const isNewPirate = state.rider.display_name === 'New Pirate';
+    $('#name').value = isNewPirate ? '' : state.rider.display_name;
+    $('#riderName').textContent = isNewPirate ? 'Choose Name' : state.rider.display_name;
     $('#name').disabled = Boolean(Number(state.rider.name_locked));
     $('#saveName').disabled = Boolean(Number(state.rider.name_locked));
     $('#points').textContent = state.rider.points;
+    if (isNewPirate && !namePromptShown) {
+      namePromptShown = true;
+      $('#profilePanel').classList.remove('hidden');
+      $('#profilePanel').classList.add('first-visit');
+      requestAnimationFrame(() => $('#name').focus());
+    }
     renderLeaders(state.leaderboard);
     renderQuest(state);
     renderRides(state);
@@ -329,10 +338,15 @@ window.listCard = async (holdingId, encodedTitle) => { const title=decodeURIComp
 window.cancelListing = async (listingId) => { if(!confirm('Remove this card from the market?'))return; try{await api('cancel_listing',{listing_id:listingId});showToast('Listing removed.');await load()}catch(e){alert(e.message)} };
 window.buyCard = async (listingId,price,encodedTitle) => { const title=decodeURIComponent(encodedTitle); if(!confirm(`Buy “${title}” for ${price} Gold Nautical Stars?`))return; try{await api('buy_card',{listing_id:listingId});showToast('Quest card purchased!');await load()}catch(e){alert(e.message)} };
 
-$('#saveName').onclick = async () => { try { await api('set_name', {display_name: $('#name').value}); $('#profilePanel').classList.add('hidden'); await load(); } catch (error) { alert(error.message); } };
+$('#saveName').onclick = async () => { try { await api('set_name', {display_name: $('#name').value}); $('#profilePanel').classList.remove('first-visit'); $('#profilePanel').classList.add('hidden'); await load(); } catch (error) { alert(error.message); } };
 $('#draw').onclick = async () => { try { await api('draw_quest'); await load(); } catch (error) { alert(error.message); } };
 $('#send').onclick = async () => { try { const message = $('#message').value.trim(); if (!message) return; await api('message', {message}); $('#message').value = ''; await load(); } catch (error) { alert(error.message); } };
-$('#profileToggle').onclick = () => $('#profilePanel').classList.toggle('hidden');
+function toggleProfile() {
+  if ($('#profilePanel').classList.contains('first-visit')) return;
+  $('#profilePanel').classList.toggle('hidden');
+}
+$('#profileToggle').onclick = toggleProfile;
+$('#riderBadge').onclick = toggleProfile;
 $('#shareSite').onclick = async () => {
   const shareData = {title: 'Wet Beard — Keeper of Quests', text: 'Join the Wet Beard bike quest adventure!', url: window.location.href};
   try {

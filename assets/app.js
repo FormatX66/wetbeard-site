@@ -221,14 +221,14 @@ function startTicker() {
 }
 
 function renderRecent(recent) {
-  const items = recent.slice(0, 12);
+  const items = recent.slice(0, 6);
+  clearInterval(tickerTimer);
+  $('#recent').classList.add('activity-list');
+  $('#recent').style.transform = '';
   $('#recent').innerHTML = items.length ? items.map((item) => `
     <article class="victory-card"><button class="kudos-button" onclick="sendStars(${item.recipient_rider_id}, ${item.id}, '${inlineEncode(item.display_name)}', event)" aria-label="Send Gold Nautical Stars">${coin()}</button><div><strong>${esc(item.display_name)}</strong><span>${esc(item.task_text)}</span></div></article>`).join('') : '<span class="empty-copy">No victories yet.</span>';
   tickerIndex = 0;
-  const count = Math.max(0, items.length - visibleAchievementCount() + 1);
-  $('#recentDots').innerHTML = count > 1 ? Array.from({length: count}, (_, i) => `<button type="button" aria-label="Achievement page ${i + 1}" class="${i === 0 ? 'active' : ''}" onclick="jumpTicker(${i})"></button>`).join('') : '';
-  updateTicker();
-  startTicker();
+  $('#recentDots').innerHTML = '';
 }
 
 function renderStarSending(starSending) {

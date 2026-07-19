@@ -56,6 +56,7 @@ const token = (() => {
 let currentState = null;
 let currentCollection = [];
 let loading = false;
+let firstQuestAttempted = false;
 let tickerIndex = 0;
 let tickerTimer = null;
 let namePromptShown = false;
@@ -272,9 +273,14 @@ async function load() {
   loading = true;
   try {
     $('#status').textContent = 'Online';
-    const state = await api('state');
-    currentState = state;
+    let state = await api('state');
     const isNewPirate = state.rider.display_name === 'New Pirate';
+    if (!isNewPirate && !getCurrentCard(state) && !firstQuestAttempted) {
+      firstQuestAttempted = true;
+      await api('draw_quest');
+      state = await api('state');
+    }
+    currentState = state;
     $('#name').value = isNewPirate ? '' : state.rider.display_name;
     $('#riderName').textContent = isNewPirate ? 'Choose Name' : state.rider.display_name;
     $('#name').disabled = Boolean(Number(state.rider.name_locked));
@@ -310,9 +316,9 @@ window.completeTask = async (taskId) => {
     const completed = new Set(fresh.completed_task_ids.map(Number));
     const allComplete = card?.length && card.every((task) => completed.has(Number(task.task_id)));
     if (allComplete) {
-      showToast('Quest card added to your collection!');
+      showToast('Quest complete — drawing your next card!');
       renderQuest(fresh);
-      await new Promise((resolve) => setTimeout(resolve, 900));
+      await new Promise((resolve) => setTimeout(resolve, 350));
       await api('draw_quest');
     }
     await load();

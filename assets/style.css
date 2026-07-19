@@ -106,7 +106,6 @@ footer{text-align:center;margin:7px 0 2px;color:#3c2514;font-size:8px;font-weigh
 @media(max-width:440px){.admin-session-bar{align-items:flex-start;gap:5px}.admin-session-bar>span{padding-top:6px}.admin-session-actions{display:grid}.admin-session-bar button,.admin-session-bar a{padding:5px 6px;font-size:7px}.rider-edit-grid,.rider-data-tools{grid-template-columns:1fr}.rider-data-tools>div{min-height:115px}.rider-record-summary strong{font-size:16px}.rider-record-summary span{font-size:6px}.admin-record-actions{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-record-actions.card-actions{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:390px){.admin-masthead{grid-template-columns:minmax(0,1fr) 82px;padding-left:7px;padding-right:8px}.admin-masthead .brand-lockup{justify-content:flex-start}.admin-masthead .brand-mark{width:42px}.admin-masthead .brand-title{font-size:20px}.admin-home-button{padding:5px 4px;font-size:8px}.admin-login{margin:12px auto;padding:38px 28px 43px}.admin-login-row{grid-template-columns:1fr}.admin-login-row button{width:100%}.admin-form-grid{grid-template-columns:1fr}.admin-field-wide{grid-column:auto}.admin-card-row{grid-template-columns:28px minmax(0,1fr)}.admin-toggle-button{grid-column:2;width:66px}.admin-stats strong{font-size:20px}.admin-stats span{font-size:7px}}
 
-
 /* Public masthead — centered identity with a dedicated rider rocker. */
 .site-masthead{position:relative;display:grid;grid-template-columns:42px minmax(0,1fr) 42px;grid-template-rows:112px 35px;align-items:center;gap:0 8px;min-height:0;padding:4px 10px 0;background:linear-gradient(90deg,transparent 0,#ead6aa 8%,#f4e5c4 50%,#ead6aa 92%,transparent 100%);filter:drop-shadow(0 5px 4px #2d160b);overflow:visible}
 .site-masthead:before,.site-masthead:after{content:"";position:absolute;z-index:-1;left:4%;right:4%;height:12px;background:url("img/torn-parchment.webp") center/100% 100% no-repeat;opacity:.9}.site-masthead:before{top:-3px}.site-masthead:after{bottom:28px;transform:rotate(180deg)}
@@ -121,7 +120,6 @@ footer{text-align:center;margin:7px 0 2px;color:#3c2514;font-size:8px;font-weigh
 .site-masthead .rider-star-balance .coin{width:19px;height:19px}.site-masthead .rider-star-balance small{color:#d5b981;font:800 7px/1 system-ui;text-transform:uppercase;letter-spacing:.4px}
 @media(max-width:360px){.site-masthead{grid-template-columns:38px minmax(0,1fr) 38px;grid-template-rows:104px 34px;padding-inline:6px}.site-masthead .header-logo{width:68px;height:99px}.site-masthead .icon-button,.site-masthead .share-button{width:35px;height:35px}.site-masthead .rider-strip{padding-inline:19px}.site-masthead .rider-strip>strong{max-width:54%;font-size:12px}.site-masthead .rider-star-balance small{display:none}}
 
-
 /* Horizontal top rocker supplied by the captain. */
 .site-masthead{grid-template-columns:40px minmax(0,1fr) 40px;grid-template-rows:auto 38px;gap:0 5px;padding:0 4px 3px;background:transparent;filter:drop-shadow(0 4px 4px #1d0e07)}
 .site-masthead:before{display:none}.site-masthead:after{z-index:0;left:0;right:0;bottom:0;height:39px;border:1px solid #120905;border-radius:4px;background:#2d1709 url("img/wood-board.webp") center/cover;box-shadow:inset 0 0 0 1px #80603a;opacity:1;transform:none}
@@ -132,7 +130,6 @@ footer{text-align:center;margin:7px 0 2px;color:#3c2514;font-size:8px;font-weigh
 .site-masthead .rider-strip{grid-column:2;grid-row:2;z-index:2;width:100%;min-width:0;margin:0;padding:5px 4px;border:0;background:transparent;box-shadow:none;clip-path:none}
 .site-masthead .rider-strip>strong{max-width:58%;font-size:13px}.site-masthead .rider-star-balance small{font-size:6px}
 @media(max-width:360px){.site-masthead{grid-template-columns:36px minmax(0,1fr) 36px;grid-template-rows:auto 36px;padding-inline:2px}.site-masthead:after{height:37px}.site-masthead .header-logo{width:100%;height:auto}.site-masthead .icon-button,.site-masthead .share-button{width:30px;height:30px}.site-masthead .rider-strip{padding-inline:2px}.site-masthead .rider-strip>strong{max-width:55%;font-size:11px}}
-
 
 /* Bleached driftwood system — muted white, charcoal and weathered ink. */
 :root{--ink:#171716;--red:#5b5a56;--gold:#a48d55;--paper:#ece9e1;--wood:#272726}
@@ -155,7 +152,6 @@ html,body{background:#181817;color:var(--ink)}
 .live-banner{background:#e5e2da;color:#252524;border-color:#555}.pulse{background:#555;box-shadow:0 0 6px #777}
 footer{color:#343330;text-shadow:0 1px #f5f2e9}
 
-
 /* Quest-first layout refinement. */
 .site-masthead .header-logo{aspect-ratio:1000/336;max-height:172px}.site-masthead .header-logo img{object-fit:cover}
 .site-masthead .rider-strip>strong{font-family:Georgia,"Times New Roman",serif;font-size:15px;letter-spacing:.2px}.site-masthead .rider-star-balance{font-size:14px}.site-masthead .rider-star-balance small{font-size:7px}
@@ -167,7 +163,6 @@ footer{color:#343330;text-shadow:0 1px #f5f2e9}
 .quest-ribbon{left:-5px;top:-9px;width:63px;padding-top:8px}.quest-ribbon small{font-size:10px}.quest-ribbon strong{font-size:20px}
 @media(max-width:390px){.site-masthead .header-logo{max-height:154px}.site-masthead .rider-strip>strong{font-size:13px}.quest-card{min-height:270px;padding-left:65px;padding-right:11px}.quest-task{min-height:52px}.task-copy{font-size:17px}.quest-heading{font-size:25px}.quest-ribbon{width:57px}}
 
-
 /* Usability correction: compact rocker, visible onboarding and readable activity. */
 .site-masthead .header-logo{aspect-ratio:1000/225;max-height:116px}.site-masthead .header-logo img{object-fit:fill}
 .profile-panel.first-visit{top:50%;left:50%;right:auto;bottom:auto;max-height:calc(100dvh - 28px);overflow:auto;transform:translate(-50%,-50%)}
@@ -176,7 +171,6 @@ footer{color:#343330;text-shadow:0 1px #f5f2e9}
 .victory-strip{padding:8px 9px 9px}.strip-title{margin-bottom:5px;font:1000 15px/1 Georgia,"Times New Roman",serif}.victory-viewport{overflow:visible}.victory-track.activity-list{display:grid;grid-template-columns:1fr;gap:0;transform:none!important;transition:none}.victory-track.activity-list .victory-card{display:grid;grid-template-columns:34px minmax(0,1fr);align-items:center;width:100%;min-height:48px;padding:6px 3px;border-right:0;border-bottom:1px dashed #77746e}.victory-track.activity-list .victory-card:last-child{border-bottom:0}.victory-track.activity-list .victory-card strong{font:900 13px/1.15 system-ui}.victory-track.activity-list .victory-card div span{margin-top:3px;font:700 12px/1.2 Georgia,"Times New Roman",serif;white-space:normal}.victory-track.activity-list .kudos-button .coin{width:27px;height:27px}.ticker-dots{display:none}
 @media(max-width:390px){.site-masthead .header-logo{max-height:106px}.profile-panel.first-visit{grid-template-columns:1fr;width:min(94vw,430px);padding:50px 16px 18px}.profile-panel.first-visit #saveName{width:100%}.profile-panel.first-visit .connection{grid-column:1}.quest-footer{flex-wrap:wrap}.reroll-button{flex:1 0 100%;margin:5px 0 0;font-size:13px}.victory-track.activity-list .victory-card{min-height:51px}}
 
-
 /* Proportional rocker and chain-framed torn quest map. */
 .site-masthead .header-logo{aspect-ratio:1100/429;max-height:168px}.site-masthead .header-logo img{object-fit:contain}
 .quest-wrap{margin:8px 4px 10px;padding:17px 18px 19px}.quest-wrap:before{content:"";position:absolute;z-index:4;inset:0;pointer-events:none;background-image:url("img/chain-border-horizontal.webp"),url("img/chain-border-horizontal.webp"),url("img/chain-border-vertical.webp"),url("img/chain-border-vertical.webp");background-position:left top,left bottom,left top,right top;background-size:auto 18px,auto 18px,18px auto,18px auto;background-repeat:repeat-x,repeat-x,repeat-y,repeat-y;filter:drop-shadow(0 2px 1px #0008)}
@@ -184,3 +178,12 @@ footer{color:#343330;text-shadow:0 1px #f5f2e9}
 .quest-heading{font-family:"Segoe Print","Bradley Hand",Georgia,serif;font-weight:1000}.task-copy{font-family:"Segoe Print","Bradley Hand",Georgia,serif;font-weight:900;line-height:1.2;text-shadow:0 1px #fff}.quest-task:nth-child(odd){transform:rotate(-.16deg)}.quest-task:nth-child(even){transform:rotate(.16deg)}
 .quest-card:before{right:22px;top:51px;width:49px;height:49px;opacity:.21}.anchor-stamp{opacity:.2}
 @media(max-width:390px){.site-masthead .header-logo{max-height:151px}.quest-wrap{padding:15px 15px 17px}.quest-wrap:before{background-size:auto 16px,auto 16px,16px auto,16px auto}.quest-card{min-height:278px;padding-left:60px;padding-right:10px}.task-copy{font-size:16px}}
+
+/* Shared admin rocker — same masthead language as the rider-facing site. */
+.admin-rocker-masthead{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto 38px;gap:0 6px;min-height:0;padding:0 4px 3px;background:transparent;filter:drop-shadow(0 4px 4px #1d0e07)}
+.admin-rocker-masthead:after{content:"";position:absolute;z-index:0;left:0;right:0;bottom:0;height:39px;border:1px solid #151514;border-radius:4px;background:#d8d5cd url("img/driftwood-white.webp") center/cover;box-shadow:inset 0 0 0 1px #f8f6ef}
+.admin-rocker-logo{grid-column:1/-1;grid-row:1;display:block;width:100%;overflow:hidden;border-radius:7px;background:#f4f2ec;box-shadow:0 2px 6px #26120888;text-decoration:none}
+.admin-rocker-logo img{display:block;width:100%;height:auto;aspect-ratio:1100/429;object-fit:contain}
+.admin-rocker-title{position:relative;z-index:2;grid-column:1;grid-row:2;align-self:center;min-width:0;padding-left:12px;overflow:hidden;color:#171716;font:1000 14px/1 Georgia,"Times New Roman",serif;letter-spacing:.45px;text-overflow:ellipsis;text-transform:uppercase;white-space:nowrap}
+.admin-rocker-masthead .admin-home-button{position:relative;z-index:2;grid-column:2;grid-row:2;align-self:center;min-height:30px;margin-right:2px;padding:5px 10px;border-radius:4px;font-size:8px}
+@media(max-width:390px){.admin-rocker-masthead{grid-template-columns:minmax(0,1fr) 82px;padding:0 2px 3px}.admin-rocker-logo img{width:100%;height:auto}.admin-rocker-title{padding-left:8px;font-size:12px}.admin-rocker-masthead .admin-home-button{padding-inline:5px}}

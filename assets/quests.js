@@ -10,26 +10,26 @@ const DISMISSED_CARD_IDEAS_KEY = 'wetbeardDismissedCardIdeas';
 
 const questIdeas = [
   {id:'e01', difficulty:1, stars:5, title:'Give another rider a genuine compliment', description:'Build the crew up anywhere the ride takes you.'},
-  {id:'e02', difficulty:1, stars:5, title:'Spot a motorcycle from a brand you have never owned', description:'Name the brand to another rider.'},
+  {id:'e02', difficulty:1, stars:5, title:'Spot a bicycle style you have never ridden', description:'Name the style to another rider.'},
   {id:'e03', difficulty:1, stars:5, title:'Find something on the ride that matches your bike', description:'Match by color, shape, name, or attitude.'},
   {id:'e04', difficulty:1, stars:5, title:'Learn another rider’s road name or nickname', description:'Ask how they got the name if they want to share.'},
-  {id:'e05', difficulty:1, stars:5, title:'Notice one custom detail on another motorcycle', description:'Tell its rider what caught your eye.'},
-  {id:'e06', difficulty:1, stars:5, title:'Share your favorite motorcycle song with the crew', description:'A title is enough; no music playback required.'},
+  {id:'e05', difficulty:1, stars:5, title:'Notice one custom detail on another bicycle', description:'Tell its rider what caught your eye.'},
+  {id:'e06', difficulty:1, stars:5, title:'Share your favorite riding song with the crew', description:'A title is enough; no music playback required.'},
   {id:'e07', difficulty:1, stars:5, title:'Name one road you would happily ride again', description:'Share what makes that road memorable.'},
-  {id:'e08', difficulty:1, stars:5, title:'Thank someone who helped make the ride happen', description:'Recognize an organizer, road captain, helper, or riding partner.'},
+  {id:'e08', difficulty:1, stars:5, title:'Thank someone who helped make the ride happen', description:'Recognize an organizer, ride leader, sweep, helper, or riding partner.'},
   {id:'m01', difficulty:2, stars:10, title:'Introduce two riders who have not met', description:'Help two people in the crew make a new connection.'},
-  {id:'m02', difficulty:2, stars:10, title:'Learn the story behind another rider’s motorcycle', description:'Ask why they chose it or what makes it special.'},
-  {id:'m03', difficulty:2, stars:10, title:'Find three different motorcycle makes on the ride', description:'Identify three distinct manufacturers.'},
+  {id:'m02', difficulty:2, stars:10, title:'Learn the story behind another rider’s bicycle', description:'Ask why they chose it or what makes it special.'},
+  {id:'m03', difficulty:2, stars:10, title:'Find three different bicycle styles on the ride', description:'Identify three styles such as road, mountain, cruiser, cargo, BMX, or recumbent.'},
   {id:'m04', difficulty:2, stars:10, title:'Share one useful riding tip with another rider', description:'Keep it friendly, practical, and safety-minded.'},
   {id:'m05', difficulty:2, stars:10, title:'Ask a rider about their favorite ride of all time', description:'Listen for the place, people, or story that made it great.'},
   {id:'m06', difficulty:2, stars:10, title:'Help check another rider’s lights or signals', description:'Only while safely parked before or after riding.'},
   {id:'m07', difficulty:2, stars:10, title:'Find a rider with more years of experience than you', description:'Ask what lesson took them longest to learn.'},
   {id:'m08', difficulty:2, stars:10, title:'Find a rider with fewer years of experience than you', description:'Welcome them and ask what they enjoy most so far.'},
-  {id:'h01', difficulty:3, stars:20, title:'Ride with someone you have never ridden beside before', description:'Make a new riding connection while following the group formation.'},
+  {id:'h01', difficulty:3, stars:20, title:'Ride with someone you have never ridden beside before', description:'Make a new riding connection while following safe group-riding etiquette.'},
   {id:'h02', difficulty:3, stars:20, title:'Help a new rider feel included in the crew', description:'Introduce yourself, include them in conversation, and connect them with another rider.'},
-  {id:'h03', difficulty:3, stars:20, title:'Learn three riders’ motorcycle origin stories', description:'Ask what first inspired each person to ride.'},
+  {id:'h03', difficulty:3, stars:20, title:'Learn three riders’ bicycle origin stories', description:'Ask what first inspired each person to ride.'},
   {id:'h04', difficulty:3, stars:20, title:'Share a meaningful road story with the crew', description:'Tell a short story about a ride that changed or taught you something.'},
-  {id:'h05', difficulty:3, stars:20, title:'Find five unique custom details across the motorcycles', description:'Look for paint, lighting, controls, luggage, exhaust, or handmade touches.'},
+  {id:'h05', difficulty:3, stars:20, title:'Find five unique custom details across the bicycles', description:'Look for paint, handlebars, racks, bags, lights, wheels, or handmade touches.'},
   {id:'h06', difficulty:3, stars:20, title:'Make three positive introductions during the ride', description:'Connect riders using something they have in common.'},
   {id:'h07', difficulty:3, stars:20, title:'Collect three pieces of local road knowledge', description:'Ask riders about roads, hazards, views, or routes worth remembering.'},
   {id:'h08', difficulty:3, stars:20, title:'Recognize three different people who supported the ride', description:'Thank riders or helpers for specific things they contributed.'}
@@ -37,24 +37,24 @@ const questIdeas = [
 
 const cardIdeas = [
   {id:'animal-friend', title:'Animal Friend', quests:[
-    {difficulty:1, stars:5, title:'Pet a friendly dog', description:'Only with the owner’s permission and when safely off the motorcycle.'},
+    {difficulty:1, stars:5, title:'Pet a friendly dog', description:'Only with the owner’s permission and when safely stopped off the bicycle.'},
     {difficulty:2, stars:10, title:'Meet and pet a friendly cat', description:'Let the cat approach and get the owner’s permission first.'},
     {difficulty:3, stars:20, title:'Meet an exotic or unusual pet', description:'Safely meet a bird, reptile, farm animal, or other uncommon companion with permission.'}]},
   {id:'crew-builder', title:'Crew Builder', quests:[
     {difficulty:1, stars:5, title:'Learn a rider’s name', description:'Introduce yourself and learn the name they prefer to use.'},
     {difficulty:2, stars:10, title:'Introduce two riders who have not met', description:'Help two people in the crew make a new connection.'},
     {difficulty:3, stars:20, title:'Make three positive introductions', description:'Connect riders using something they have in common.'}]},
-  {id:'machine-spotter', title:'Machine Spotter', quests:[
-    {difficulty:1, stars:5, title:'Spot a motorcycle brand you have never owned', description:'Identify the manufacturer.'},
-    {difficulty:2, stars:10, title:'Find three different motorcycle makes', description:'Identify three distinct manufacturers represented on the ride.'},
-    {difficulty:3, stars:20, title:'Find five unique custom motorcycle details', description:'Look for paint, lighting, controls, luggage, exhaust, or handmade touches.'}]},
+  {id:'bike-spotter', title:'Bike Spotter', quests:[
+    {difficulty:1, stars:5, title:'Spot a bicycle style you have never ridden', description:'Identify the style and ask its rider about it.'},
+    {difficulty:2, stars:10, title:'Find three different bicycle styles', description:'Look for road, mountain, cruiser, cargo, BMX, folding, tandem, or recumbent bikes.'},
+    {difficulty:3, stars:20, title:'Find five unique custom bicycle details', description:'Look for paint, handlebars, racks, bags, lights, wheels, or handmade touches.'}]},
   {id:'road-stories', title:'Road Stories', quests:[
     {difficulty:1, stars:5, title:'Name a road you would happily ride again', description:'Share what makes that road memorable.'},
     {difficulty:2, stars:10, title:'Ask a rider about their favorite ride', description:'Listen for the place, people, or story that made it great.'},
     {difficulty:3, stars:20, title:'Share a meaningful road story', description:'Tell the crew about a ride that changed or taught you something.'}]},
   {id:'safety-watch', title:'Safety Watch', quests:[
-    {difficulty:1, stars:5, title:'Check your motorcycle before riding', description:'Give tires, lights, controls, fluids, and stands a quick visual check.'},
-    {difficulty:2, stars:10, title:'Help check another rider’s lights and signals', description:'Only while safely parked before or after riding.'},
+    {difficulty:1, stars:5, title:'Give your bicycle an ABC Quick Check', description:'Check air, brakes, cranks, chain, quick releases, and take a brief test ride.'},
+    {difficulty:2, stars:10, title:'Help check another rider’s lights and brakes', description:'Only while safely stopped before or after riding.'},
     {difficulty:3, stars:20, title:'Share three useful safety reminders with the crew', description:'Keep them practical, friendly, and appropriate for today’s ride.'}]},
   {id:'local-knowledge', title:'Local Knowledge', quests:[
     {difficulty:1, stars:5, title:'Learn the name of a road you have not ridden', description:'Ask another rider for one local road name.'},
@@ -65,21 +65,21 @@ const cardIdeas = [
     {difficulty:2, stars:10, title:'Recognize someone’s contribution to the ride', description:'Thank them for one specific thing they did.'},
     {difficulty:3, stars:20, title:'Recognize three people who supported the ride', description:'Thank riders or helpers for specific things they contributed.'}]},
   {id:'rider-roots', title:'Rider Roots', quests:[
-    {difficulty:1, stars:5, title:'Ask someone what motorcycle they first rode', description:'Learn the make or model if they remember it.'},
-    {difficulty:2, stars:10, title:'Learn the story behind another rider’s motorcycle', description:'Ask why they chose it or what makes it special.'},
-    {difficulty:3, stars:20, title:'Learn three riders’ motorcycle origin stories', description:'Ask what first inspired each person to ride.'}]},
+    {difficulty:1, stars:5, title:'Ask someone about the first bicycle they remember', description:'Learn the color, style, or model if they remember it.'},
+    {difficulty:2, stars:10, title:'Learn the story behind another rider’s bicycle', description:'Ask why they chose it or what makes it special.'},
+    {difficulty:3, stars:20, title:'Learn three riders’ bicycle origin stories', description:'Ask what first inspired each person to ride.'}]},
   {id:'road-soundtrack', title:'Road Soundtrack', quests:[
-    {difficulty:1, stars:5, title:'Share your favorite motorcycle song', description:'A song title is enough; no music playback required.'},
+    {difficulty:1, stars:5, title:'Share your favorite riding song', description:'A song title is enough; no music playback required.'},
     {difficulty:2, stars:10, title:'Collect three songs for a crew playlist', description:'Ask three riders for one road-song recommendation each.'},
     {difficulty:3, stars:20, title:'Build a ten-song ride playlist with the crew', description:'Collect ten unique song recommendations from riders.'}]},
   {id:'welcome-aboard', title:'Welcome Aboard', quests:[
     {difficulty:1, stars:5, title:'Welcome someone you have not met before', description:'Introduce yourself and make room in the conversation.'},
-    {difficulty:2, stars:10, title:'Ride near someone you have not ridden with before', description:'Follow the group formation and road captain’s directions.'},
+    {difficulty:2, stars:10, title:'Ride near someone you have not ridden with before', description:'Follow safe spacing and the ride leader’s directions.'},
     {difficulty:3, stars:20, title:'Help a new rider feel included in the crew', description:'Introduce them to others and include them in conversation.'}]},
   {id:'style-scout', title:'Style Scout', quests:[
-    {difficulty:1, stars:5, title:'Notice one custom detail on a motorcycle', description:'Tell its rider what caught your eye.'},
-    {difficulty:2, stars:10, title:'Find three different motorcycle styles', description:'Examples include cruiser, touring, sport, standard, adventure, or trike.'},
-    {difficulty:3, stars:20, title:'Find five motorcycles with distinct personalities', description:'Identify what makes each machine’s look or setup unique.'}]},
+    {difficulty:1, stars:5, title:'Notice one custom detail on a bicycle', description:'Tell its rider what caught your eye.'},
+    {difficulty:2, stars:10, title:'Find three different bicycle styles', description:'Examples include road, mountain, cruiser, cargo, BMX, folding, tandem, or recumbent.'},
+    {difficulty:3, stars:20, title:'Find five bicycles with distinct personalities', description:'Identify what makes each bicycle’s look or setup unique.'}]},
   {id:'wisdom-run', title:'Wisdom Run', quests:[
     {difficulty:1, stars:5, title:'Share one useful riding tip', description:'Keep it friendly, practical, and safety-minded.'},
     {difficulty:2, stars:10, title:'Ask an experienced rider for one lesson', description:'Find out what lesson took them longest to learn.'},

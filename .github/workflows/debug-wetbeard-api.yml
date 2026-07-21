@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  issues: write
 
 jobs:
   diagnose:
@@ -105,3 +106,13 @@ jobs:
           name: wetbeard-api-diagnostics
           path: wetbeard-api-diagnostics.txt
           retention-days: 1
+
+      - name: Return the run ID
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          gh issue create \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Temporary Wet Beard API diagnostics $GITHUB_RUN_ID" \
+            --body "Private diagnostic artifact: wetbeard-api-diagnostics."

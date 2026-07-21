@@ -4,6 +4,23 @@ on:
   push:
     branches:
       - main
+    paths:
+      - index.html
+      - admin.html
+      - advanced.html
+      - quests.html
+      - riders.html
+      - assets/app.js
+      - assets/admin.js
+      - assets/advanced.js
+      - assets/quests.js
+      - assets/riders.js
+      - assets/style.css
+      - assets/img/**
+      - api/api.php
+      - api/admin.php
+      - api/quests.php
+      - api/quest-store.php
   workflow_dispatch:
 
 permissions:
@@ -37,7 +54,9 @@ jobs:
           BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
           BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
           BLUEHOST_SSH_PRIVATE_KEY: ${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}
+        shell: bash
         run: |
+          set -euo pipefail
           test -n "$BLUEHOST_HOST"
           test -n "$BLUEHOST_USERNAME"
           test -n "$BLUEHOST_SSH_PRIVATE_KEY"
@@ -50,7 +69,9 @@ jobs:
         env:
           BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
           BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
         run: |
+          set -euo pipefail
           ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 \
             "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
             'test -d public_html/wetbeard && test -f public_html/wetbeard/config.php && test -f public_html/wetbeard/api/bootstrap.php'
@@ -59,7 +80,9 @@ jobs:
         env:
           BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
           BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
         run: |
+          set -euo pipefail
           tar -czf - \
             deploy-version.json \
             index.html \
@@ -85,7 +108,9 @@ jobs:
       - name: Verify the deployed commit
         shell: bash
         run: |
-          curl --fail --silent --show-error \
+          set -euo pipefail
+          curl --fail-with-body --silent --show-error \
+            --retry 5 --retry-all-errors --retry-delay 3 \
             --header 'Cache-Control: no-cache' \
             --output deploy-version-live.json \
             'https://madmorrigan.com/wetbeard/deploy-version.json'
@@ -94,7 +119,29 @@ jobs:
             "$GITHUB_SHA"
 
       - name: Verify the live API still answers
+        shell: bash
         run: |
-          curl --fail --silent --show-error \
-            'https://madmorrigan.com/wetbeard/api/api.php?action=health' \
-            > /dev/null
+          set -euo pipefail
+          response_file="$(mktemp)"
+          http_code="$(curl --silent --show-error \
+            --retry 5 --retry-all-errors --retry-delay 3 \
+            --header 'Cache-Control: no-cache' \
+            --output "$response_file" \
+            --write-out '%{http_code}' \
+            'https://madmorrigan.com/wetbeard/api/api.php?action=health')"
+
+          if [ "$http_code" != '200' ]; then
+            echo "::error title=Wet Beard API health check failed::The live API returned HTTP $http_code after retries."
+            exit 1
+          fi
+
+          python3 - "$response_file" <<'PY'
+          import json
+          import sys
+
+          with open(sys.argv[1], encoding='utf-8') as handle:
+              payload = json.load(handle)
+
+          if payload.get('ok') is not True:
+              raise SystemExit('Live API returned HTTP 200 but did not report ok=true.')
+          PY

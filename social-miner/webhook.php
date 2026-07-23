@@ -16,7 +16,18 @@ try {
         http_response_code(403); echo 'Forbidden'; exit;
     }
 
-    $payload = json_decode(file_get_contents('php://input') ?: '{}', true);
+    $rawBody = file_get_contents('php://input') ?: '';
+    $appSecret = setting('meta_app_secret', '') ?? '';
+    if ($appSecret === '') {
+        json_response(['ok' => false, 'error' => 'Meta App Secret is not configured; webhook ingestion is disabled.'], 503);
+    }
+    $providedSignature = (string)($_SERVER['HTTP_X_HUB_SIGNATURE_256'] ?? '');
+    $expectedSignature = 'sha256=' . hash_hmac('sha256', $rawBody, $appSecret);
+    if ($providedSignature === '' || !hash_equals($expectedSignature, $providedSignature)) {
+        json_response(['ok' => false, 'error' => 'Invalid Meta webhook signature.'], 403);
+    }
+
+    $payload = json_decode($rawBody !== '' ? $rawBody : '{}', true);
     if (!is_array($payload)) throw new RuntimeException('Invalid webhook JSON');
     $object = (string)($payload['object'] ?? '');
     $platform = $object === 'instagram' ? 'instagram' : 'facebook';

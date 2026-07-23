@@ -22,6 +22,7 @@ try {
             'instagram_host'=>setting('instagram_host','graph.instagram.com'),
             'instagram_token'=>redact_token(setting('instagram_token','')),
             'facebook_token'=>redact_token(setting('facebook_token','')),
+            'meta_app_secret'=>redact_token(setting('meta_app_secret','')),
             'webhook_verify_token'=>setting('webhook_verify_token',''),
             'custom_flag_terms'=>setting('custom_flag_terms',''),
         ]]);
@@ -32,7 +33,7 @@ try {
     if ($action === 'settings' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $data = body_json();
         foreach (['meta_api_version','instagram_host','custom_flag_terms'] as $key) if (array_key_exists($key,$data)) set_setting($key, trim((string)$data[$key]));
-        foreach (['instagram_token','facebook_token'] as $key) if (isset($data[$key]) && trim((string)$data[$key]) !== '') set_setting($key, trim((string)$data[$key]));
+        foreach (['instagram_token','facebook_token','meta_app_secret'] as $key) if (isset($data[$key]) && trim((string)$data[$key]) !== '') set_setting($key, trim((string)$data[$key]));
         if ((setting('webhook_verify_token','')??'') === '') set_setting('webhook_verify_token', bin2hex(random_bytes(18)));
         json_response(['ok'=>true]);
     }

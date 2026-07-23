@@ -44,8 +44,7 @@ jobs:
         run: |
           set -euo pipefail
           admin_key="$(openssl rand -hex 18)"
-          admin_hash="$(php -r 'echo password_hash($argv[1], PASSWORD_DEFAULT);' "$admin_key")"
-          config_b64="$(printf '%s\n' "<?php return ['admin_password_hash' => '$admin_hash'];" | base64 -w0)"
+          config_b64="$(php -r '$h=password_hash($argv[1], PASSWORD_DEFAULT); echo base64_encode("<?php return " . var_export(["admin_password_hash" => $h], true) . ";\n");' "$admin_key")"
           created="$(ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
             "mkdir -p public_html/social-miner/storage; chmod 700 public_html/social-miner/storage; if [ ! -f public_html/social-miner/config.local.php ]; then printf '%s' '$config_b64' | base64 -d > public_html/social-miner/config.local.php; chmod 600 public_html/social-miner/config.local.php; echo created; else echo exists; fi")"
           if [ "$created" = "created" ]; then

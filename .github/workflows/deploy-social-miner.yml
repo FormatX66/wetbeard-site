@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: social-miner-production
@@ -36,22 +36,17 @@ jobs:
           chmod 600 "$HOME/.ssh/bluehost_deploy"
           ssh-keyscan -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts"
 
-      - name: Prepare private admin config on first deploy
+      - name: Establish recoverable admin login once
         env:
           BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
           BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+          BOOTSTRAP_ADMIN_HASH: '$2y$12$kUtc5ykorp2d.MbPgUEJgOELTZgZPNuoZ8dlaS5mm74ekNUDpwbny'
         shell: bash
         run: |
           set -euo pipefail
-          admin_key="$(openssl rand -hex 18)"
-          config_b64="$(php -r '$h=password_hash($argv[1], PASSWORD_DEFAULT); echo base64_encode("<?php return " . var_export(["admin_password_hash" => $h], true) . ";\n");' "$admin_key")"
-          created="$(ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
-            "mkdir -p public_html/social-miner/storage; chmod 700 public_html/social-miner/storage; if [ ! -f public_html/social-miner/config.local.php ]; then printf '%s' '$config_b64' | base64 -d > public_html/social-miner/config.local.php; chmod 600 public_html/social-miner/config.local.php; echo created; else echo exists; fi")"
-          if [ "$created" = "created" ]; then
-            echo "::notice title=Social Miner first-run admin key::$admin_key"
-          else
-            echo "Social Miner admin key already exists; leaving it unchanged."
-          fi
+          config_b64="$(php -r 'echo base64_encode("<?php return " . var_export(["admin_password_hash" => $argv[1]], true) . ";\n");' "$BOOTSTRAP_ADMIN_HASH")"
+          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "set -e; mkdir -p public_html/social-miner/storage; chmod 700 public_html/social-miner/storage; marker=public_html/social-miner/.admin-bootstrap-v2; if [ ! -f \"\$marker\" ]; then printf '%s' '$config_b64' | base64 -d > public_html/social-miner/config.local.php; chmod 600 public_html/social-miner/config.local.php; touch \"\$marker\"; chmod 600 \"\$marker\"; fi"
 
       - name: Deploy Social Miner files
         env:
@@ -75,5 +70,32 @@ jobs:
           import json
           p=json.load(open('/tmp/health.json'))
           assert p.get('ok') is True, p
+          assert p.get('storage_writable') is True, p
           print('Social Miner health OK:', p)
           PY
+
+      - name: Record verified deployment receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          health=json.load(open('/tmp/health.json'))
+          payload={
+              'deployed_commit': os.environ['GITHUB_SHA'],
+              'verified_at_utc': datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z'),
+              'health': health,
+              'url': 'https://madmorrigan.com/social-miner/api.php?action=health',
+          }
+          os.makedirs('.deploy-status', exist_ok=True)
+          with open('.deploy-status/social-miner.json','w',encoding='utf-8') as f:
+              json.dump(payload,f,indent=2,sort_keys=True)
+              f.write('\n')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .deploy-status/social-miner.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'Record Social Miner deployment [skip ci]'
+          git push origin HEAD:main

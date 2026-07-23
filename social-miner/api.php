@@ -1,0 +1,103 @@
+<?php
+declare(strict_types=1);
+require __DIR__ . '/lib/bootstrap.php';
+require __DIR__ . '/lib/analyzer.php';
+require __DIR__ . '/lib/meta.php';
+$action = $_GET['action'] ?? '';
+
+try {
+    if ($action === 'health') {
+        ensure_storage();
+        $probe = storage_path('.health');
+        $ok = @file_put_contents($probe, gmdate('c')) !== false;
+        if ($ok) @unlink($probe);
+        json_response(['ok'=>$ok,'version'=>MINER_VERSION,'php'=>PHP_VERSION,'storage'=>'json+flock','storage_writable'=>$ok], $ok?200:500);
+    }
+
+    require_session_auth();
+
+    if ($action === 'status') {
+        json_response(['ok'=>true,'csrf'=>csrf_token(),'watches'=>watches_all(),'counts'=>comment_counts(),'settings'=>[
+            'meta_api_version'=>setting('meta_api_version','v23.0'),
+            'instagram_host'=>setting('instagram_host','graph.instagram.com'),
+            'instagram_token'=>redact_token(setting('instagram_token','')),
+            'facebook_token'=>redact_token(setting('facebook_token','')),
+            'meta_app_secret'=>redact_token(setting('meta_app_secret','')),
+            'webhook_verify_token'=>setting('webhook_verify_token',''),
+            'custom_flag_terms'=>setting('custom_flag_terms',''),
+        ]]);
+    }
+
+    if ($_SERVER['REQUEST_METHOD'] !== 'GET') require_csrf();
+
+    if ($action === 'settings' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $data = body_json();
+        foreach (['meta_api_version','instagram_host','custom_flag_terms'] as $key) if (array_key_exists($key,$data)) set_setting($key, trim((string)$data[$key]));
+        foreach (['instagram_token','facebook_token','meta_app_secret'] as $key) if (isset($data[$key]) && trim((string)$data[$key]) !== '') set_setting($key, trim((string)$data[$key]));
+        if ((setting('webhook_verify_token','')??'') === '') set_setting('webhook_verify_token', bin2hex(random_bytes(18)));
+        json_response(['ok'=>true]);
+    }
+
+    if ($action === 'watch' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $data = body_json();
+        $platform = strtolower(trim((string)($data['platform']??'')));
+        $externalId = trim((string)($data['external_id']??''));
+        if (!in_array($platform,['instagram','facebook'],true)) throw new InvalidArgumentException('Platform must be instagram or facebook.');
+        if ($externalId === '' || !preg_match('/^[0-9_]+$/',$externalId)) throw new InvalidArgumentException('Enter the Meta media/post ID, not only the public URL.');
+        $watch = watch_upsert($platform,$externalId,trim((string)($data['label']??'')),trim((string)($data['url']??'')));
+        json_response(['ok'=>true,'watch'=>$watch]);
+    }
+
+    if ($action === 'sync' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $data = body_json(); $watch = watch_by_id((int)($data['id']??0));
+        if (!$watch) throw new RuntimeException('Watch not found.');
+        try {
+            $count = sync_watch($watch);
+            append_jsonl('sync-log.jsonl',['platform'=>$watch['platform'],'external_media_id'=>$watch['external_id'],'status'=>'ok','detail'=>'','imported_count'=>$count,'created_at'=>gmdate('c')]);
+            json_response(['ok'=>true,'imported'=>$count]);
+        } catch (Throwable $e) {
+            append_jsonl('sync-log.jsonl',['platform'=>$watch['platform'],'external_media_id'=>$watch['external_id'],'status'=>'error','detail'=>$e->getMessage(),'imported_count'=>0,'created_at'=>gmdate('c')]);
+            throw $e;
+        }
+    }
+
+    if ($action === 'comments') {
+        $risk = (string)($_GET['risk']??''); $q = strtolower(trim((string)($_GET['q']??'')));
+        $rows = array_values(array_filter(comments_all(), function(array $r) use ($risk,$q): bool {
+            if (in_array($risk,['none','low','medium','high'],true) && ($r['risk_level']??'none') !== $risk) return false;
+            if ($q !== '') {
+                $hay = strtolower((string)($r['text']??'').' '.(string)($r['username']??''));
+                if (strpos($hay,$q) === false) return false;
+            }
+            return true;
+        }));
+        usort($rows, fn($a,$b)=>strcmp((string)($b['created_time']??$b['collected_at']??''),(string)($a['created_time']??$a['collected_at']??'')));
+        $rows = array_slice($rows,0,1000);
+        foreach ($rows as &$row) $row['flags'] = json_decode((string)($row['flags_json']??'[]'),true) ?: [];
+        json_response(['ok'=>true,'comments'=>$rows]);
+    }
+
+    if ($action === 'users') {
+        $groups=[];
+        foreach (comments_all() as $r) {
+            $key=(string)($r['platform']??'').':'.(string)($r['user_id']??'').':'.(string)($r['username']??'');
+            if(!isset($groups[$key]))$groups[$key]=['platform'=>$r['platform']??'','username'=>$r['username']??'','user_id'=>$r['user_id']??'','comment_count'=>0,'high_count'=>0,'medium_count'=>0,'latest'=>''];
+            $groups[$key]['comment_count']++;
+            if(($r['risk_level']??'')==='high')$groups[$key]['high_count']++;
+            if(($r['risk_level']??'')==='medium')$groups[$key]['medium_count']++;
+            $t=(string)($r['created_time']??$r['collected_at']??''); if($t>$groups[$key]['latest'])$groups[$key]['latest']=$t;
+        }
+        $rows=array_values($groups); usort($rows,fn($a,$b)=>[$b['high_count'],$b['medium_count'],$b['comment_count']]<=>[$a['high_count'],$a['medium_count'],$a['comment_count']]);
+        json_response(['ok'=>true,'users'=>array_slice($rows,0,1000)]);
+    }
+
+    if ($action === 'export') {
+        header('Content-Type: text/csv; charset=utf-8'); header('Content-Disposition: attachment; filename="social-miner-comments-'.gmdate('Ymd-His').'.csv"'); header('Cache-Control: no-store');
+        $out=fopen('php://output','wb'); fputcsv($out,['platform','post_id','comment_id','parent_comment_id','username','user_id','text','created_time','like_count','risk_level','flags','permalink','collected_at']);
+        $rows=comments_all(); usort($rows,fn($a,$b)=>strcmp((string)($a['created_time']??$a['collected_at']??''),(string)($b['created_time']??$b['collected_at']??'')));
+        foreach($rows as $r)fputcsv($out,[$r['platform']??'',$r['external_media_id']??'',$r['external_comment_id']??'',$r['parent_external_id']??'',$r['username']??'',$r['user_id']??'',$r['text']??'',$r['created_time']??'',$r['like_count']??0,$r['risk_level']??'none',implode('|',json_decode((string)($r['flags_json']??'[]'),true)?:[]),$r['permalink']??'',$r['collected_at']??'']);
+        fclose($out); exit;
+    }
+    json_response(['ok'=>false,'error'=>'Unknown action'],404);
+} catch (InvalidArgumentException $e) { json_response(['ok'=>false,'error'=>$e->getMessage()],400); }
+catch (Throwable $e) { json_response(['ok'=>false,'error'=>$e->getMessage()],500); }

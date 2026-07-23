@@ -1,0 +1,12 @@
+{
+  "deployed_commit": "1c601f9d532ecfeeb208c468d53b293422f17574",
+  "health": {
+    "ok": true,
+    "php": "8.2.32",
+    "storage": "json+flock",
+    "storage_writable": true,
+    "version": "0.2.0"
+  },
+  "url": "https://madmorrigan.com/social-miner/api.php?action=health",
+  "verified_at_utc": "2026-07-23T20:11:18Z"
+}

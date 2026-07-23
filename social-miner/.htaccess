@@ -1,0 +1,6 @@
+Options -Indexes
+<FilesMatch "^(config\.local\.php|.*\.sqlite(?:-wal|-shm)?|.*\.jsonl?)$">
+    Require all denied
+</FilesMatch>
+RewriteEngine On
+RewriteRule ^storage/ - [F,L]

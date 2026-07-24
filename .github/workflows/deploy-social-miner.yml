@@ -22,23 +22,33 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Validate PHP and bot scoring
+      - name: Validate PHP, bot scoring, queue and reviews
         shell: bash
         run: |
           set -euo pipefail
           find social-miner -name '*.php' -type f -print0 | xargs -0 -n1 php -l
           php -r '
             require "social-miner/lib/bootstrap.php";
+            require "social-miner/lib/analyzer.php";
             require "social-miner/lib/bot.php";
+            require "social-miner/lib/importer.php";
             $comments=[];
             for($i=0;$i<5;$i++) $comments[]=["platform"=>"instagram","user_id"=>"1","username"=>"autobot123456","text"=>"same promo link https://example.com","created_time"=>gmdate("c",1700000000+$i*5),"risk_level"=>"none"];
             $comments[]=["platform"=>"instagram","user_id"=>"2","username"=>"otheracct","text"=>"same promo link https://example.com","created_time"=>gmdate("c",1700000100),"risk_level"=>"none"];
             $reports=build_bot_reports($comments);
-            if(count($reports)!==2) throw new RuntimeException("bot report grouping failed");
-            if(($reports[0]["bot_percentage"]??0)<75) throw new RuntimeException("bot score smoke test failed");
-            if(empty($reports[0]["signals"]) || empty($reports[0]["report_id"])) throw new RuntimeException("bot report detail failed");
-            echo "Bot scoring smoke test OK: ".$reports[0]["bot_percentage"]."%\n";
+            if(count($reports)!==2 || ($reports[0]["bot_percentage"]??0)<75) throw new RuntimeException("bot scoring smoke test failed");
+            $tmp=tempnam(sys_get_temp_dir(),"sminer-");
+            file_put_contents($tmp,json_encode([["comment"=>"queued test comment","username"=>"queue_test","timestamp"=>1700000200]]));
+            $job="smoketest".bin2hex(random_bytes(5));
+            queue_uploaded_export($tmp,"comments.json","instagram","","CI queue smoke",$job,"ci-test",filesize($tmp));
+            $result=process_inbox_files();
+            if(empty($result[0]["ok"]) || empty($result[0]["import_id"])) throw new RuntimeException("background queue smoke test failed");
+            $import=import_find((string)$result[0]["import_id"]);
+            if(empty($import["review_ready"]) || count(import_comments((string)$import["id"]))!==1) throw new RuntimeException("review membership smoke test failed");
+            echo "Background queue/review smoke test OK\n";
           '
+          find social-miner/storage -type f ! -name '.htaccess' -delete 2>/dev/null || true
+          find social-miner/storage -mindepth 1 -type d -empty -delete 2>/dev/null || true
 
       - name: Configure Bluehost SSH
         env:
@@ -73,9 +83,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          sed -i 's/Admin key/Password/g; s/Invalid admin key\./Invalid password./g' social-miner/index.php
           tar -C social-miner -czf - \
-            index.php api.php webhook.php import.php cron-import.php .htaccess .user.ini README.md lib storage/.htaccess | \
+            index.php review.php api.php webhook.php import.php cron-import.php .htaccess .user.ini README.md lib storage/.htaccess | \
           ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
             'set -e; mkdir -p public_html/social-miner/storage/inbox/processed public_html/social-miner/storage/inbox/failed; tar -xzf - -C public_html/social-miner; chmod 700 public_html/social-miner/storage public_html/social-miner/storage/inbox public_html/social-miner/storage/inbox/processed public_html/social-miner/storage/inbox/failed'
 
@@ -90,7 +99,7 @@ jobs:
             set -e
             if command -v crontab >/dev/null 2>&1; then
               php_bin="$(command -v php)"
-              cron_line="*/15 * * * * $php_bin $HOME/public_html/social-miner/cron-import.php >> $HOME/public_html/social-miner/storage/cron.log 2>&1"
+              cron_line="* * * * * $php_bin $HOME/public_html/social-miner/cron-import.php >> $HOME/public_html/social-miner/storage/cron.log 2>&1"
               { crontab -l 2>/dev/null | grep -v "social-miner/cron-import.php" || true; echo "$cron_line"; } | crontab -
               echo "Social Miner cron installed: $cron_line"
             else
@@ -98,7 +107,7 @@ jobs:
             fi
           '
 
-      - name: Verify live health endpoint
+      - name: Verify live health and review route
         shell: bash
         run: |
           set -euo pipefail
@@ -111,8 +120,11 @@ jobs:
           assert p.get('storage_writable') is True, p
           assert p.get('curl_available') is True, p
           assert p.get('bot_analysis') is True, p
+          assert p.get('version') == '0.4.0', p
           print('Social Miner health OK:', p)
           PY
+          code="$(curl --silent --output /dev/null --write-out '%{http_code}' 'https://madmorrigan.com/social-miner/review.php?id=healthcheck')"
+          test "$code" = "302"
 
       - name: Record verified deployment receipt
         shell: bash

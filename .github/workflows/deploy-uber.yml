@@ -122,20 +122,31 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          check() {
+            local needle="$1"
+            local file="$2"
+            local label="$3"
+            if ! grep -Fq -- "$needle" "$file"; then
+              echo "Health check failed: $label"
+              echo "Expected: $needle"
+              echo "File: $file"
+              exit 1
+            fi
+          }
           for page in '' 'citizen.html' 'careers.html'; do
             url="https://madmorrigan.com/uber/${page}"
             out="/tmp/uber-${page:-index}.html"
             curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --header 'Cache-Control: no-cache' --output "$out" "$url"
-            grep -q 'Übercorp' "$out"
-            grep -q 'WE MAKE IT. YOU BUY IT.' "$out"
-            grep -q 'P1-KLS ONLINE.' "$out"
-            grep -q 'logo.css?v=logo2' "$out"
-            grep -q 'logo.js?v=logo2' "$out"
-            grep -q 'tentacles.css?v=tent1' "$out"
-            grep -q 'tentacles.js?v=tent1' "$out"
-            grep -q 'easter-eggs-stable.js?v=egg5' "$out"
-            grep -q 'jimothy.js?v=jim3' "$out"
-            grep -q 'click-eggs.js?v=click1' "$out"
+            check 'Übercorp' "$out" "$page brand"
+            check 'WE MAKE IT. YOU BUY IT.' "$out" "$page slogan"
+            check 'P1-KLS ONLINE.' "$out" "$page P1-KLS marker"
+            check 'logo.css?v=logo2' "$out" "$page logo CSS"
+            check 'logo.js?v=logo2' "$out" "$page logo JS"
+            check 'tentacles.css?v=tent1' "$out" "$page tentacle CSS"
+            check 'tentacles.js?v=tent1' "$out" "$page tentacle JS"
+            check 'easter-eggs-stable.js?v=egg5' "$out" "$page Easter egg JS"
+            check 'jimothy.js?v=jim3' "$out" "$page Jimothy JS"
+            check 'click-eggs.js?v=click1' "$out" "$page click egg JS"
             if grep -Eq '(rebuild\.js|octopus\.js|easter-eggs\.js)' "$out"; then
               echo "Obsolete experimental script still present in $page"
               exit 1
@@ -152,34 +163,34 @@ jobs:
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/click-eggs.js 'https://madmorrigan.com/uber/assets/click-eggs.js?v=click1'
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/wordmark.svg 'https://madmorrigan.com/uber/assets/ubercorp-wordmark-final.svg?v=logo2'
           test -s /tmp/site.css
-          grep -q 'launchTrogdor' /tmp/site.js
-          grep -q '.uc-page-brand' /tmp/logo.css
+          check 'launchTrogdor' /tmp/site.js 'Trogdor launcher'
+          check '.uc-page-brand' /tmp/logo.css 'logo styling'
           if grep -q 'ucLogoSweep\|animation:' /tmp/logo.css; then echo 'Logo shimmer unexpectedly present'; exit 1; fi
-          grep -q 'ubercorp-wordmark-final.svg' /tmp/logo.js
-          grep -q '#ucTentacles' /tmp/tentacles.css
-          grep -q "id:'ucTentacles'" /tmp/tentacles.js
-          grep -q 'data-tentacle' /tmp/tentacles.js
-          grep -q 'EPISODE XXV: SEARCH AND DESTROY' /tmp/easter.js
-          grep -q 'P1-KLS ONLINE' /tmp/easter.js
-          grep -q 'ee-close-host' /tmp/easter.js
-          grep -q 'aria-label=.Close.' /tmp/easter.js
-          grep -q 'PICKLES:p1klz' /tmp/easter.js
-          grep -q 'OCTOPUS' /tmp/easter.js
-          grep -q 'ubercorp-wordmark-final.svg' /tmp/easter.js
-          grep -q 'EMPLOYEE OF THE SUMMER' /tmp/jimothy.js
-          grep -q '<button class="close"' /tmp/jimothy.js
+          check 'ubercorp-wordmark-final.svg' /tmp/logo.js 'canonical logo asset'
+          check '#ucTentacles' /tmp/tentacles.css 'tentacle styling'
+          check "id:'ucTentacles'" /tmp/tentacles.js 'tentacle SVG root'
+          check 'data-tentacle' /tmp/tentacles.js 'tentacle paths'
+          check 'EPISODE XXV: SEARCH AND DESTROY' /tmp/easter.js 'Star Wars crawl'
+          check 'P1-KLS ONLINE' /tmp/easter.js 'P1-KLS Easter egg'
+          check 'ee-close-host' /tmp/easter.js 'persistent close host'
+          check "setAttribute('aria-label','Close')" /tmp/easter.js 'persistent close button'
+          check 'PICKLES:p1klz' /tmp/easter.js 'PICKLES alias'
+          check 'OCTOPUS' /tmp/easter.js 'Octopus Easter egg'
+          check 'ubercorp-wordmark-final.svg' /tmp/easter.js 'Octopus logo asset'
+          check 'EMPLOYEE OF THE SUMMER' /tmp/jimothy.js 'Jimothy badge'
+          check '<button class="close"' /tmp/jimothy.js 'Jimothy close button'
           if grep -q 'setTimeout(cleanup,11500)' /tmp/jimothy.js; then echo 'Jimothy still auto-closes'; exit 1; fi
-          grep -q 'COBALT // INTERNAL EYES ONLY' /tmp/click-eggs.js
-          grep -q 'BLARGLE GARBLE BARGLE' /tmp/click-eggs.js
-          grep -q 'PIRACY REMAINS A MYTH' /tmp/click-eggs.js
-          grep -q "SATELLITE, NOT A LAUNDROMAT" /tmp/click-eggs.js
-          grep -q 'YOU SMELL MAGIX' /tmp/click-eggs.js
-          grep -q 'aria-label="Übercorp wordmark"' /tmp/wordmark.svg
+          check 'COBALT // INTERNAL EYES ONLY' /tmp/click-eggs.js 'Cobalt click egg'
+          check 'BLARGLE GARBLE BARGLE' /tmp/click-eggs.js 'Bridgebot click egg'
+          check 'PIRACY REMAINS A MYTH' /tmp/click-eggs.js 'Newsmöbius click egg'
+          check "SATELLITE, NOT A LAUNDROMAT" /tmp/click-eggs.js 'laundromat click egg'
+          check 'YOU SMELL MAGIX' /tmp/click-eggs.js 'Magix click egg'
+          check 'aria-label="Übercorp wordmark"' /tmp/wordmark.svg 'canonical wordmark accessibility label'
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/uber-lab.html 'https://madmorrigan.com/uber/lab/'
-          grep -q 'WEBSITE IMPROVEMENT TERMINAL' /tmp/uber-lab.html
-          grep -q 'logo.css?v=logo2' /tmp/uber-lab.html
-          grep -q 'tentacles.js?v=tent1' /tmp/uber-lab.html
-          grep -q 'click-eggs.js?v=click1' /tmp/uber-lab.html
+          check 'WEBSITE IMPROVEMENT TERMINAL' /tmp/uber-lab.html 'Lab terminal'
+          check 'logo.css?v=logo2' /tmp/uber-lab.html 'Lab logo CSS'
+          check 'tentacles.js?v=tent1' /tmp/uber-lab.html 'Lab tentacles JS'
+          check 'click-eggs.js?v=click1' /tmp/uber-lab.html 'Lab click eggs JS'
           response="$(curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 'https://madmorrigan.com/uber/api/compliance-score.php?name=CorporateTest')"
           python3 -c 'import json,sys; d=json.loads(sys.argv[1]); sys.exit(0 if d.get("ok") is True and isinstance(d.get("score"),int) else "Übercorp API health check failed")' "$response"
 

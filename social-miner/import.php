@@ -3,10 +3,9 @@ declare(strict_types=1);
 require __DIR__ . '/lib/bootstrap.php';
 require __DIR__ . '/lib/analyzer.php';
 require __DIR__ . '/lib/importer.php';
-require __DIR__ . '/lib/bot.php';
 
 $jobId = '';
-$source = 'manual';
+$source = 'manual-upload';
 try {
     if (session_status() !== PHP_SESSION_ACTIVE) session_start();
     $sessionOk = !empty($_SESSION['miner_auth']);
@@ -36,9 +35,9 @@ try {
     $target = trim((string)($_POST['target'] ?? ''));
     $label = trim((string)($_POST['label'] ?? ''));
 
-    import_progress_set($jobId,$source,'uploaded',40,'Upload complete — handing file to analyzer.',['filename'=>$name,'platform'=>$platform,'size_bytes'=>$size]);
-    $stats = import_meta_export_file($tmp, $name, $platform, $target, $label, $jobId, $source);
-    json_response(['ok'=>true,'job_id'=>$jobId,'import'=>$stats]);
+    import_progress_set($jobId,$source,'uploaded',40,'Upload complete — saving to background queue.',['filename'=>$name,'platform'=>$platform,'size_bytes'=>$size]);
+    $queued = queue_uploaded_export($tmp,$name,$platform,$target,$label,$jobId,$source,$size);
+    json_response(['ok'=>true,'accepted'=>true,'job_id'=>$jobId,'queue'=>$queued],202);
 } catch (InvalidArgumentException $e) {
     if ($jobId !== '') import_progress_set($jobId,$source,'failed',100,'Import failed: '.$e->getMessage(),['status'=>'error']);
     json_response(['ok'=>false,'error'=>$e->getMessage()],400);

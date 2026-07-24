@@ -39,12 +39,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 - <<'PY'
+          cache_key="${GITHUB_SHA:0:12}"
+          python3 - "$cache_key" <<'PY'
           from pathlib import Path
+          import re, sys
+          key=sys.argv[1]
           p=Path('uber/index.html')
           s=p.read_text(encoding='utf-8')
-          s=s.replace('assets/octopus.css?v=20260724-1','assets/octopus.css?v=20260724-4')
-          s=s.replace('assets/octopus.js?v=20260724-1','assets/octopus.js?v=20260724-4')
+          s=re.sub(r"assets/octopus\.css\?v=[^\"']+",f"assets/octopus.css?v={key}",s)
+          s=re.sub(r"assets/octopus\.js\?v=[^\"']+",f"assets/octopus.js?v={key}",s)
           p.write_text(s,encoding='utf-8')
           PY
 
@@ -120,28 +123,30 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          cache_key="${GITHUB_SHA:0:12}"
           curl --fail-with-body --silent --show-error \
             --retry 5 --retry-all-errors --retry-delay 3 \
             --header 'Cache-Control: no-cache' \
             --output /tmp/uber-index.html \
             'https://madmorrigan.com/uber/'
           grep -q 'Übercorp' /tmp/uber-index.html
-          grep -q 'octopus.css?v=20260724-4' /tmp/uber-index.html
-          grep -q 'octopus.js?v=20260724-4' /tmp/uber-index.html
+          grep -q "octopus.css?v=${cache_key}" /tmp/uber-index.html
+          grep -q "octopus.js?v=${cache_key}" /tmp/uber-index.html
           curl --fail-with-body --silent --show-error \
             --retry 5 --retry-all-errors --retry-delay 3 \
             --header 'Cache-Control: no-cache' \
             --output /tmp/ubercorp-octopus.svg \
-            'https://madmorrigan.com/uber/assets/ubercorp-octopus-metallic.svg?v=20260724-4'
+            "https://madmorrigan.com/uber/assets/ubercorp-octopus-metallic.svg?v=${cache_key}"
           grep -q '<svg' /tmp/ubercorp-octopus.svg
           grep -q 'data:image/webp;base64' /tmp/ubercorp-octopus.svg
           curl --fail-with-body --silent --show-error \
             --retry 5 --retry-all-errors --retry-delay 3 \
             --header 'Cache-Control: no-cache' \
             --output /tmp/ubercorp-octopus.css \
-            'https://madmorrigan.com/uber/assets/octopus.css?v=20260724-4'
+            "https://madmorrigan.com/uber/assets/octopus.css?v=${cache_key}"
           grep -q 'ubercorp-octopus-metallic.svg' /tmp/ubercorp-octopus.css
           grep -q 'octoLogoGlow' /tmp/ubercorp-octopus.css
+          grep -q 'z-index:0' /tmp/ubercorp-octopus.css
           curl --fail-with-body --silent --show-error \
             --retry 5 --retry-all-errors --retry-delay 3 \
             --header 'Cache-Control: no-cache' \

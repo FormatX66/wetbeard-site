@@ -1,9 +1,4 @@
 .brand::before,.brand>.brand-octo,.brand>.mark{display:none!important}
-.uc-page-brand{--uc-logo:url('/uber/assets/ubercorp-wordmark-final.svg');position:relative;z-index:4;width:min(820px,88vw);margin:20px auto -34px;display:grid;place-items:center;pointer-events:none}
-.uc-page-brand img{display:block;position:relative;z-index:2;width:100%;height:auto;transform-origin:50% 72%;filter:drop-shadow(0 0 6px rgba(219,239,255,.08)) drop-shadow(0 0 14px rgba(219,239,255,.05))}
-.uc-page-brand::before,.uc-page-brand::after{content:"";position:absolute;inset:0;pointer-events:none;-webkit-mask-image:var(--uc-logo);mask-image:var(--uc-logo);-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;-webkit-mask-size:contain;mask-size:contain}
-.uc-page-brand::before{z-index:1;background:rgba(218,239,255,.18);filter:blur(4px) drop-shadow(0 0 7px rgba(211,235,255,.20));opacity:.42}
-.uc-page-brand::after{z-index:3;background:linear-gradient(105deg,transparent 0 34%,rgba(255,255,255,0) 39%,rgba(255,255,255,.52) 47%,rgba(198,241,255,.24) 52%,rgba(237,224,255,.18) 57%,rgba(255,255,255,0) 64%,transparent 70%);background-size:230% 100%;background-position:135% 0;mix-blend-mode:screen;filter:drop-shadow(0 0 3px rgba(225,242,255,.12));opacity:.84;animation:ucLogoSweep 4.8s ease-in-out infinite}
-@keyframes ucLogoSweep{0%,15%{background-position:135% 0;opacity:.12}50%{opacity:.78}100%{background-position:-60% 0;opacity:.14}}
-@media(max-width:820px){.uc-page-brand{width:94vw;margin:10px auto -18px}.uc-page-brand::before{filter:blur(3px) drop-shadow(0 0 5px rgba(211,235,255,.18))}}
-@media(prefers-reduced-motion:reduce){.uc-page-brand::after{animation:none;opacity:.18;background-position:50% 0}}
+.uc-page-brand{position:relative;z-index:4;width:min(820px,88vw);margin:20px auto -34px;display:grid;place-items:center;pointer-events:none}
+.uc-page-brand img{display:block;position:relative;z-index:2;width:100%;height:auto;transform-origin:50% 72%;filter:drop-shadow(0 0 5px rgba(219,239,255,.08)) drop-shadow(0 0 12px rgba(219,239,255,.05))}
+@media(max-width:820px){.uc-page-brand{width:94vw;margin:10px auto -18px}}

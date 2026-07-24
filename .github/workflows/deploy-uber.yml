@@ -51,11 +51,14 @@ jobs:
           s=re.sub(r"assets/octopus\.js\?v=[^\"']+",f"assets/octopus.js?v={key}",s)
           index.write_text(s,encoding='utf-8')
 
-          loader=f'<script src="/uber/assets/easter-eggs.js?v={key}"></script>'
+          easter=f'<script src="/uber/assets/easter-eggs.js?v={key}"></script>'
+          jimothy=f'<script src="/uber/assets/jimothy.js?v={key}"></script>'
+          loader=easter+jimothy
           for name in ('index.html','citizen.html','careers.html'):
               p=Path('uber')/name
               s=p.read_text(encoding='utf-8')
               s=re.sub(r'<script src="/uber/assets/easter-eggs\.js\?v=[^\"]+"></script>','',s)
+              s=re.sub(r'<script src="/uber/assets/jimothy\.js\?v=[^\"]+"></script>','',s)
               s=s.replace('</body>',loader+'</body>')
               p.write_text(s,encoding='utf-8')
           PY
@@ -128,7 +131,7 @@ jobs:
           python3 -c 'import json,sys; d=json.load(open(sys.argv[1],encoding="utf-8")); sys.exit(0 if d.get("commit_sha")==sys.argv[2] and d.get("status")=="deployed" else "Übercorp deploy verification failed")' \
             uber-version-live.json "$GITHUB_SHA"
 
-      - name: Verify live site, Easter eggs, octopus assets, Lab, and compliance API
+      - name: Verify live site, octopus assets, Easter eggs, Lab, and compliance API
         shell: bash
         run: |
           set -euo pipefail
@@ -142,30 +145,7 @@ jobs:
           grep -q "octopus.css?v=${cache_key}" /tmp/uber-index.html
           grep -q "octopus.js?v=${cache_key}" /tmp/uber-index.html
           grep -q "easter-eggs.js?v=${cache_key}" /tmp/uber-index.html
-
-          curl --fail-with-body --silent --show-error \
-            --retry 5 --retry-all-errors --retry-delay 3 \
-            --header 'Cache-Control: no-cache' \
-            --output /tmp/uber-citizen.html \
-            'https://madmorrigan.com/uber/citizen.html'
-          grep -q "easter-eggs.js?v=${cache_key}" /tmp/uber-citizen.html
-
-          curl --fail-with-body --silent --show-error \
-            --retry 5 --retry-all-errors --retry-delay 3 \
-            --header 'Cache-Control: no-cache' \
-            --output /tmp/uber-careers.html \
-            'https://madmorrigan.com/uber/careers.html'
-          grep -q "easter-eggs.js?v=${cache_key}" /tmp/uber-careers.html
-
-          curl --fail-with-body --silent --show-error \
-            --retry 5 --retry-all-errors --retry-delay 3 \
-            --header 'Cache-Control: no-cache' \
-            --output /tmp/uber-eggs.js \
-            "https://madmorrigan.com/uber/assets/easter-eggs.js?v=${cache_key}"
-          grep -q 'JIMOTHY' /tmp/uber-eggs.js
-          grep -q 'STARWARS' /tmp/uber-eggs.js
-          grep -q 'DETRITUS' /tmp/uber-eggs.js
-
+          grep -q "jimothy.js?v=${cache_key}" /tmp/uber-index.html
           curl --fail-with-body --silent --show-error \
             --retry 5 --retry-all-errors --retry-delay 3 \
             --header 'Cache-Control: no-cache' \
@@ -181,7 +161,22 @@ jobs:
           grep -q 'ubercorp-octopus-metallic.svg' /tmp/ubercorp-octopus.css
           grep -q 'octoLogoGlow' /tmp/ubercorp-octopus.css
           grep -q 'z-index:0' /tmp/ubercorp-octopus.css
-
+          curl --fail-with-body --silent --show-error \
+            --retry 5 --retry-all-errors --retry-delay 3 \
+            --header 'Cache-Control: no-cache' \
+            --output /tmp/jimothy.js \
+            "https://madmorrigan.com/uber/assets/jimothy.js?v=${cache_key}"
+          grep -q 'EMPLOYEE OF THE SUMMER' /tmp/jimothy.js
+          grep -q 'Urban Asset Recovery Specialist' /tmp/jimothy.js
+          for page in citizen.html careers.html; do
+            curl --fail-with-body --silent --show-error \
+              --retry 5 --retry-all-errors --retry-delay 3 \
+              --header 'Cache-Control: no-cache' \
+              --output "/tmp/${page}" \
+              "https://madmorrigan.com/uber/${page}"
+            grep -q "easter-eggs.js?v=${cache_key}" "/tmp/${page}"
+            grep -q "jimothy.js?v=${cache_key}" "/tmp/${page}"
+          done
           curl --fail-with-body --silent --show-error \
             --retry 5 --retry-all-errors --retry-delay 3 \
             --header 'Cache-Control: no-cache' \

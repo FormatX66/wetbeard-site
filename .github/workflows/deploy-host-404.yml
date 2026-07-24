@@ -83,5 +83,5 @@ jobs:
           status="$(curl --silent --show-error --location --output /tmp/host404.html --write-out '%{http_code}' --header 'Cache-Control: no-cache' "$test_url")"
           test "$status" = '404'
           grep -Fq 'THE SYSTEM IS DOWN' /tmp/host404.html
-          grep -Fq '404 // SYSTEM FAILURE' /tmp/host404.html
+          grep -Fq 'ÜBERCORP ERROR RESPONSE // 404' /tmp/host404.html
           echo "Host-wide 404 verified at $test_url"

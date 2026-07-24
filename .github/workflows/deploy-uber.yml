@@ -44,8 +44,8 @@ jobs:
           tentacles_css = '<link rel="stylesheet" href="/uber/assets/tentacles.css?v=tent1">'
           logo_js = '<script src="/uber/assets/logo.js?v=logo2"></script>'
           tentacles_js = '<script src="/uber/assets/tentacles.js?v=tent1"></script>'
-          easter_js = '<script src="/uber/assets/easter-eggs-stable.js?v=egg3"></script>'
-          jimothy_js = '<script src="/uber/assets/jimothy.js?v=jim1"></script>'
+          easter_js = '<script src="/uber/assets/easter-eggs-stable.js?v=egg4"></script>'
+          jimothy_js = '<script src="/uber/assets/jimothy.js?v=jim2"></script>'
 
           html_files = [Path('uber/index.html'), Path('uber/citizen.html'), Path('uber/careers.html')]
           for p in html_files:
@@ -132,8 +132,8 @@ jobs:
             grep -q 'logo.js?v=logo2' "$out"
             grep -q 'tentacles.css?v=tent1' "$out"
             grep -q 'tentacles.js?v=tent1' "$out"
-            grep -q 'easter-eggs-stable.js?v=egg3' "$out"
-            grep -q 'jimothy.js?v=jim1' "$out"
+            grep -q 'easter-eggs-stable.js?v=egg4' "$out"
+            grep -q 'jimothy.js?v=jim2' "$out"
             if grep -Eq '(rebuild\.js|octopus\.js|easter-eggs\.js)' "$out"; then
               echo "Obsolete experimental script still present in $page"
               exit 1
@@ -145,8 +145,8 @@ jobs:
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/logo.js 'https://madmorrigan.com/uber/assets/logo.js?v=logo2'
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/tentacles.css 'https://madmorrigan.com/uber/assets/tentacles.css?v=tent1'
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/tentacles.js 'https://madmorrigan.com/uber/assets/tentacles.js?v=tent1'
-          curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/easter.js 'https://madmorrigan.com/uber/assets/easter-eggs-stable.js?v=egg3'
-          curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/jimothy.js 'https://madmorrigan.com/uber/assets/jimothy.js?v=jim1'
+          curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/easter.js 'https://madmorrigan.com/uber/assets/easter-eggs-stable.js?v=egg4'
+          curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/jimothy.js 'https://madmorrigan.com/uber/assets/jimothy.js?v=jim2'
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/wordmark.svg 'https://madmorrigan.com/uber/assets/ubercorp-wordmark-final.svg?v=logo2'
           test -s /tmp/site.css
           grep -q 'launchTrogdor' /tmp/site.js
@@ -156,13 +156,17 @@ jobs:
           grep -q '#ucTentacles' /tmp/tentacles.css
           grep -q "id:'ucTentacles'" /tmp/tentacles.js
           grep -q 'data-tentacle' /tmp/tentacles.js
-          grep -q 'STARWARS' /tmp/easter.js
-          grep -q 'DETRITUS' /tmp/easter.js
+          grep -q 'EPISODE XXV: SEARCH AND DESTROY' /tmp/easter.js
+          grep -q 'LEAGUE OF SPACE PIRATES' /tmp/easter.js
           grep -q 'P1-KLS ONLINE' /tmp/easter.js
           grep -q 'PICKLES:p1klz' /tmp/easter.js
+          grep -q 'CLOSE ×' /tmp/easter.js
+          grep -q ',0);' /tmp/easter.js
           grep -q 'OCTOPUS' /tmp/easter.js
           grep -q 'ubercorp-wordmark-final.svg' /tmp/easter.js
           grep -q 'EMPLOYEE OF THE SUMMER' /tmp/jimothy.js
+          grep -q 'class="close"' /tmp/jimothy.js
+          if grep -q 'setTimeout(cleanup,11500)' /tmp/jimothy.js; then echo 'Jimothy still auto-closes'; exit 1; fi
           grep -q 'aria-label="Übercorp wordmark"' /tmp/wordmark.svg
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/uber-lab.html 'https://madmorrigan.com/uber/lab/'
           grep -q 'WEBSITE IMPROVEMENT TERMINAL' /tmp/uber-lab.html

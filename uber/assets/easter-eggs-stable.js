@@ -19,6 +19,31 @@
     const d=document.createElement('div');d.id=NS;d.innerHTML=html+'<span class="hint">ESC TO CLOSE</span>';document.body.appendChild(d);active=d;
     if(ms)setTimeout(()=>{if(active===d)remove()},ms);
   }
+  function crewCard(name,kicker,copy,stamp,accent='#dce9f4'){
+    mount(`
+      #${NS}{background:radial-gradient(circle at 50% 44%,${accent}20,rgba(2,4,7,.95) 58%)}
+      #${NS} .crew{border-color:${accent}66;background:linear-gradient(145deg,#0a0d12f2,#05070af2)}
+      #${NS} .crew h2{color:#fff;text-shadow:0 0 22px ${accent}45}
+      #${NS} .crew .stamp{display:inline-block;margin-top:15px;padding:7px 10px;border:2px solid ${accent};color:${accent};font:900 10px ui-monospace,monospace;letter-spacing:.12em;transform:rotate(-2deg)}
+    `,`<div class="card crew"><div class="k">${kicker}</div><h2>${name}</h2><p>${copy}</p><div class="stamp">${stamp}</div></div>`);
+  }
+  function rusty(){crewCard('RUSTY SHIELDS','ÜBERCORP SECURITY // GUITAR-BASED INCIDENT','Subject continues operating with long hair, sunglasses, leather jacket, and a dented aluminum colander presented as protective headgear. Corporate Safety has declined to certify the colander. Corporate Music has declined to certify the guitar.','HELMET: QUESTIONABLE // RIFFS: WORSE','#f1d3a4');}
+  function orlok(){crewCard('CAPTAIN ORLOK','COMMAND AUTHORITY DISPUTE // DETRITUS','Unauthorized captaincy remains active despite repeated corporate notices explaining that leadership is available only through approved management channels. Vessel continues to ignore calendar invitations.','MEETING DECLINED: AGAIN','#ff7989');}
+  function chroma(){crewCard('CHROMA','VISUAL COMPLIANCE // COLOR EVENT','Subject has exceeded the approved corporate saturation limit. Nearby grayscale branding has filed a formal complaint and requested immediate beige restoration.','TOO MUCH COLOR FOR ONE EMPLOYEE','#b995ff');}
+  function mungo(){crewCard('MUNGO','OPERATIONS NOTICE // UNKNOWN LEVER PULLED','A control marked DO NOT TOUCH has been touched. Results remain difficult to reproduce, expensive to explain, and surprisingly effective. Engineering requests that Mungo stop helping.','HELPfulness LEVEL: ALARMING','#90e7b2');}
+  function parrot(){crewCard('PARROT','COMMUNICATIONS INTERCEPT // AVIAN CHANNEL','Corporate listening systems have detected repeated unauthorized repetition of sensitive phrases. Legal cannot determine whether this constitutes espionage, commentary, or simply excellent timing.','POLLY WANTS CLASSIFIED DATA','#79d8ff');}
+  function pavo(){crewCard('PAVO CRISTATUS','DISPLAY PROTOCOL // EXCESSIVE MAGNIFICENCE','Subject has initiated a full visual display without submitting Form 88-P: Notice of Dramatic Entrance. Nearby personnel report elevated confidence, confusion, and feather-related envy.','DISPLAY: UNNECESSARILY EFFECTIVE','#7ce5e0');}
+  function p1klzLaundry(){
+    mount(`
+      #${NS}{background:radial-gradient(circle at 50% 42%,#0b2f5bdd,#02050af5)}
+      #${NS} .eye{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);width:180px;height:180px;border-radius:50%;border:18px solid #202833;background:#061426;box-shadow:0 0 40px #4ca8ff,0 0 110px #0d4d99 inset;display:grid;place-items:center}
+      #${NS} .eye:after{content:'';width:56px;height:56px;border-radius:50%;background:#bce9ff;box-shadow:0 0 16px #fff,0 0 40px #4ca8ff;animation:eeBlink 2.2s infinite}
+      #${NS} .laundry{position:absolute;left:50%;top:65%;transform:translateX(-50%);width:min(90vw,760px);text-align:center;color:#d8efff;font:800 14px ui-monospace,monospace;letter-spacing:.08em}
+      #${NS} .laundry b{display:block;font-size:clamp(28px,6vw,54px);color:#fff;margin-bottom:12px}
+      #${NS} .sock{font-size:44px;margin-top:12px;animation:eeSock 1.2s ease-in-out infinite alternate}
+      @keyframes eeBlink{0%,46%,54%,100%{transform:scaleY(1)}50%{transform:scaleY(.08)}}@keyframes eeSock{to{transform:rotate(12deg) translateY(-5px)}}
+    `,`<div class="eye"></div><div class="laundry"><b>P1KLZ ONLINE</b>RUSTY.<br><br>YOUR LAUNDRY IS DONE.<br><br>I HAVE FOLDED NOTHING.<div class="sock">🧦</div></div>`);
+  }
   function starWars(){
     const stars=Array.from({length:86},(_,i)=>`<i style="left:${(i*37)%100}%;top:${(i*61)%100}%;animation-delay:-${(i%17)/3}s"></i>`).join('');
     mount(`
@@ -78,12 +103,20 @@
     const coins=Array.from({length:24},(_,i)=>`<span style="left:${(i*43)%100}%;animation-delay:${(i%8)*.15}s">✦</span>`).join('');
     mount(`#${NS}{background:#020306ed}#${NS} .pixel{position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);width:min(92vw,680px);text-align:center;color:#73ff8d;font:900 14px ui-monospace,monospace;letter-spacing:.08em;text-shadow:0 0 8px #31ff5b}.pixel b{display:block;font-size:clamp(35px,8vw,76px);margin-bottom:16px}.coin span{position:absolute;top:-40px;font-size:28px;animation:eeCoin 3s linear forwards}@keyframes eeCoin{to{transform:translateY(110vh) rotate(720deg)}}`,`<div class="pixel"><b>EXECUTIVE MODE</b>30 EXTRA COMPLIANCE POINTS HAVE BEEN ADDED.<br><br>They are imaginary.</div><div class="coin">${coins}</div>`);
   }
-  const eggs={STARWARS:starWars,FORCE:starWars,DETRITUS:detritus,PICKLES:p1klz,P1KLS:p1klz,'P1-KLS':p1klz,P1KLZ:p1klz,'P1-KLZ':p1klz,'1887':year1887,OCTOPUS:octopus,COFFEE:coffee,'42':fortyTwo,RICHMOND:richmond};
-  function check(value){const u=String(value||'').trim().toUpperCase();for(const [word,fn] of Object.entries(eggs)){if(u.endsWith(word)){fn();buffer='';return true}}return false}
+  const eggs={
+    RUSTYSHIELDS:rusty,RUSTY:rusty,
+    CAPTAINORLOCK:orlok,CAPTAINORLOK:orlok,ORLOCK:orlok,ORLOK:orlok,
+    CHROMA:chroma,MUNGO:mungo,PARROT:parrot,PAVOCRISTATUS:pavo,PAVO:pavo,
+    STARWARS:starWars,FORCE:starWars,DETRITUS:detritus,
+    PICKLES:p1klz,P1KLS:p1klz,'P1-KLS':p1klz,
+    P1KLZ:p1klzLaundry,'P1-KLZ':p1klzLaundry,
+    '1887':year1887,OCTOPUS:octopus,COFFEE:coffee,'42':fortyTwo,RICHMOND:richmond
+  };
+  function check(value){const u=String(value||'').trim().toUpperCase().replace(/\s+/g,'');for(const [word,fn] of Object.entries(eggs)){if(u.endsWith(word.replace(/\s+/g,''))){fn();buffer='';return true}}return false}
   addEventListener('keydown',e=>{
     if(e.key==='Escape'){remove();return}
     if(e.key.length!==1)return;
-    clearTimeout(clearTimer);buffer=(buffer+e.key).slice(-22);check(buffer);clearTimer=setTimeout(()=>buffer='',2400);
+    clearTimeout(clearTimer);buffer=(buffer+e.key).slice(-28);check(buffer);clearTimer=setTimeout(()=>buffer='',2400);
   });
   addEventListener('input',e=>{if(e.target&&'value' in e.target)check(e.target.value)});
   const code=['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];let ci=0;

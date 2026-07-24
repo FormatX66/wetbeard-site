@@ -74,6 +74,17 @@ function pick_export_timestamp(array $flat): string {
 
 function comment_candidate_from_record(string $platform, string $sourceFile, string $recordPath, mixed $record, string $target = ''): ?array {
     if (!is_array($record)) return null;
+
+    $hasDirectCommentSignal = false;
+    foreach ($record as $key => $value) {
+        $lk = strtolower((string)$key);
+        if (!is_array($value) && preg_match('/(^|_)(comment|message|text|body|content)($|_)/', $lk)) {
+            $hasDirectCommentSignal = true; break;
+        }
+    }
+    $hasStructuredPayload = isset($record['string_map_data']) || isset($record['string_list_data']);
+    if (!$hasDirectCommentSignal && !$hasStructuredPayload) return null;
+
     $flat = [];
     flatten_export_record($record, '', 0, $flat);
     if (!$flat) return null;
@@ -89,12 +100,14 @@ function comment_candidate_from_record(string $platform, string $sourceFile, str
     $text = pick_flat_value($flat, ['comment.value','comment_text','comment text','comment','message','body','text.value','content.value','text']);
     if ($text === '' || strlen($text) > 20000) return null;
 
-    $username = pick_flat_value($flat, ['username','author','from.name','from.username','profile_name','media owner','owner','name'], 250);
+    $username = '';
+    foreach ($flat as $key=>$value) {
+        if (strtolower($key) === 'title' && strlen($value) <= 250) { $username = $value; break; }
+    }
+    if ($username === '') $username = pick_flat_value($flat, ['username','author','from.name','from.username','profile_name','name'], 250);
     if ($username === '') {
-        foreach (['title','string_list_data.0.value'] as $fallback) {
-            foreach ($flat as $key=>$value) {
-                if (strtolower($key) === $fallback && strlen($value) <= 250) { $username = $value; break 2; }
-            }
+        foreach ($flat as $key=>$value) {
+            if (strtolower($key) === 'string_list_data.0.value' && strlen($value) <= 250) { $username = $value; break; }
         }
     }
 
@@ -104,7 +117,8 @@ function comment_candidate_from_record(string $platform, string $sourceFile, str
     $mediaId = pick_flat_value($flat, ['media_id','post_id','reel_id','media.id','post.id'], 500);
     if ($mediaId === '' && $url !== '') $mediaId = $url;
 
-    $fingerprint = hash('sha256', $platform.'|'.$sourceFile.'|'.$recordPath.'|'.$username.'|'.$timestamp.'|'.$text);
+    $fallbackIdentity = ($username === '' && $timestamp === '' && $url === '') ? ($sourceFile.'|'.$recordPath) : '';
+    $fingerprint = hash('sha256', $platform.'|'.$username.'|'.$timestamp.'|'.$text.'|'.$url.'|'.$mediaId.'|'.$fallbackIdentity);
     $analysis = analyze_comment($text);
     return [
         'platform' => $platform,

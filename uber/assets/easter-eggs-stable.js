@@ -11,15 +11,19 @@
     #${NS} h2{font-size:clamp(38px,8vw,80px);line-height:.86;letter-spacing:-.055em;margin:10px 0}
     #${NS} p{color:#aab4be;max-width:62ch}
     #${NS} .hint{position:absolute;right:12px;bottom:10px;color:#6d7680;font:800 8px ui-monospace,monospace;letter-spacing:.12em}
-    #${NS} .ee-close{position:absolute;right:14px;top:14px;z-index:20;pointer-events:auto;border:1px solid #77818b;background:#0b0e12e8;color:#eef4f8;padding:8px 11px;font:900 10px ui-monospace,monospace;letter-spacing:.1em;cursor:pointer}
-    #${NS} .ee-close:hover{background:#1a2027}
-    @media(max-width:600px){#${NS} .card{padding:48px 20px 20px}#${NS} p{font-size:13px}#${NS} .ee-close{top:10px;right:10px}}
+    #${NS} .ee-close{position:absolute;right:0;top:0;z-index:40;pointer-events:auto;border:0;border-left:1px solid #77818b;border-bottom:1px solid #77818b;background:#0b0e12f2;color:#eef4f8;width:42px;height:42px;padding:0;font:900 20px/42px ui-monospace,monospace;cursor:pointer;text-align:center}
+    #${NS} .ee-close:hover{background:#222a33}
+    #${NS} .ee-close-host{padding-top:max(48px,inherit)}
+    @media(max-width:600px){#${NS} .card{padding:48px 20px 20px}#${NS} p{font-size:13px}#${NS} .ee-close{width:40px;height:40px;line-height:40px}}
   `;
   function mount(css,html,ms=6500){
     remove();
     const s=document.createElement('style');s.id=NS+'Style';s.textContent=base+css;document.head.appendChild(s);
-    const d=document.createElement('div');d.id=NS;d.innerHTML=html+'<button class="ee-close" type="button">CLOSE ×</button><span class="hint">ESC TO CLOSE</span>';document.body.appendChild(d);active=d;
-    d.querySelector('.ee-close')?.addEventListener('click',remove);
+    const d=document.createElement('div');d.id=NS;d.innerHTML=html+'<span class="hint">ESC TO CLOSE</span>';document.body.appendChild(d);active=d;
+    const host=d.querySelector('.card,.copy,.laundry,.msg,.coffee,.ac,.pixel,.crawl,.warning')||d;
+    host.classList.add('ee-close-host');
+    const close=document.createElement('button');close.className='ee-close';close.type='button';close.setAttribute('aria-label','Close');close.textContent='×';host.appendChild(close);
+    close.addEventListener('click',remove);
     if(ms)setTimeout(()=>{if(active===d)remove()},ms);
   }
   function crewCard(name,kicker,copy,stamp,accent='#dce9f4'){
@@ -41,7 +45,7 @@
       #${NS}{background:radial-gradient(circle at 50% 42%,#0b2f5bdd,#02050af5)}
       #${NS} .eye{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);width:180px;height:180px;border-radius:50%;border:18px solid #202833;background:#061426;box-shadow:0 0 40px #4ca8ff,0 0 110px #0d4d99 inset;display:grid;place-items:center}
       #${NS} .eye:after{content:'';width:56px;height:56px;border-radius:50%;background:#bce9ff;box-shadow:0 0 16px #fff,0 0 40px #4ca8ff;animation:eeBlink 2.2s infinite}
-      #${NS} .laundry{position:absolute;left:50%;top:65%;transform:translateX(-50%);width:min(90vw,760px);text-align:center;color:#d8efff;font:800 14px ui-monospace,monospace;letter-spacing:.08em}
+      #${NS} .laundry{position:absolute;left:50%;top:65%;transform:translateX(-50%);width:min(90vw,760px);padding:46px 16px 16px;text-align:center;color:#d8efff;background:#061426d9;border:1px solid #365f83;font:800 14px ui-monospace,monospace;letter-spacing:.08em}
       #${NS} .laundry b{display:block;font-size:clamp(28px,6vw,54px);color:#fff;margin-bottom:12px}
       #${NS} .sock{font-size:44px;margin-top:12px;animation:eeSock 1.2s ease-in-out infinite alternate}
       @keyframes eeBlink{0%,46%,54%,100%{transform:scaleY(1)}50%{transform:scaleY(.08)}}@keyframes eeSock{to{transform:rotate(12deg) translateY(-5px)}}
@@ -62,7 +66,7 @@
       #${NS}{background:linear-gradient(180deg,transparent,#05070be8)}
       #${NS} .ship{position:absolute;left:-260px;top:36%;font-size:122px;filter:drop-shadow(0 15px 10px #000);animation:eeShip 6s cubic-bezier(.2,.7,.3,1) forwards}
       #${NS} .ship:after{content:'♫  ♫  ♫';position:absolute;left:-20px;top:90px;color:#ff4052;font:900 28px ui-monospace,monospace;letter-spacing:22px;white-space:nowrap}
-      #${NS} .warning{position:absolute;left:50%;top:12%;transform:translateX(-50%) rotate(-2deg);padding:12px 18px;border:3px solid #ff4052;color:#ff4052;background:#07080be8;font:900 clamp(16px,4vw,34px) ui-monospace,monospace;text-align:center}
+      #${NS} .warning{position:absolute;left:50%;top:12%;transform:translateX(-50%) rotate(-2deg);padding:46px 18px 12px;border:3px solid #ff4052;color:#ff4052;background:#07080be8;font:900 clamp(16px,4vw,34px) ui-monospace,monospace;text-align:center}
       @keyframes eeShip{0%{transform:translate(0,100px) rotate(-8deg)}45%{transform:translate(60vw,-40px) rotate(5deg)}100%{transform:translate(calc(100vw + 420px),40px) rotate(-2deg)}}
     `,`<div class="warning">UNAUTHORIZED VESSEL DETECTED<br>DETRITUS // EXTREMELY MUSICAL</div><div class="ship">🛸</div>`);
   }
@@ -71,7 +75,7 @@
       #${NS}{background:radial-gradient(circle at 50% 45%,#0b2f5bdd,#02050af2)}
       #${NS} .eye{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);width:180px;height:180px;border-radius:50%;border:18px solid #202833;background:#061426;box-shadow:0 0 40px #4ca8ff,0 0 110px #0d4d99 inset;display:grid;place-items:center}
       #${NS} .eye:after{content:'';width:56px;height:56px;border-radius:50%;background:#bce9ff;box-shadow:0 0 16px #fff,0 0 40px #4ca8ff;animation:eeBlink 2.2s infinite}
-      #${NS} .copy{position:absolute;left:50%;top:68%;transform:translateX(-50%);width:min(88vw,720px);text-align:center;color:#cfe8ff;font:800 14px ui-monospace,monospace;letter-spacing:.08em}.copy b{display:block;font-size:clamp(25px,5vw,50px);color:#fff;margin-bottom:10px}
+      #${NS} .copy{position:absolute;left:50%;top:68%;transform:translateX(-50%);width:min(88vw,720px);padding:46px 16px 16px;text-align:center;color:#cfe8ff;background:#061426d9;border:1px solid #365f83;font:800 14px ui-monospace,monospace;letter-spacing:.08em}.copy b{display:block;font-size:clamp(25px,5vw,50px);color:#fff;margin-bottom:10px}
       @keyframes eeBlink{0%,46%,54%,100%{transform:scaleY(1)}50%{transform:scaleY(.08)}}
     `,`<div class="eye"></div><div class="copy"><b>P1-KLS ONLINE</b>I HAVE REVIEWED YOUR BROWSING HISTORY.<br><br>BOLD CHOICES.<br><br>Also, this website is very nice.</div>`,0);
   }
@@ -85,17 +89,17 @@
     mount(`
       #${NS}{background:radial-gradient(circle at 50% 42%,rgba(221,239,255,.17),rgba(3,5,8,.92) 55%)}
       #${NS} .octo{position:absolute;left:50%;top:45%;transform:translate(-50%,-50%);width:min(92vw,900px);aspect-ratio:840/260;background:url('/uber/assets/ubercorp-wordmark-final.svg') center/contain no-repeat;filter:drop-shadow(0 0 16px rgba(223,244,255,.30)) drop-shadow(0 0 38px rgba(206,225,255,.14));animation:eeOcto .9s ease-in-out infinite alternate}
-      #${NS} .msg{position:absolute;left:50%;bottom:9%;transform:translateX(-50%);width:min(92vw,900px);color:#fff;text-align:center;font:900 clamp(18px,4vw,38px) ui-monospace,monospace;letter-spacing:.09em;text-shadow:0 0 16px #dff4ff55}
+      #${NS} .msg{position:absolute;left:50%;bottom:9%;transform:translateX(-50%);width:min(92vw,900px);padding:44px 14px 14px;color:#fff;background:#070a0dd9;border:1px solid #71808b;text-align:center;font:900 clamp(18px,4vw,38px) ui-monospace,monospace;letter-spacing:.09em;text-shadow:0 0 16px #dff4ff55}
       @keyframes eeOcto{to{transform:translate(-50%,-50%) scale(1.018)}}
     `,`<div class="octo"></div><div class="msg">BRAND COMPLIANCE: 100%<br>THE TENTACLES ARE WORKING AS INTENDED</div>`);
   }
   function coffee(){
     mount(`
-      #${NS}{background:#080706ed}#${NS} .cup{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);font-size:150px;animation:eeCup .18s 8 alternate}#${NS} .steam{position:absolute;left:50%;top:15%;transform:translateX(-50%);font-size:70px;color:#eee;opacity:.55;animation:eeSteam 2s infinite}#${NS} .coffee{position:absolute;left:50%;bottom:16%;transform:translateX(-50%);color:#e5cfb2;text-align:center;font:900 14px ui-monospace,monospace;letter-spacing:.09em}@keyframes eeCup{to{transform:translate(-50%,-50%) rotate(4deg)}}@keyframes eeSteam{to{transform:translate(-50%,-40px);opacity:.08}}
+      #${NS}{background:#080706ed}#${NS} .cup{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);font-size:150px;animation:eeCup .18s 8 alternate}#${NS} .steam{position:absolute;left:50%;top:15%;transform:translateX(-50%);font-size:70px;color:#eee;opacity:.55;animation:eeSteam 2s infinite}#${NS} .coffee{position:absolute;left:50%;bottom:16%;transform:translateX(-50%);padding:44px 14px 14px;color:#e5cfb2;background:#17110bdc;border:1px solid #705b43;text-align:center;font:900 14px ui-monospace,monospace;letter-spacing:.09em}@keyframes eeCup{to{transform:translate(-50%,-50%) rotate(4deg)}}@keyframes eeSteam{to{transform:translate(-50%,-40px);opacity:.08}}
     `,`<div class="steam">〰</div><div class="cup">☕</div><div class="coffee">PRODUCTIVITY SERUM<br>BREAK TIME HAS BEEN SUCCESSFULLY ELIMINATED</div>`);
   }
   function fortyTwo(){
-    mount(`#${NS}{background:#02050af4}#${NS} .answer{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);font-size:min(45vw,420px);font-weight:950;line-height:.75;color:#f3f5f8;text-shadow:0 0 40px #a8c9ff55}#${NS} .ac{position:absolute;left:50%;bottom:10%;transform:translateX(-50%);color:#9aa8bb;text-align:center;font:900 12px ui-monospace,monospace;letter-spacing:.12em;white-space:nowrap}`,`<div class="answer">42</div><div class="ac">CORPORATE ANSWER CONFIRMED<br>THE QUESTION REMAINS CLASSIFIED</div>`,0);
+    mount(`#${NS}{background:#02050af4}#${NS} .answer{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);font-size:min(45vw,420px);font-weight:950;line-height:.75;color:#f3f5f8;text-shadow:0 0 40px #a8c9ff55}#${NS} .ac{position:absolute;left:50%;bottom:10%;transform:translateX(-50%);padding:44px 14px 14px;color:#9aa8bb;background:#070a0dd9;border:1px solid #536070;text-align:center;font:900 12px ui-monospace,monospace;letter-spacing:.12em;white-space:nowrap}`,`<div class="answer">42</div><div class="ac">CORPORATE ANSWER CONFIRMED<br>THE QUESTION REMAINS CLASSIFIED</div>`,0);
   }
   function richmond(){
     mount(`
@@ -104,7 +108,7 @@
   }
   function konami(){
     const coins=Array.from({length:24},(_,i)=>`<span style="left:${(i*43)%100}%;animation-delay:${(i%8)*.15}s">✦</span>`).join('');
-    mount(`#${NS}{background:#020306ed}#${NS} .pixel{position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);width:min(92vw,680px);text-align:center;color:#73ff8d;font:900 14px ui-monospace,monospace;letter-spacing:.08em;text-shadow:0 0 8px #31ff5b}.pixel b{display:block;font-size:clamp(35px,8vw,76px);margin-bottom:16px}.coin span{position:absolute;top:-40px;font-size:28px;animation:eeCoin 3s linear forwards}@keyframes eeCoin{to{transform:translateY(110vh) rotate(720deg)}}`,`<div class="pixel"><b>EXECUTIVE MODE</b>30 EXTRA COMPLIANCE POINTS HAVE BEEN ADDED.<br><br>They are imaginary.</div><div class="coin">${coins}</div>`);
+    mount(`#${NS}{background:#020306ed}#${NS} .pixel{position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);width:min(92vw,680px);padding:44px 14px 14px;background:#061008e8;border:1px solid #4f9f62;text-align:center;color:#73ff8d;font:900 14px ui-monospace,monospace;letter-spacing:.08em;text-shadow:0 0 8px #31ff5b}.pixel b{display:block;font-size:clamp(35px,8vw,76px);margin-bottom:16px}.coin span{position:absolute;top:-40px;font-size:28px;animation:eeCoin 3s linear forwards}@keyframes eeCoin{to{transform:translateY(110vh) rotate(720deg)}}`,`<div class="pixel"><b>EXECUTIVE MODE</b>30 EXTRA COMPLIANCE POINTS HAVE BEEN ADDED.<br><br>They are imaginary.</div><div class="coin">${coins}</div>`);
   }
   const eggs={
     RUSTYSHIELDS:rusty,RUSTY:rusty,

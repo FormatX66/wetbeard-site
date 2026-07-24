@@ -43,13 +43,10 @@
   }
 
   function bind(){
-    const brand=document.querySelector('.uc-page-brand');
-    if(brand){
-      brand.style.pointerEvents='auto';
-      brand.style.touchAction='manipulation';
-      brand.setAttribute('role','button');
-      brand.setAttribute('aria-label','Übercorp wordmark');
-      multi(brand,8,()=>show('blue','COBALT // INTERNAL EYES ONLY','THE BLUE BOTTLE PROTOCOL','The public company sells products. Cobalt keeps a much older promise. Albrecht Über named the inner circle for the cobalt-blue medicine bottles that carried his patent remedies—and entrusted it with the continuing search for the true source of übergeist.','PUBLIC HISTORY: REDACTED'),8000);
+    const cobaltTrigger=firstByText('.brand small,header small','ORDER');
+    if(cobaltTrigger){
+      cobaltTrigger.style.touchAction='manipulation';
+      multi(cobaltTrigger,8,()=>show('blue','COBALT // INTERNAL EYES ONLY','THE BLUE BOTTLE PROTOCOL','The public company sells products. Cobalt keeps a much older promise. Albrecht Über named the inner circle for the cobalt-blue medicine bottles that carried his patent remedies—and entrusted it with the continuing search for the true source of übergeist.','PUBLIC HISTORY: REDACTED'),8000);
     }
 
     const orb=document.querySelector('.orb,.octo-orb');

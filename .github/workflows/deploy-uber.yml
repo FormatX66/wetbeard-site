@@ -44,25 +44,26 @@ jobs:
           tentacles_css = '<link rel="stylesheet" href="/uber/assets/tentacles.css?v=tent1">'
           logo_js = '<script src="/uber/assets/logo.js?v=logo2"></script>'
           tentacles_js = '<script src="/uber/assets/tentacles.js?v=tent1"></script>'
-          easter_js = '<script src="/uber/assets/easter-eggs-stable.js?v=egg4"></script>'
-          jimothy_js = '<script src="/uber/assets/jimothy.js?v=jim2"></script>'
+          easter_js = '<script src="/uber/assets/easter-eggs-stable.js?v=egg5"></script>'
+          jimothy_js = '<script src="/uber/assets/jimothy.js?v=jim3"></script>'
+          click_js = '<script src="/uber/assets/click-eggs.js?v=click1"></script>'
 
           html_files = [Path('uber/index.html'), Path('uber/citizen.html'), Path('uber/careers.html')]
           for p in html_files:
               s = p.read_text(encoding='utf-8')
               s = re.sub(r'<link[^>]+(?:octopus|rebuild|logo|tentacles)\.css[^>]*>\s*', '', s, flags=re.I)
-              s = re.sub(r'<script[^>]+(?:octopus|rebuild|easter-eggs(?:-stable)?|jimothy|logo|tentacles)\.js[^>]*></script>\s*', '', s, flags=re.I)
+              s = re.sub(r'<script[^>]+(?:octopus|rebuild|easter-eggs(?:-stable)?|jimothy|logo|tentacles|click-eggs)\.js[^>]*></script>\s*', '', s, flags=re.I)
               s = s.replace('</head>', logo_css + tentacles_css + '</head>')
-              s = s.replace('</body>', logo_js + tentacles_js + easter_js + jimothy_js + '</body>')
+              s = s.replace('</body>', logo_js + tentacles_js + easter_js + jimothy_js + click_js + '</body>')
               p.write_text(s, encoding='utf-8')
 
           lab = Path('uber/lab/index.php')
           if lab.exists():
               s = lab.read_text(encoding='utf-8')
               s = re.sub(r'<link[^>]+(?:octopus|rebuild|logo|tentacles)\.css[^>]*>\s*', '', s, flags=re.I)
-              s = re.sub(r'<script[^>]+(?:octopus|rebuild|easter-eggs(?:-stable)?|jimothy|logo|tentacles)\.js[^>]*></script>\s*', '', s, flags=re.I)
+              s = re.sub(r'<script[^>]+(?:octopus|rebuild|easter-eggs(?:-stable)?|jimothy|logo|tentacles|click-eggs)\.js[^>]*></script>\s*', '', s, flags=re.I)
               s = s.replace('</head>', '<link rel="stylesheet" href="../assets/logo.css?v=logo2"><link rel="stylesheet" href="../assets/tentacles.css?v=tent1"></head>')
-              s = s.replace('</body>', '<script src="../assets/logo.js?v=logo2"></script><script src="../assets/tentacles.js?v=tent1"></script></body>')
+              s = s.replace('</body>', '<script src="../assets/logo.js?v=logo2"></script><script src="../assets/tentacles.js?v=tent1"></script><script src="../assets/click-eggs.js?v=click1"></script></body>')
               lab.write_text(s, encoding='utf-8')
           PY
 
@@ -132,8 +133,9 @@ jobs:
             grep -q 'logo.js?v=logo2' "$out"
             grep -q 'tentacles.css?v=tent1' "$out"
             grep -q 'tentacles.js?v=tent1' "$out"
-            grep -q 'easter-eggs-stable.js?v=egg4' "$out"
-            grep -q 'jimothy.js?v=jim2' "$out"
+            grep -q 'easter-eggs-stable.js?v=egg5' "$out"
+            grep -q 'jimothy.js?v=jim3' "$out"
+            grep -q 'click-eggs.js?v=click1' "$out"
             if grep -Eq '(rebuild\.js|octopus\.js|easter-eggs\.js)' "$out"; then
               echo "Obsolete experimental script still present in $page"
               exit 1
@@ -145,8 +147,9 @@ jobs:
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/logo.js 'https://madmorrigan.com/uber/assets/logo.js?v=logo2'
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/tentacles.css 'https://madmorrigan.com/uber/assets/tentacles.css?v=tent1'
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/tentacles.js 'https://madmorrigan.com/uber/assets/tentacles.js?v=tent1'
-          curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/easter.js 'https://madmorrigan.com/uber/assets/easter-eggs-stable.js?v=egg4'
-          curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/jimothy.js 'https://madmorrigan.com/uber/assets/jimothy.js?v=jim2'
+          curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/easter.js 'https://madmorrigan.com/uber/assets/easter-eggs-stable.js?v=egg5'
+          curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/jimothy.js 'https://madmorrigan.com/uber/assets/jimothy.js?v=jim3'
+          curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/click-eggs.js 'https://madmorrigan.com/uber/assets/click-eggs.js?v=click1'
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/wordmark.svg 'https://madmorrigan.com/uber/assets/ubercorp-wordmark-final.svg?v=logo2'
           test -s /tmp/site.css
           grep -q 'launchTrogdor' /tmp/site.js
@@ -157,21 +160,26 @@ jobs:
           grep -q "id:'ucTentacles'" /tmp/tentacles.js
           grep -q 'data-tentacle' /tmp/tentacles.js
           grep -q 'EPISODE XXV: SEARCH AND DESTROY' /tmp/easter.js
-          grep -q 'LEAGUE OF SPACE PIRATES' /tmp/easter.js
           grep -q 'P1-KLS ONLINE' /tmp/easter.js
+          grep -q 'ee-close-host' /tmp/easter.js
+          grep -q 'aria-label=.Close.' /tmp/easter.js
           grep -q 'PICKLES:p1klz' /tmp/easter.js
-          grep -q 'CLOSE ×' /tmp/easter.js
-          grep -q ',0);' /tmp/easter.js
           grep -q 'OCTOPUS' /tmp/easter.js
           grep -q 'ubercorp-wordmark-final.svg' /tmp/easter.js
           grep -q 'EMPLOYEE OF THE SUMMER' /tmp/jimothy.js
-          grep -q 'class="close"' /tmp/jimothy.js
+          grep -q '<button class="close"' /tmp/jimothy.js
           if grep -q 'setTimeout(cleanup,11500)' /tmp/jimothy.js; then echo 'Jimothy still auto-closes'; exit 1; fi
+          grep -q 'COBALT // INTERNAL EYES ONLY' /tmp/click-eggs.js
+          grep -q 'BLARGLE GARBLE BARGLE' /tmp/click-eggs.js
+          grep -q 'PIRACY REMAINS A MYTH' /tmp/click-eggs.js
+          grep -q "SATELLITE, NOT A LAUNDROMAT" /tmp/click-eggs.js
+          grep -q 'YOU SMELL MAGIX' /tmp/click-eggs.js
           grep -q 'aria-label="Übercorp wordmark"' /tmp/wordmark.svg
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/uber-lab.html 'https://madmorrigan.com/uber/lab/'
           grep -q 'WEBSITE IMPROVEMENT TERMINAL' /tmp/uber-lab.html
           grep -q 'logo.css?v=logo2' /tmp/uber-lab.html
           grep -q 'tentacles.js?v=tent1' /tmp/uber-lab.html
+          grep -q 'click-eggs.js?v=click1' /tmp/uber-lab.html
           response="$(curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 'https://madmorrigan.com/uber/api/compliance-score.php?name=CorporateTest')"
           python3 -c 'import json,sys; d=json.loads(sys.argv[1]); sys.exit(0 if d.get("ok") is True and isinstance(d.get("score"),int) else "Übercorp API health check failed")' "$response"
 

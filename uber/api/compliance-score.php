@@ -1,12 +1,24 @@
 <?php
 declare(strict_types=1);
 header('Content-Type: application/json; charset=utf-8');
-header('Cache-Control: no-store, max-age=0');
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 
 $name = trim((string)($_GET['name'] ?? ''));
 if ($name === '') {
     http_response_code(400);
     echo json_encode(['ok' => false, 'error' => 'name_required']);
+    exit;
+}
+
+if (strcasecmp($name, 'trogdor') === 0) {
+    echo json_encode([
+        'ok' => true,
+        'score' => 0,
+        'status' => 'BURNINATION DETECTED',
+        'risk' => 'PEASANT-LEVEL CATASTROPHE',
+        'action' => 'RUN FOR THE THATCHED-ROOF COTTAGES',
+        'event' => 'trogdor',
+    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     exit;
 }
 

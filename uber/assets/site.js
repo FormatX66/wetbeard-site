@@ -14,7 +14,6 @@
   function launchTrogdor(){
     document.getElementById('trogdor-event')?.remove();
     document.getElementById('trogdor-style')?.remove();
-
     const style=document.createElement('style');
     style.id='trogdor-style';
     style.textContent=`
@@ -80,6 +79,26 @@
   const form=q('#complianceForm');
   if(form){
     const name=q('#citizenName'),score=q('#scoreValue'),ring=q('#scoreRing'),state=q('#scanState'),status=q('#statusValue'),risk=q('#riskValue'),action=q('#actionValue');
+    let trogdorActive=false;
+
+    function setTrogdorResult(){
+      if(!trogdorActive){
+        trogdorActive=true;
+        launchTrogdor();
+        setTimeout(()=>{trogdorActive=false},10500);
+      }
+      score.textContent='00';
+      ring.style.background='conic-gradient(var(--red) 0deg,#252a31 0deg)';
+      status.textContent='BURNINATION DETECTED';
+      risk.textContent='PEASANT-LEVEL CATASTROPHE';
+      action.textContent='RUN FOR THE THATCHED-ROOF COTTAGES';
+      state.textContent='OH NO';
+    }
+
+    name.addEventListener('input',()=>{
+      if(/^trogdor$/i.test(name.value.trim())) setTrogdorResult();
+    });
+
     function fallback(n){
       let h=0;for(const c of n.toUpperCase())h=((h<<5)-h)+c.charCodeAt(0);let s=18+Math.abs(h%78);
       if(/^trogdor$/i.test(n))return{score:0,status:'BURNINATION DETECTED',risk:'PEASANT-LEVEL CATASTROPHE',action:'RUN FOR THE THATCHED-ROOF COTTAGES',event:'trogdor'};
@@ -89,22 +108,23 @@
       if(s>=40)return{score:s,status:'REQUIRES GUIDANCE',risk:'CONCERNING',action:'REPORT UNUSUAL THOUGHTS'};
       return{score:s,status:'NON-COMPLIANT',risk:'SPICY',action:'AVOID GUITARS & SMALL MOONS'};
     }
+
     async function scan(n){
       try{const r=await fetch('/uber/api/compliance-score.php?name='+encodeURIComponent(n)+'&_='+Date.now(),{cache:'no-store',headers:{Accept:'application/json'}});if(!r.ok)throw 0;const d=await r.json();if(typeof d.score!=='number')throw 0;return d}catch{return fallback(n)}
     }
+
     form.addEventListener('submit',async e=>{
       e.preventDefault();
       const n=name.value.trim();if(!n)return;
-      const localTrogdor=/^trogdor$/i.test(n);
-      if(localTrogdor)launchTrogdor();
-      state.textContent=localTrogdor?'BURNINATING…':'SCANNING…';score.textContent='..';
+      if(/^trogdor$/i.test(n)){setTrogdorResult();return}
+      state.textContent='SCANNING…';score.textContent='..';
       const d=await scan(n);
-      if(d.event==='trogdor'&&!localTrogdor)launchTrogdor();
+      if(d.event==='trogdor'){setTrogdorResult();return}
       await new Promise(r=>setTimeout(r,300));
       const s=Math.max(0,Math.min(100,d.score));
       score.textContent=String(s).padStart(2,'0');
       ring.style.background=`conic-gradient(var(--red) ${s*3.6}deg,#252a31 0deg)`;
-      status.textContent=d.status||'CORPORATE REVIEW';risk.textContent=d.risk||'UNASSESSED';action.textContent=d.action||'AWAIT INSTRUCTIONS';state.textContent=d.event==='trogdor'?'OH NO':'COMPLETE';
+      status.textContent=d.status||'CORPORATE REVIEW';risk.textContent=d.risk||'UNASSESSED';action.textContent=d.action||'AWAIT INSTRUCTIONS';state.textContent='COMPLETE';
     });
   }
 })();

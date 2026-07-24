@@ -24,12 +24,14 @@ jobs:
     steps:
       - name: Check out site files
         uses: actions/checkout@v4
+
       - name: Create deployment version marker
         shell: bash
         run: |
           deployed_at_utc="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
           printf '{\n  "commit_sha": "%s",\n  "deployed_at_utc": "%s",\n  "status": "deployed"\n}\n' "$GITHUB_SHA" "$deployed_at_utc" > uber/deploy-version.json
-      - name: Prepare cache-busted visual and Easter egg assets
+
+      - name: Prepare rebuilt visual system and Easter eggs
         shell: bash
         run: |
           set -euo pipefail
@@ -38,23 +40,35 @@ jobs:
           from pathlib import Path
           import re, sys
           key=sys.argv[1]
+          rebuild_css=f'<link rel="stylesheet" href="/uber/assets/rebuild.css?v={key}">'
+          rebuild_js=f'<script src="/uber/assets/rebuild.js?v={key}"></script>'
+          easter=f'<script src="/uber/assets/easter-eggs.js?v={key}"></script>'
+          jimothy=f'<script src="/uber/assets/jimothy.js?v={key}"></script>'
           for name in ('index.html','citizen.html','careers.html'):
               p=Path('uber')/name
               s=p.read_text(encoding='utf-8')
-              s=re.sub(r"assets/octopus\.css\?v=[^\"']+",f"assets/octopus.css?v={key}",s)
-              s=re.sub(r"assets/octopus\.js\?v=[^\"']+",f"assets/octopus.js?v={key}",s)
-              easter=f'<script src="/uber/assets/easter-eggs.js?v={key}"></script>'
-              jimothy=f'<script src="/uber/assets/jimothy.js?v={key}"></script>'
-              s=re.sub(r'<script src="/uber/assets/easter-eggs\.js\?v=[^\"]+"></script>','',s)
-              s=re.sub(r'<script src="/uber/assets/jimothy\.js\?v=[^\"]+"></script>','',s)
-              s=s.replace('</body>',easter+jimothy+'</body>')
+              s=re.sub(r'<link[^>]+href=["\'][^"\']*octopus\.css[^"\']*["\'][^>]*>','',s,flags=re.I)
+              s=re.sub(r'<script[^>]+src=["\'][^"\']*octopus\.js[^"\']*["\'][^>]*></script>','',s,flags=re.I)
+              s=re.sub(r'<link[^>]+href=["\'][^"\']*rebuild\.css[^"\']*["\'][^>]*>','',s,flags=re.I)
+              s=re.sub(r'<script[^>]+src=["\'][^"\']*rebuild\.js[^"\']*["\'][^>]*></script>','',s,flags=re.I)
+              s=re.sub(r'<script src="/uber/assets/easter-eggs\.js\?v=[^"]+"></script>','',s)
+              s=re.sub(r'<script src="/uber/assets/jimothy\.js\?v=[^"]+"></script>','',s)
+              s=s.replace('</head>',rebuild_css+'</head>')
+              s=s.replace('</body>',easter+jimothy+rebuild_js+'</body>')
               p.write_text(s,encoding='utf-8')
           lab=Path('uber/lab/index.php')
           s=lab.read_text(encoding='utf-8')
-          s=re.sub(r"\.\./assets/octopus\.css\?v=[^\"']+",f"../assets/octopus.css?v={key}",s)
-          s=re.sub(r"\.\./assets/octopus\.js\?v=[^\"']+",f"../assets/octopus.js?v={key}",s)
+          s=re.sub(r'<link[^>]+href=["\'][^"\']*octopus\.css[^"\']*["\'][^>]*>','',s,flags=re.I)
+          s=re.sub(r'<script[^>]+src=["\'][^"\']*octopus\.js[^"\']*["\'][^>]*></script>','',s,flags=re.I)
+          s=re.sub(r'<link[^>]+href=["\'][^"\']*rebuild\.css[^"\']*["\'][^>]*>','',s,flags=re.I)
+          s=re.sub(r'<script[^>]+src=["\'][^"\']*rebuild\.js[^"\']*["\'][^>]*></script>','',s,flags=re.I)
+          lab_css=f'<link rel="stylesheet" href="../assets/rebuild.css?v={key}">'
+          lab_js=f'<script src="../assets/rebuild.js?v={key}"></script>'
+          s=s.replace('</head>',lab_css+'</head>')
+          s=s.replace('</body>',lab_js+'</body>')
           lab.write_text(s,encoding='utf-8')
           PY
+
       - name: Configure secure Bluehost connection
         env:
           BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
@@ -63,17 +77,21 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -n "$BLUEHOST_HOST"; test -n "$BLUEHOST_USERNAME"; test -n "$BLUEHOST_SSH_PRIVATE_KEY"
+          test -n "$BLUEHOST_HOST"
+          test -n "$BLUEHOST_USERNAME"
+          test -n "$BLUEHOST_SSH_PRIVATE_KEY"
           install -m 700 -d "$HOME/.ssh"
           printf '%s\n' "$BLUEHOST_SSH_PRIVATE_KEY" > "$HOME/.ssh/bluehost_deploy"
           chmod 600 "$HOME/.ssh/bluehost_deploy"
           ssh-keyscan -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts"
+
       - name: Prepare Übercorp production folder
         env:
           BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
           BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
         shell: bash
         run: ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" 'test -d public_html && mkdir -p public_html/uber'
+
       - name: Install Website Lab API key if configured
         env:
           BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
@@ -87,19 +105,22 @@ jobs:
           else
             echo 'UBERCORP_OPENAI_API_KEY is not configured; Website Lab will deploy in setup-required mode.'
           fi
+
       - name: Deploy Übercorp files
         env:
           BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
           BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
         shell: bash
         run: tar -C uber -czf - . | ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" 'tar -xzf - -C public_html/uber'
+
       - name: Verify deployed commit
         shell: bash
         run: |
           set -euo pipefail
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --header 'Cache-Control: no-cache' --output uber-version-live.json 'https://madmorrigan.com/uber/deploy-version.json'
           python3 -c 'import json,sys; d=json.load(open(sys.argv[1],encoding="utf-8")); sys.exit(0 if d.get("commit_sha")==sys.argv[2] and d.get("status")=="deployed" else "Übercorp deploy verification failed")' uber-version-live.json "$GITHUB_SHA"
-      - name: Verify live site, Safari-safe canonical wordmark, Easter eggs, Lab, and compliance API
+
+      - name: Verify rebuilt live experience
         shell: bash
         run: |
           set -euo pipefail
@@ -109,29 +130,33 @@ jobs:
             [ "$page" = index.html ] && url='https://madmorrigan.com/uber/'
             curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --header 'Cache-Control: no-cache' --output "/tmp/${page}" "$url"
             grep -q 'Übercorp' "/tmp/${page}"
-            grep -q "octopus.css?v=${cache_key}" "/tmp/${page}"
-            grep -q "octopus.js?v=${cache_key}" "/tmp/${page}"
+            grep -q "rebuild.css?v=${cache_key}" "/tmp/${page}"
+            grep -q "rebuild.js?v=${cache_key}" "/tmp/${page}"
             grep -q "easter-eggs.js?v=${cache_key}" "/tmp/${page}"
             grep -q "jimothy.js?v=${cache_key}" "/tmp/${page}"
+            if grep -q 'octopus.js' "/tmp/${page}"; then echo 'Old octopus.js still present'; exit 1; fi
           done
-          curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --header 'Cache-Control: no-cache' --output /tmp/ubercorp-wordmark.svg "https://madmorrigan.com/uber/assets/ubercorp-wordmark-liquid-v2.svg?v=${cache_key}"
-          grep -q 'aria-label="Übercorp liquid metallic wordmark"' /tmp/ubercorp-wordmark.svg
-          grep -q 'data:image/webp;base64' /tmp/ubercorp-wordmark.svg
-          curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --header 'Cache-Control: no-cache' --output /tmp/ubercorp-octopus.css "https://madmorrigan.com/uber/assets/octopus.css?v=${cache_key}"
-          grep -q 'wordmarkPulse' /tmp/ubercorp-octopus.css
-          grep -q 'asset-failed' /tmp/ubercorp-octopus.css
-          grep -q 'z-index:0' /tmp/ubercorp-octopus.css
-          curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --header 'Cache-Control: no-cache' --output /tmp/ubercorp-octopus.js "https://madmorrigan.com/uber/assets/octopus.js?v=${cache_key}"
-          grep -q 'ubercorp-wordmark-liquid-v2.svg' /tmp/ubercorp-octopus.js
-          grep -q 'ensureLogo' /tmp/ubercorp-octopus.js
+          curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --header 'Cache-Control: no-cache' --output /tmp/wordmark.svg 'https://madmorrigan.com/uber/assets/ubercorp-wordmark-final.svg'
+          grep -q 'aria-label="Übercorp wordmark"' /tmp/wordmark.svg
+          grep -q 'fill-rule="evenodd"' /tmp/wordmark.svg
+          curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --header 'Cache-Control: no-cache' --output /tmp/rebuild.css "https://madmorrigan.com/uber/assets/rebuild.css?v=${cache_key}"
+          grep -q '.uc-commerce' /tmp/rebuild.css
+          grep -q '#ucCircuit' /tmp/rebuild.css
+          curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --header 'Cache-Control: no-cache' --output /tmp/rebuild.js "https://madmorrigan.com/uber/assets/rebuild.js?v=${cache_key}"
+          grep -q 'DIET XQWX' /tmp/rebuild.js
+          grep -q 'FASTCUBES' /tmp/rebuild.js
+          grep -q 'NEWSMÖBIUS' /tmp/rebuild.js
+          grep -q 'GENEPARLOR' /tmp/rebuild.js
+          grep -q 'ubercorp-wordmark-final.svg' /tmp/rebuild.js
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --header 'Cache-Control: no-cache' --output /tmp/jimothy.js "https://madmorrigan.com/uber/assets/jimothy.js?v=${cache_key}"
           grep -q 'EMPLOYEE OF THE SUMMER' /tmp/jimothy.js
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --header 'Cache-Control: no-cache' --output /tmp/uber-lab.html 'https://madmorrigan.com/uber/lab/'
           grep -q 'WEBSITE IMPROVEMENT TERMINAL' /tmp/uber-lab.html
-          grep -q "octopus.css?v=${cache_key}" /tmp/uber-lab.html
-          grep -q "octopus.js?v=${cache_key}" /tmp/uber-lab.html
+          grep -q "rebuild.css?v=${cache_key}" /tmp/uber-lab.html
+          grep -q "rebuild.js?v=${cache_key}" /tmp/uber-lab.html
           response="$(curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --header 'Cache-Control: no-cache' 'https://madmorrigan.com/uber/api/compliance-score.php?name=CorporateTest')"
           python3 -c 'import json,sys; d=json.loads(sys.argv[1]); sys.exit(0 if d.get("ok") is True and isinstance(d.get("score"),int) else "Übercorp API health check failed")' "$response"
+
       - name: Record successful production deployment
         shell: bash
         run: |
@@ -140,7 +165,7 @@ jobs:
           deployed_at_utc="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
           printf '{\n  "site": "uber",\n  "url": "https://madmorrigan.com/uber/",\n  "commit_sha": "%s",\n  "verified_at_utc": "%s",\n  "status": "verified-live"\n}\n' "$GITHUB_SHA" "$deployed_at_utc" > deployments/uber-live.json
           git config user.name 'github-actions[bot]'
-          git config user.email '41898233+github-actions[bot]@users.noreply.github.com'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/uber-live.json
           git commit -m 'Record Übercorp live deployment [skip ci]'
           git push

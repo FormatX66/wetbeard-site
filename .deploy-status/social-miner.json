@@ -1,5 +1,5 @@
 {
-  "deployed_commit": "4ebc6c8f53bbfc2f27dc08744596d17ba26dc1b6",
+  "deployed_commit": "196caf3a40dd4819ef260a3eea56c51c6be8549a",
   "health": {
     "bot_analysis": true,
     "curl_available": true,
@@ -11,5 +11,5 @@
     "zip_available": true
   },
   "url": "https://madmorrigan.com/social-miner/api.php?action=health",
-  "verified_at_utc": "2026-07-24T04:45:05Z"
+  "verified_at_utc": "2026-07-24T12:49:28Z"
 }

@@ -1,4 +1,4 @@
-name: Deploy UberCorp to Bluehost
+name: Deploy Übercorp to Bluehost
 
 on:
   push:
@@ -51,7 +51,7 @@ jobs:
           chmod 600 "$HOME/.ssh/bluehost_deploy"
           ssh-keyscan -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts"
 
-      - name: Prepare UberCorp production folder
+      - name: Prepare Übercorp production folder
         env:
           BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
           BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
@@ -62,7 +62,24 @@ jobs:
             "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
             'test -d public_html && mkdir -p public_html/uber'
 
-      - name: Deploy UberCorp files
+      - name: Install Website Lab API key if configured
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+          UBERCORP_OPENAI_API_KEY: ${{ secrets.UBERCORP_OPENAI_API_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -n "${UBERCORP_OPENAI_API_KEY:-}" ]; then
+            printf '%s' "$UBERCORP_OPENAI_API_KEY" | \
+              ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 \
+              "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+              'umask 077; cat > "$HOME/.ubercorp-openai-key"'
+          else
+            echo 'UBERCORP_OPENAI_API_KEY is not configured; Website Lab will deploy in setup-required mode.'
+          fi
+
+      - name: Deploy Übercorp files
         env:
           BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
           BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
@@ -83,10 +100,10 @@ jobs:
             --header 'Cache-Control: no-cache' \
             --output uber-version-live.json \
             'https://madmorrigan.com/uber/deploy-version.json'
-          python3 -c 'import json,sys; d=json.load(open(sys.argv[1],encoding="utf-8")); sys.exit(0 if d.get("commit_sha")==sys.argv[2] and d.get("status")=="deployed" else "UberCorp deploy verification failed")' \
+          python3 -c 'import json,sys; d=json.load(open(sys.argv[1],encoding="utf-8")); sys.exit(0 if d.get("commit_sha")==sys.argv[2] and d.get("status")=="deployed" else "Übercorp deploy verification failed")' \
             uber-version-live.json "$GITHUB_SHA"
 
-      - name: Verify live site and compliance API
+      - name: Verify live site, Lab, and compliance API
         shell: bash
         run: |
           set -euo pipefail
@@ -95,12 +112,18 @@ jobs:
             --header 'Cache-Control: no-cache' \
             --output /tmp/uber-index.html \
             'https://madmorrigan.com/uber/'
-          grep -q 'ÜBERCORP' /tmp/uber-index.html
+          grep -q 'Übercorp' /tmp/uber-index.html
+          curl --fail-with-body --silent --show-error \
+            --retry 5 --retry-all-errors --retry-delay 3 \
+            --header 'Cache-Control: no-cache' \
+            --output /tmp/uber-lab.html \
+            'https://madmorrigan.com/uber/lab/'
+          grep -q 'WEBSITE IMPROVEMENT TERMINAL' /tmp/uber-lab.html
           response="$(curl --fail-with-body --silent --show-error \
             --retry 5 --retry-all-errors --retry-delay 3 \
             --header 'Cache-Control: no-cache' \
             'https://madmorrigan.com/uber/api/compliance-score.php?name=CorporateTest')"
-          python3 -c 'import json,sys; d=json.loads(sys.argv[1]); sys.exit(0 if d.get("ok") is True and isinstance(d.get("score"),int) else "UberCorp API health check failed")' "$response"
+          python3 -c 'import json,sys; d=json.loads(sys.argv[1]); sys.exit(0 if d.get("ok") is True and isinstance(d.get("score"),int) else "Übercorp API health check failed")' "$response"
 
       - name: Record successful production deployment
         shell: bash
@@ -113,5 +136,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/uber-live.json
-          git commit -m 'Record UberCorp live deployment [skip ci]'
+          git commit -m 'Record Übercorp live deployment [skip ci]'
           git push

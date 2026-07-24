@@ -46,7 +46,7 @@ jobs:
           set -euo pipefail
           config_b64="$(php -r 'echo base64_encode("<?php return " . var_export(["admin_password_hash" => $argv[1]], true) . ";\n");' "$BOOTSTRAP_ADMIN_HASH")"
           ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
-            "set -e; mkdir -p public_html/social-miner/storage; chmod 700 public_html/social-miner/storage; marker=public_html/social-miner/.admin-bootstrap-v2; if [ ! -f \"\$marker\" ]; then printf '%s' '$config_b64' | base64 -d > public_html/social-miner/config.local.php; chmod 600 public_html/social-miner/config.local.php; touch \"\$marker\"; chmod 600 \"\$marker\"; fi"
+            "set -e; mkdir -p public_html/social-miner/storage public_html/social-miner/storage/inbox public_html/social-miner/storage/inbox/processed public_html/social-miner/storage/inbox/failed; chmod 700 public_html/social-miner/storage public_html/social-miner/storage/inbox public_html/social-miner/storage/inbox/processed public_html/social-miner/storage/inbox/failed; marker=public_html/social-miner/.admin-bootstrap-v2; if [ ! -f \"\$marker\" ]; then printf '%s' '$config_b64' | base64 -d > public_html/social-miner/config.local.php; chmod 600 public_html/social-miner/config.local.php; touch \"\$marker\"; chmod 600 \"\$marker\"; fi"
 
       - name: Deploy Social Miner files
         env:
@@ -56,9 +56,28 @@ jobs:
         run: |
           set -euo pipefail
           tar -C social-miner -czf - \
-            index.php api.php webhook.php .htaccess README.md lib storage/.htaccess | \
+            index.php api.php webhook.php import.php cron-import.php .htaccess .user.ini README.md lib storage/.htaccess | \
           ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
-            'mkdir -p public_html/social-miner && tar -xzf - -C public_html/social-miner && chmod 700 public_html/social-miner/storage'
+            'set -e; mkdir -p public_html/social-miner/storage/inbox/processed public_html/social-miner/storage/inbox/failed; tar -xzf - -C public_html/social-miner; chmod 700 public_html/social-miner/storage public_html/social-miner/storage/inbox public_html/social-miner/storage/inbox/processed public_html/social-miner/storage/inbox/failed'
+
+      - name: Install scheduled import worker
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" '
+            set -e
+            if command -v crontab >/dev/null 2>&1; then
+              php_bin="$(command -v php)"
+              cron_line="*/15 * * * * $php_bin $HOME/public_html/social-miner/cron-import.php >> $HOME/public_html/social-miner/storage/cron.log 2>&1"
+              { crontab -l 2>/dev/null | grep -v "social-miner/cron-import.php" || true; echo "$cron_line"; } | crontab -
+              echo "Social Miner cron installed: $cron_line"
+            else
+              echo "::warning::crontab is unavailable on this Bluehost shell; cloud polling can still be run from the dashboard."
+            fi
+          '
 
       - name: Verify live health endpoint
         shell: bash
@@ -71,6 +90,7 @@ jobs:
           p=json.load(open('/tmp/health.json'))
           assert p.get('ok') is True, p
           assert p.get('storage_writable') is True, p
+          assert p.get('curl_available') is True, p
           print('Social Miner health OK:', p)
           PY
 

@@ -45,7 +45,7 @@
       #${NS} .eye:after{content:'';width:56px;height:56px;border-radius:50%;background:#bce9ff;box-shadow:0 0 16px #fff,0 0 40px #4ca8ff;animation:eeBlink 2.2s infinite}
       #${NS} .copy{position:absolute;left:50%;top:68%;transform:translateX(-50%);width:min(88vw,720px);text-align:center;color:#cfe8ff;font:800 14px ui-monospace,monospace;letter-spacing:.08em}.copy b{display:block;font-size:clamp(25px,5vw,50px);color:#fff;margin-bottom:10px}
       @keyframes eeBlink{0%,46%,54%,100%{transform:scaleY(1)}50%{transform:scaleY(.08)}}
-    `,`<div class="eye"></div><div class="copy"><b>P1-KLS // PICKLES ONLINE</b>I HAVE REVIEWED YOUR BROWSING HISTORY.<br><br>BOLD CHOICES.<br><br>Also, this website is very nice.</div>`);
+    `,`<div class="eye"></div><div class="copy"><b>P1-KLS ONLINE</b>I HAVE REVIEWED YOUR BROWSING HISTORY.<br><br>BOLD CHOICES.<br><br>Also, this website is very nice.</div>`);
   }
   function year1887(){
     mount(`

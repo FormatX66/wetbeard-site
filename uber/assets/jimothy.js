@@ -32,7 +32,23 @@
       @keyframes jimWaddle{0%{transform:translateX(0) rotate(-8deg)}12%{transform:translateX(18vw) rotate(7deg)}25%{transform:translateX(36vw) rotate(-7deg)}39%{transform:translateX(53vw) rotate(7deg)}54%{transform:translateX(70vw) rotate(-7deg)}70%{transform:translateX(88vw) rotate(7deg)}86%,100%{transform:translateX(calc(100vw + 280px)) rotate(-5deg)}}
       @keyframes pawPop{0%,12%{opacity:0;transform:rotate(-18deg) scale(.5)}18%,70%{opacity:.75;transform:rotate(8deg) scale(1)}100%{opacity:0;transform:rotate(18deg) scale(.8)}}
       @keyframes badgeIn{to{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(-1deg)}}
-      @media(max-width:600px){#${NS} .jim-floor{height:27%}#${NS} .trash{font-size:38px}#${NS} .badge{padding:48px 16px 16px;border-width:8px}.badge .grid{grid-template-columns:1fr}.badge .grid div{border-right:0}.badge .wildlife{font-size:8px}}
+      @media(max-width:600px){
+        #${NS} .jim-banner{top:4%;width:88vw;padding:7px 9px;font-size:10px;line-height:1.3}
+        #${NS} .jim-floor{height:24%}
+        #${NS} .jimothy{left:-95px;bottom:13%;font-size:62px}
+        #${NS} .jimothy:after{font-size:7px}
+        #${NS} .trash{bottom:13%;font-size:28px}
+        #${NS} .paw{bottom:11%;font-size:16px}
+        #${NS} .badge{top:50%;width:88vw;max-height:84vh;overflow:auto;padding:46px 12px 14px;border-width:5px}
+        #${NS} .badge h2{font-size:34px}
+        #${NS} .badge .sub{font-size:10px}
+        #${NS} .badge .grid{grid-template-columns:1fr}
+        #${NS} .badge .grid div{padding:6px;border-right:0}
+        #${NS} .badge .grid b{font-size:11px}
+        #${NS} .badge .stamp{font-size:9px}
+        #${NS} .badge .wildlife{font-size:7px}
+        #${NS} .close{width:38px;height:38px;line-height:38px}
+      }
       @media(prefers-reduced-motion:reduce){#${NS} .jimothy{animation-duration:.01ms;left:42%;bottom:9%}#${NS} .badge{animation-delay:.4s}.paw{display:none}}
     `;
     document.head.appendChild(style);

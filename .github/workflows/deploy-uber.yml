@@ -32,7 +32,7 @@ jobs:
           deployed_at_utc="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
           printf '{\n  "commit_sha": "%s",\n  "deployed_at_utc": "%s",\n  "status": "deployed"\n}\n' "$GITHUB_SHA" "$deployed_at_utc" > uber/deploy-version.json
 
-      - name: Sanitize experiments and install isolated logo
+      - name: Sanitize experiments and install logo plus tentacles
         shell: bash
         run: |
           set -euo pipefail
@@ -40,25 +40,27 @@ jobs:
           from pathlib import Path
           import re
 
-          logo_css = '<link rel="stylesheet" href="/uber/assets/logo.css?v=logo1">'
-          logo_js = '<script src="/uber/assets/logo.js?v=logo1"></script>'
+          logo_css = '<link rel="stylesheet" href="/uber/assets/logo.css?v=logo2">'
+          tentacles_css = '<link rel="stylesheet" href="/uber/assets/tentacles.css?v=tent1">'
+          logo_js = '<script src="/uber/assets/logo.js?v=logo2"></script>'
+          tentacles_js = '<script src="/uber/assets/tentacles.js?v=tent1"></script>'
 
           html_files = [Path('uber/index.html'), Path('uber/citizen.html'), Path('uber/careers.html')]
           for p in html_files:
               s = p.read_text(encoding='utf-8')
-              s = re.sub(r'<link[^>]+(?:octopus|rebuild|logo)\.css[^>]*>\s*', '', s, flags=re.I)
-              s = re.sub(r'<script[^>]+(?:octopus|rebuild|easter-eggs|jimothy|logo)\.js[^>]*></script>\s*', '', s, flags=re.I)
-              s = s.replace('</head>', logo_css + '</head>')
-              s = s.replace('</body>', logo_js + '</body>')
+              s = re.sub(r'<link[^>]+(?:octopus|rebuild|logo|tentacles)\.css[^>]*>\s*', '', s, flags=re.I)
+              s = re.sub(r'<script[^>]+(?:octopus|rebuild|easter-eggs|jimothy|logo|tentacles)\.js[^>]*></script>\s*', '', s, flags=re.I)
+              s = s.replace('</head>', logo_css + tentacles_css + '</head>')
+              s = s.replace('</body>', logo_js + tentacles_js + '</body>')
               p.write_text(s, encoding='utf-8')
 
           lab = Path('uber/lab/index.php')
           if lab.exists():
               s = lab.read_text(encoding='utf-8')
-              s = re.sub(r'<link[^>]+(?:octopus|rebuild|logo)\.css[^>]*>\s*', '', s, flags=re.I)
-              s = re.sub(r'<script[^>]+(?:octopus|rebuild|easter-eggs|jimothy|logo)\.js[^>]*></script>\s*', '', s, flags=re.I)
-              s = s.replace('</head>', '<link rel="stylesheet" href="../assets/logo.css?v=logo1"></head>')
-              s = s.replace('</body>', '<script src="../assets/logo.js?v=logo1"></script></body>')
+              s = re.sub(r'<link[^>]+(?:octopus|rebuild|logo|tentacles)\.css[^>]*>\s*', '', s, flags=re.I)
+              s = re.sub(r'<script[^>]+(?:octopus|rebuild|easter-eggs|jimothy|logo|tentacles)\.js[^>]*></script>\s*', '', s, flags=re.I)
+              s = s.replace('</head>', '<link rel="stylesheet" href="../assets/logo.css?v=logo2"><link rel="stylesheet" href="../assets/tentacles.css?v=tent1"></head>')
+              s = s.replace('</body>', '<script src="../assets/logo.js?v=logo2"></script><script src="../assets/tentacles.js?v=tent1"></script></body>')
               lab.write_text(s, encoding='utf-8')
           PY
 
@@ -113,7 +115,7 @@ jobs:
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --header 'Cache-Control: no-cache' --output /tmp/uber-version.json 'https://madmorrigan.com/uber/deploy-version.json'
           python3 -c 'import json,sys; d=json.load(open(sys.argv[1],encoding="utf-8")); sys.exit(0 if d.get("commit_sha")==sys.argv[2] and d.get("status")=="deployed" else "Übercorp deploy verification failed")' /tmp/uber-version.json "$GITHUB_SHA"
 
-      - name: Verify core site and logo are healthy
+      - name: Verify core site logo and tentacles are healthy
         shell: bash
         run: |
           set -euo pipefail
@@ -122,8 +124,10 @@ jobs:
             out="/tmp/uber-${page:-index}.html"
             curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --header 'Cache-Control: no-cache' --output "$out" "$url"
             grep -q 'Übercorp' "$out"
-            grep -q 'logo.css?v=logo1' "$out"
-            grep -q 'logo.js?v=logo1' "$out"
+            grep -q 'logo.css?v=logo2' "$out"
+            grep -q 'logo.js?v=logo2' "$out"
+            grep -q 'tentacles.css?v=tent1' "$out"
+            grep -q 'tentacles.js?v=tent1' "$out"
             if grep -Eq '(rebuild\.js|octopus\.js|easter-eggs\.js|jimothy\.js)' "$out"; then
               echo "Experimental production script still present in $page"
               exit 1
@@ -131,18 +135,24 @@ jobs:
           done
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/site.css 'https://madmorrigan.com/uber/assets/site.css'
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/site.js 'https://madmorrigan.com/uber/assets/site.js'
-          curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/logo.css 'https://madmorrigan.com/uber/assets/logo.css?v=logo1'
-          curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/logo.js 'https://madmorrigan.com/uber/assets/logo.js?v=logo1'
-          curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/wordmark.svg 'https://madmorrigan.com/uber/assets/ubercorp-wordmark-final.svg?v=logo1'
+          curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/logo.css 'https://madmorrigan.com/uber/assets/logo.css?v=logo2'
+          curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/logo.js 'https://madmorrigan.com/uber/assets/logo.js?v=logo2'
+          curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/tentacles.css 'https://madmorrigan.com/uber/assets/tentacles.css?v=tent1'
+          curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/tentacles.js 'https://madmorrigan.com/uber/assets/tentacles.js?v=tent1'
+          curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/wordmark.svg 'https://madmorrigan.com/uber/assets/ubercorp-wordmark-final.svg?v=logo2'
           test -s /tmp/site.css
           test -s /tmp/site.js
           grep -q '.uc-page-brand' /tmp/logo.css
+          if grep -q 'ucLogoSweep\|animation:' /tmp/logo.css; then echo 'Logo shimmer unexpectedly present'; exit 1; fi
           grep -q 'ubercorp-wordmark-final.svg' /tmp/logo.js
+          grep -q '#ucTentacles' /tmp/tentacles.css
+          grep -q "id:'ucTentacles'" /tmp/tentacles.js
+          grep -q 'data-tentacle' /tmp/tentacles.js
           grep -q 'aria-label="Übercorp wordmark"' /tmp/wordmark.svg
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/uber-lab.html 'https://madmorrigan.com/uber/lab/'
           grep -q 'WEBSITE IMPROVEMENT TERMINAL' /tmp/uber-lab.html
-          grep -q 'logo.css?v=logo1' /tmp/uber-lab.html
-          grep -q 'logo.js?v=logo1' /tmp/uber-lab.html
+          grep -q 'logo.css?v=logo2' /tmp/uber-lab.html
+          grep -q 'tentacles.js?v=tent1' /tmp/uber-lab.html
           response="$(curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 'https://madmorrigan.com/uber/api/compliance-score.php?name=CorporateTest')"
           python3 -c 'import json,sys; d=json.loads(sys.argv[1]); sys.exit(0 if d.get("ok") is True and isinstance(d.get("score"),int) else "Übercorp API health check failed")' "$response"
 

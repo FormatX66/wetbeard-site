@@ -24,6 +24,8 @@ jobs:
     steps:
       - name: Check out site files
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Create deployment version marker
         shell: bash
@@ -167,6 +169,37 @@ jobs:
           grep -q 'tentacles.js?v=tent1' /tmp/uber-lab.html
           response="$(curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 'https://madmorrigan.com/uber/api/compliance-score.php?name=CorporateTest')"
           python3 -c 'import json,sys; d=json.loads(sys.argv[1]); sys.exit(0 if d.get("ok") is True and isinstance(d.get("score"),int) else "Übercorp API health check failed")' "$response"
+
+      - name: Package verified source backup
+        shell: bash
+        run: |
+          set -euo pipefail
+          BUILD_SHA='8a52ced75739b26ea99eaa162fb8b91bfeffc1a6'
+          BACKUP_NAME='ubercorp-backup-2026-07-24-8a52ced.zip'
+          STAGE="$(mktemp -d)"
+          git cat-file -e "${BUILD_SHA}^{commit}"
+          git archive "$BUILD_SHA" uber .github/workflows/deploy-uber.yml | tar -x -C "$STAGE"
+          cat > "$STAGE/BACKUP-MANIFEST.txt" <<EOF
+          Übercorp website backup
+          Source repository: FormatX66/wetbeard-site
+          Verified production build commit: ${BUILD_SHA}
+          Production URL: https://madmorrigan.com/uber/
+          Packaged UTC: $(date -u +'%Y-%m-%dT%H:%M:%SZ')
+
+          Contents:
+          - uber/                              Complete Übercorp source at the verified commit
+          - .github/workflows/deploy-uber.yml  Deployment workflow at the verified commit
+          EOF
+          mkdir -p backups
+          (cd "$STAGE" && zip -qr "$GITHUB_WORKSPACE/backups/$BACKUP_NAME" .)
+          unzip -t "backups/$BACKUP_NAME"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "backups/$BACKUP_NAME"
+          if ! git diff --cached --quiet; then
+            git commit -m 'Store Übercorp backup 8a52ced [skip ci]'
+            git push
+          fi
 
       - name: Record successful production deployment
         shell: bash

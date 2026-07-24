@@ -3,6 +3,8 @@ declare(strict_types=1);
 require __DIR__ . '/lib/bootstrap.php';
 require __DIR__ . '/lib/analyzer.php';
 require __DIR__ . '/lib/meta.php';
+require __DIR__ . '/lib/importer.php';
+require __DIR__ . '/lib/cloud.php';
 $action = $_GET['action'] ?? '';
 
 try {
@@ -11,31 +13,80 @@ try {
         $probe = storage_path('.health');
         $ok = @file_put_contents($probe, gmdate('c')) !== false;
         if ($ok) @unlink($probe);
-        json_response(['ok'=>$ok,'version'=>MINER_VERSION,'php'=>PHP_VERSION,'storage'=>'json+flock','storage_writable'=>$ok], $ok?200:500);
+        json_response([
+            'ok'=>$ok,
+            'version'=>MINER_VERSION,
+            'php'=>PHP_VERSION,
+            'storage'=>'json+flock',
+            'storage_writable'=>$ok,
+            'zip_available'=>class_exists('ZipArchive'),
+            'curl_available'=>function_exists('curl_init'),
+        ], $ok?200:500);
     }
 
     require_session_auth();
 
     if ($action === 'status') {
-        json_response(['ok'=>true,'csrf'=>csrf_token(),'watches'=>watches_all(),'counts'=>comment_counts(),'settings'=>[
-            'meta_api_version'=>setting('meta_api_version','v23.0'),
-            'instagram_host'=>setting('instagram_host','graph.instagram.com'),
-            'instagram_token'=>redact_token(setting('instagram_token','')),
-            'facebook_token'=>redact_token(setting('facebook_token','')),
-            'meta_app_secret'=>redact_token(setting('meta_app_secret','')),
-            'webhook_verify_token'=>setting('webhook_verify_token',''),
-            'custom_flag_terms'=>setting('custom_flag_terms',''),
-        ]]);
+        $shortcutToken = ensure_shortcut_token();
+        json_response([
+            'ok'=>true,
+            'csrf'=>csrf_token(),
+            'watches'=>watches_all(),
+            'counts'=>comment_counts(),
+            'imports'=>array_slice(import_history(),0,20),
+            'settings'=>[
+                'meta_api_version'=>setting('meta_api_version','v23.0'),
+                'instagram_host'=>setting('instagram_host','graph.instagram.com'),
+                'instagram_token'=>redact_token(setting('instagram_token','')),
+                'facebook_token'=>redact_token(setting('facebook_token','')),
+                'meta_app_secret'=>redact_token(setting('meta_app_secret','')),
+                'webhook_verify_token'=>setting('webhook_verify_token',''),
+                'custom_flag_terms'=>setting('custom_flag_terms',''),
+                'shortcut_upload_token'=>$shortcutToken,
+                'gdrive_enabled'=>setting('gdrive_enabled','0'),
+                'gdrive_client_id'=>setting('gdrive_client_id',''),
+                'gdrive_client_secret'=>redact_token(setting('gdrive_client_secret','')),
+                'gdrive_refresh_token'=>redact_token(setting('gdrive_refresh_token','')),
+                'gdrive_folder_id'=>setting('gdrive_folder_id',''),
+                'dropbox_enabled'=>setting('dropbox_enabled','0'),
+                'dropbox_app_key'=>setting('dropbox_app_key',''),
+                'dropbox_app_secret'=>redact_token(setting('dropbox_app_secret','')),
+                'dropbox_refresh_token'=>redact_token(setting('dropbox_refresh_token','')),
+                'dropbox_folder'=>setting('dropbox_folder',''),
+            ]
+        ]);
     }
 
     if ($_SERVER['REQUEST_METHOD'] !== 'GET') require_csrf();
 
     if ($action === 'settings' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $data = body_json();
-        foreach (['meta_api_version','instagram_host','custom_flag_terms'] as $key) if (array_key_exists($key,$data)) set_setting($key, trim((string)$data[$key]));
-        foreach (['instagram_token','facebook_token','meta_app_secret'] as $key) if (isset($data[$key]) && trim((string)$data[$key]) !== '') set_setting($key, trim((string)$data[$key]));
+        foreach (['meta_api_version','instagram_host','custom_flag_terms','gdrive_client_id','gdrive_folder_id','dropbox_app_key','dropbox_folder'] as $key) {
+            if (array_key_exists($key,$data)) set_setting($key, trim((string)$data[$key]));
+        }
+        foreach (['gdrive_enabled','dropbox_enabled'] as $key) {
+            if (array_key_exists($key,$data)) set_setting($key, !empty($data[$key]) ? '1' : '0');
+        }
+        foreach (['instagram_token','facebook_token','meta_app_secret','gdrive_client_secret','gdrive_refresh_token','dropbox_app_secret','dropbox_refresh_token'] as $key) {
+            if (isset($data[$key]) && trim((string)$data[$key]) !== '') set_setting($key, trim((string)$data[$key]));
+        }
         if ((setting('webhook_verify_token','')??'') === '') set_setting('webhook_verify_token', bin2hex(random_bytes(18)));
+        ensure_shortcut_token();
         json_response(['ok'=>true]);
+    }
+
+    if ($action === 'rotate_shortcut_token' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $token = bin2hex(random_bytes(24));
+        set_setting('shortcut_upload_token',$token);
+        json_response(['ok'=>true,'token'=>$token]);
+    }
+
+    if ($action === 'cloud_sync' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        json_response(['ok'=>true,'results'=>poll_cloud_sources()]);
+    }
+
+    if ($action === 'imports') {
+        json_response(['ok'=>true,'imports'=>import_history()]);
     }
 
     if ($action === 'watch' && $_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -66,7 +117,7 @@ try {
         $rows = array_values(array_filter(comments_all(), function(array $r) use ($risk,$q): bool {
             if (in_array($risk,['none','low','medium','high'],true) && ($r['risk_level']??'none') !== $risk) return false;
             if ($q !== '') {
-                $hay = strtolower((string)($r['text']??'').' '.(string)($r['username']??''));
+                $hay = strtolower((string)($r['text']??'').' '.(string)($r['username']??'').' '.(string)($r['source_file']??'').' '.(string)($r['permalink']??''));
                 if (strpos($hay,$q) === false) return false;
             }
             return true;
@@ -93,9 +144,10 @@ try {
 
     if ($action === 'export') {
         header('Content-Type: text/csv; charset=utf-8'); header('Content-Disposition: attachment; filename="social-miner-comments-'.gmdate('Ymd-His').'.csv"'); header('Cache-Control: no-store');
-        $out=fopen('php://output','wb'); fputcsv($out,['platform','post_id','comment_id','parent_comment_id','username','user_id','text','created_time','like_count','risk_level','flags','permalink','collected_at']);
+        $out=fopen('php://output','wb');
+        fputcsv($out,['platform','post_id','comment_id','parent_comment_id','username','user_id','text','created_time','like_count','risk_level','flags','permalink','source_type','source_file','source_path','collected_at']);
         $rows=comments_all(); usort($rows,fn($a,$b)=>strcmp((string)($a['created_time']??$a['collected_at']??''),(string)($b['created_time']??$b['collected_at']??'')));
-        foreach($rows as $r)fputcsv($out,[$r['platform']??'',$r['external_media_id']??'',$r['external_comment_id']??'',$r['parent_external_id']??'',$r['username']??'',$r['user_id']??'',$r['text']??'',$r['created_time']??'',$r['like_count']??0,$r['risk_level']??'none',implode('|',json_decode((string)($r['flags_json']??'[]'),true)?:[]),$r['permalink']??'',$r['collected_at']??'']);
+        foreach($rows as $r) fputcsv($out,[$r['platform']??'',$r['external_media_id']??'',$r['external_comment_id']??'',$r['parent_external_id']??'',$r['username']??'',$r['user_id']??'',$r['text']??'',$r['created_time']??'',$r['like_count']??0,$r['risk_level']??'none',implode('|',json_decode((string)($r['flags_json']??'[]'),true)?:[]),$r['permalink']??'',$r['source_type']??'api',$r['source_file']??'',$r['source_path']??'',$r['collected_at']??'']);
         fclose($out); exit;
     }
     json_response(['ok'=>false,'error'=>'Unknown action'],404);

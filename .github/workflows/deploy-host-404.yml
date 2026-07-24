@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: host-404-production
@@ -85,3 +85,23 @@ jobs:
           grep -Fq 'THE SYSTEM IS DOWN' /tmp/host404.html
           grep -Fq 'ÜBERCORP ERROR RESPONSE // 404' /tmp/host404.html
           echo "Host-wide 404 verified at $test_url"
+
+      - name: Record verified host-wide 404 deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_sha="$GITHUB_SHA"
+          verified_at_utc="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          git fetch origin main
+          git checkout main
+          git reset --hard origin/main
+          mkdir -p deployments
+          printf '{\n  "site": "madmorrigan.com",\n  "scope": "root-document-404",\n  "source_sha": "%s",\n  "verified_at_utc": "%s",\n  "status": "verified-live"\n}\n' "$source_sha" "$verified_at_utc" > deployments/host-404-live.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add deployments/host-404-live.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m 'Record host-wide 404 live deployment [skip ci]'
+          git push origin main

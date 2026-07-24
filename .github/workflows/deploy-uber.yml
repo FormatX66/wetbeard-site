@@ -103,7 +103,7 @@ jobs:
           python3 -c 'import json,sys; d=json.load(open(sys.argv[1],encoding="utf-8")); sys.exit(0 if d.get("commit_sha")==sys.argv[2] and d.get("status")=="deployed" else "Übercorp deploy verification failed")' \
             uber-version-live.json "$GITHUB_SHA"
 
-      - name: Verify live site, Lab, and compliance API
+      - name: Verify live site, octopus assets, Lab, and compliance API
         shell: bash
         run: |
           set -euo pipefail
@@ -113,6 +113,20 @@ jobs:
             --output /tmp/uber-index.html \
             'https://madmorrigan.com/uber/'
           grep -q 'Übercorp' /tmp/uber-index.html
+          curl --fail-with-body --silent --show-error \
+            --retry 5 --retry-all-errors --retry-delay 3 \
+            --header 'Cache-Control: no-cache' \
+            --output /tmp/ubercorp-octopus.svg \
+            'https://madmorrigan.com/uber/assets/ubercorp-octopus-metallic.svg?v=20260724-3'
+          grep -q '<svg' /tmp/ubercorp-octopus.svg
+          grep -q 'data:image/webp;base64' /tmp/ubercorp-octopus.svg
+          curl --fail-with-body --silent --show-error \
+            --retry 5 --retry-all-errors --retry-delay 3 \
+            --header 'Cache-Control: no-cache' \
+            --output /tmp/ubercorp-octopus.css \
+            'https://madmorrigan.com/uber/assets/octopus.css'
+          grep -q 'ubercorp-octopus-metallic.svg' /tmp/ubercorp-octopus.css
+          grep -q 'octoLogoGlow' /tmp/ubercorp-octopus.css
           curl --fail-with-body --silent --show-error \
             --retry 5 --retry-all-errors --retry-delay 3 \
             --header 'Cache-Control: no-cache' \

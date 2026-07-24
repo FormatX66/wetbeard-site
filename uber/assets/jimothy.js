@@ -28,10 +28,11 @@
       #${NS} .paw{position:absolute;bottom:7%;font-size:25px;opacity:0;animation:pawPop 6.2s linear forwards}.p1{left:18%;animation-delay:.7s}.p2{left:34%;animation-delay:1.5s}.p3{left:51%;animation-delay:2.5s}.p4{left:68%;animation-delay:3.4s}.p5{left:84%;animation-delay:4.4s}
       #${NS} .badge{position:absolute;left:50%;top:48%;transform:translate(-50%,-50%) scale(.82) rotate(-1deg);width:min(90vw,710px);padding:22px;background:#e8e4d9;color:#151719;border:12px solid #d7d1c3;box-shadow:0 30px 100px #000c;opacity:0;animation:badgeIn .5s 5.8s cubic-bezier(.18,.88,.23,1.2) forwards}
       #${NS} .badge .kicker{font:900 9px ui-monospace,monospace;letter-spacing:.16em;color:#555d61}.badge h2{margin:8px 0 4px;font-size:clamp(42px,9vw,80px);line-height:.9;letter-spacing:-.05em}.badge .sub{font:800 13px ui-monospace,monospace;color:#596168;margin-bottom:15px}.badge .grid{display:grid;grid-template-columns:1fr 1fr;border-top:2px solid #222}.badge .grid div{padding:9px;border-right:1px solid #777;border-bottom:1px solid #777}.badge .grid span,.badge .grid b{display:block}.badge .grid span{font:800 8px ui-monospace,monospace;letter-spacing:.09em;color:#697078}.badge .grid b{font-size:13px;margin-top:3px}.badge .stamp{display:inline-block;margin-top:14px;padding:7px 10px;border:3px solid #1d2226;color:#1d2226;font:950 11px ui-monospace,monospace;letter-spacing:.1em;transform:rotate(-2deg)}.badge .wildlife{margin-top:10px;font:700 9px ui-monospace,monospace;color:#697078}
+      #${NS} .close{position:absolute;right:14px;top:14px;z-index:30;pointer-events:auto;border:1px solid #dfe8ef;background:#080b0eea;color:#eef5fa;padding:8px 11px;font:900 10px ui-monospace,monospace;letter-spacing:.1em;cursor:pointer}
       @keyframes jimWaddle{0%{transform:translateX(0) rotate(-8deg)}12%{transform:translateX(18vw) rotate(7deg)}25%{transform:translateX(36vw) rotate(-7deg)}39%{transform:translateX(53vw) rotate(7deg)}54%{transform:translateX(70vw) rotate(-7deg)}70%{transform:translateX(88vw) rotate(7deg)}86%,100%{transform:translateX(calc(100vw + 280px)) rotate(-5deg)}}
       @keyframes pawPop{0%,12%{opacity:0;transform:rotate(-18deg) scale(.5)}18%,70%{opacity:.75;transform:rotate(8deg) scale(1)}100%{opacity:0;transform:rotate(18deg) scale(.8)}}
       @keyframes badgeIn{to{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(-1deg)}}
-      @media(max-width:600px){#${NS} .jim-floor{height:27%}#${NS} .trash{font-size:38px}#${NS} .badge{padding:16px;border-width:8px}.badge .grid{grid-template-columns:1fr}.badge .grid div{border-right:0}.badge .wildlife{font-size:8px}}
+      @media(max-width:600px){#${NS} .jim-floor{height:27%}#${NS} .trash{font-size:38px}#${NS} .badge{padding:16px;border-width:8px}.badge .grid{grid-template-columns:1fr}.badge .grid div{border-right:0}.badge .wildlife{font-size:8px}#${NS} .close{top:10px;right:10px}}
       @media(prefers-reduced-motion:reduce){#${NS} .jimothy{animation-duration:.01ms;left:42%;bottom:9%}#${NS} .badge{animation-delay:.4s}.paw{display:none}}
     `;
     document.head.appendChild(style);
@@ -39,6 +40,7 @@
     const d=document.createElement('div');
     d.id=NS;
     d.innerHTML=`
+      <button class="close" type="button">CLOSE ×</button>
       <div class="jim-banner">ÜBERCORP TALENT ACQUISITION // SEATTLE FIELD OFFICE<br>WE HAVE HIRED THE INTERNET.</div>
       <div class="jim-floor"></div>
       <div class="trash t1">🗑️</div><div class="trash t2">🗑️</div><div class="trash t3">🗑️</div>
@@ -60,7 +62,7 @@
         <div class="wildlife">REAL-WORLD NOTICE: Admire wild raccoons from a respectful distance and do not feed or approach them.</div>
       </div>`;
     document.body.appendChild(d);
-    setTimeout(cleanup,11500);
+    d.querySelector('.close')?.addEventListener('click',cleanup);
   }
 
   function endsJimothy(value){return String(value||'').trim().toUpperCase().endsWith('JIMOTHY')}

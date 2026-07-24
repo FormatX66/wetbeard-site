@@ -99,7 +99,7 @@ jobs:
           set -euo pipefail
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --header 'Cache-Control: no-cache' --output uber-version-live.json 'https://madmorrigan.com/uber/deploy-version.json'
           python3 -c 'import json,sys; d=json.load(open(sys.argv[1],encoding="utf-8")); sys.exit(0 if d.get("commit_sha")==sys.argv[2] and d.get("status")=="deployed" else "Übercorp deploy verification failed")' uber-version-live.json "$GITHUB_SHA"
-      - name: Verify live site, canonical wordmark network, Easter eggs, Lab, and compliance API
+      - name: Verify live site, Safari-safe canonical wordmark, Easter eggs, Lab, and compliance API
         shell: bash
         run: |
           set -euo pipefail
@@ -114,16 +114,15 @@ jobs:
             grep -q "easter-eggs.js?v=${cache_key}" "/tmp/${page}"
             grep -q "jimothy.js?v=${cache_key}" "/tmp/${page}"
           done
-          curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --header 'Cache-Control: no-cache' --output /tmp/ubercorp-wordmark.svg "https://madmorrigan.com/uber/assets/ubercorp-wordmark-metallic.svg?v=${cache_key}"
-          grep -q 'aria-label="Übercorp metallic wordmark"' /tmp/ubercorp-wordmark.svg
-          grep -q 'data:image/png;base64' /tmp/ubercorp-wordmark.svg
-          grep -q 'markMask' /tmp/ubercorp-wordmark.svg
+          curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --header 'Cache-Control: no-cache' --output /tmp/ubercorp-wordmark.svg "https://madmorrigan.com/uber/assets/ubercorp-wordmark-liquid-v2.svg?v=${cache_key}"
+          grep -q 'aria-label="Übercorp liquid metallic wordmark"' /tmp/ubercorp-wordmark.svg
+          grep -q 'data:image/webp;base64' /tmp/ubercorp-wordmark.svg
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --header 'Cache-Control: no-cache' --output /tmp/ubercorp-octopus.css "https://madmorrigan.com/uber/assets/octopus.css?v=${cache_key}"
-          grep -q 'ubercorp-wordmark-metallic.svg' /tmp/ubercorp-octopus.css
-          grep -q 'wordmarkFlow' /tmp/ubercorp-octopus.css
+          grep -q 'wordmarkPulse' /tmp/ubercorp-octopus.css
+          grep -q 'asset-failed' /tmp/ubercorp-octopus.css
           grep -q 'z-index:0' /tmp/ubercorp-octopus.css
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --header 'Cache-Control: no-cache' --output /tmp/ubercorp-octopus.js "https://madmorrigan.com/uber/assets/octopus.js?v=${cache_key}"
-          grep -q 'ubercorp-wordmark-metallic.svg' /tmp/ubercorp-octopus.js
+          grep -q 'ubercorp-wordmark-liquid-v2.svg' /tmp/ubercorp-octopus.js
           grep -q 'ensureLogo' /tmp/ubercorp-octopus.js
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --header 'Cache-Control: no-cache' --output /tmp/jimothy.js "https://madmorrigan.com/uber/assets/jimothy.js?v=${cache_key}"
           grep -q 'EMPLOYEE OF THE SUMMER' /tmp/jimothy.js
@@ -141,7 +140,7 @@ jobs:
           deployed_at_utc="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
           printf '{\n  "site": "uber",\n  "url": "https://madmorrigan.com/uber/",\n  "commit_sha": "%s",\n  "verified_at_utc": "%s",\n  "status": "verified-live"\n}\n' "$GITHUB_SHA" "$deployed_at_utc" > deployments/uber-live.json
           git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git config user.email '41898233+github-actions[bot]@users.noreply.github.com'
           git add deployments/uber-live.json
           git commit -m 'Record Übercorp live deployment [skip ci]'
           git push

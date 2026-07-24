@@ -1,6 +1,6 @@
 # Social Comment Miner
 
-PHP application for collecting and compiling Facebook/Instagram comment evidence from supported Meta APIs **and** Meta account data exports. It preserves comment text and raw source records, groups commenters, flags possible threats/harassment, deduplicates recurring exports, and exports evidence to CSV.
+PHP application for collecting and compiling Facebook/Instagram comment evidence from supported Meta APIs **and** Meta account data exports. It preserves comment text and raw source records, groups commenters, flags possible threats/harassment, deduplicates recurring exports, estimates bot/automation likelihood from observable behavior, and exports evidence to CSV.
 
 ## Ingestion paths
 
@@ -9,6 +9,12 @@ PHP application for collecting and compiling Facebook/Instagram comment evidence
 - iPhone Shortcuts upload using a rotatable bearer token.
 - Scheduled Google Drive or Dropbox polling for recurring Meta exports.
 - Protected server-side `storage/inbox/` processing for files placed on the host directly.
+
+## Bot / automation analysis
+
+Each commenter receives a 0-100 behavioral automation score plus a confidence level. The score is based only on data available to Social Miner, including repeated comments, cross-account phrase reuse, burst timing, unusually regular timing, link-heavy behavior, comment volume, and weak username-pattern signals. The dashboard provides a full per-account report with the exact signals and points, timing/content metrics, repeated text, and source comment samples. Bot reports can also be exported to CSV.
+
+This score is a heuristic, not proof that an account is automated. Social Miner does not have access to Meta-internal signals such as IP addresses, device fingerprints, login history, or Meta's own integrity classifications.
 
 ## Storage
 Atomic JSON files protected by `flock()` are used so the app works on shared PHP hosting without requiring SQLite/MySQL extensions. Data lives under `storage/`, which is denied by Apache and retained across deploys.
@@ -33,3 +39,6 @@ Instagram API comment access requires a professional Instagram account and the r
 - manual/Shortcut upload at `import.php`
 - CLI scheduled worker at `cron-import.php`
 - Meta webhook callback at `webhook.php`
+- authenticated bot summary at `api.php?action=bot_users`
+- authenticated full account report at `api.php?action=bot_report&id=...`
+- bot report CSV export at `api.php?action=bot_export`

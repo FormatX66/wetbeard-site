@@ -22,6 +22,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Validate PHP and bot scoring
+        shell: bash
+        run: |
+          set -euo pipefail
+          find social-miner -name '*.php' -type f -print0 | xargs -0 -n1 php -l
+          php -r '
+            require "social-miner/lib/bootstrap.php";
+            require "social-miner/lib/bot.php";
+            $comments=[];
+            for($i=0;$i<5;$i++) $comments[]=["platform"=>"instagram","user_id"=>"1","username"=>"autobot123456","text"=>"same promo link https://example.com","created_time"=>gmdate("c",1700000000+$i*5),"risk_level"=>"none"];
+            $comments[]=["platform"=>"instagram","user_id"=>"2","username"=>"otheracct","text"=>"same promo link https://example.com","created_time"=>gmdate("c",1700000100),"risk_level"=>"none"];
+            $reports=build_bot_reports($comments);
+            if(count($reports)!==2) throw new RuntimeException("bot report grouping failed");
+            if(($reports[0]["bot_percentage"]??0)<75) throw new RuntimeException("bot score smoke test failed");
+            if(empty($reports[0]["signals"]) || empty($reports[0]["report_id"])) throw new RuntimeException("bot report detail failed");
+            echo "Bot scoring smoke test OK: ".$reports[0]["bot_percentage"]."%\n";
+          '
+
       - name: Configure Bluehost SSH
         env:
           BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
@@ -91,6 +109,7 @@ jobs:
           assert p.get('ok') is True, p
           assert p.get('storage_writable') is True, p
           assert p.get('curl_available') is True, p
+          assert p.get('bot_analysis') is True, p
           print('Social Miner health OK:', p)
           PY
 

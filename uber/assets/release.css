@@ -1,0 +1,30 @@
+/* Detritus release bulletin: static, resilient homepage content. */
+.release-alert{display:inline-flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:0 0 18px;padding:9px 12px;border:1px solid #73313a;background:#1a0a0d;color:#fff;text-decoration:none;font:800 9px ui-monospace,monospace;letter-spacing:.11em}
+.release-alert span{padding:3px 6px;background:var(--red);color:#fff}
+.release-alert strong{font:inherit;color:#f4c5ca}
+.release-alert:hover{border-color:var(--red2);background:#260d12}
+.release-bulletin{position:relative;overflow:hidden;padding:72px 0;background:radial-gradient(circle at 18% 42%,rgba(60,180,130,.16),transparent 31%),radial-gradient(circle at 80% 28%,rgba(217,30,50,.17),transparent 32%),linear-gradient(135deg,#060807 0%,#0b1010 48%,#11070a 100%)}
+.release-bulletin::after{content:"ÜBERCORP RECORDS // CONTROLLED CULTURAL PRODUCT";position:absolute;right:-70px;bottom:34px;color:rgba(255,255,255,.035);font:900 clamp(34px,6vw,88px)/.8 ui-monospace,monospace;letter-spacing:-.08em;white-space:nowrap;transform:rotate(-3deg);pointer-events:none}
+.release-grid{display:grid;grid-template-columns:minmax(300px,.88fr) minmax(0,1.12fr);gap:clamp(36px,6vw,76px);align-items:center}
+.release-evidence{position:relative;margin:0;padding:12px;border:1px solid #43504c;background:#090c0b;box-shadow:0 34px 90px rgba(0,0,0,.58),0 0 0 1px rgba(255,255,255,.025) inset;transform:rotate(-1deg)}
+.release-evidence a{display:block;overflow:hidden;background:#020403}
+.release-evidence img{display:block;width:100%;height:auto;aspect-ratio:1;object-fit:cover;filter:saturate(.94) contrast(1.05);transition:transform .45s ease,filter .45s ease}
+.release-evidence a:hover img{transform:scale(1.018);filter:saturate(1.08) contrast(1.05)}
+.release-evidence figcaption{padding:11px 3px 1px;color:#7e8d87;font:800 8px ui-monospace,monospace;letter-spacing:.12em}
+.release-stamp{position:absolute;right:-20px;top:22px;padding:8px 12px;border:3px double #ef3f4f;background:rgba(25,4,8,.91);color:#ff8994;text-align:center;font:900 12px/.95 ui-monospace,monospace;letter-spacing:.08em;transform:rotate(6deg);box-shadow:0 8px 24px #0008}
+.release-status{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 18px}
+.release-status span{padding:7px 9px;border:1px solid #4b3135;background:#15090c;color:#df9ea6;font:800 8px ui-monospace,monospace;letter-spacing:.13em}
+.release-copy h2{max-width:760px;margin:0 0 22px;font-size:clamp(48px,6.3vw,88px);line-height:.84;letter-spacing:-.065em}
+.release-lede{max-width:740px;margin:0;color:#c3c9c5;font-size:clamp(17px,1.7vw,21px);line-height:1.55}
+.release-order{max-width:720px;margin:22px 0;padding:15px 17px;border-left:3px solid var(--red);background:rgba(25,7,10,.72);color:#c5aeb1}
+.release-order strong{color:#fff}
+.release-facts{display:grid;grid-template-columns:repeat(3,1fr);max-width:650px;margin:28px 0 0;padding:0;border:1px solid #353d3a;list-style:none}
+.release-facts li{padding:15px 16px;border-right:1px solid #353d3a}
+.release-facts li:last-child{border-right:0}
+.release-facts b,.release-facts span{display:block}
+.release-facts b{color:#fff;font-size:22px}
+.release-facts span{margin-top:2px;color:#77827e;font:800 8px ui-monospace,monospace;letter-spacing:.1em}
+.release-cta{min-height:56px;padding-inline:22px;box-shadow:0 0 32px rgba(217,30,50,.18)}
+.release-fineprint{max-width:700px;margin:18px 0 0;color:#68716e;font:700 8px ui-monospace,monospace;letter-spacing:.12em}
+@media(max-width:850px){.release-grid{grid-template-columns:1fr}.release-evidence{width:min(620px,92%);margin:auto}.release-copy{text-align:center}.release-copy .eyebrow,.release-lede,.release-order,.release-facts,.release-fineprint{margin-left:auto;margin-right:auto}.release-status,.release-copy .actions{justify-content:center}}
+@media(max-width:520px){.release-bulletin{padding:52px 0}.release-evidence{width:100%}.release-stamp{right:-6px;top:12px;font-size:10px}.release-copy h2{font-size:44px}.release-facts li{padding:12px 8px}.release-facts b{font-size:18px}.release-cta{width:100%;line-height:1.3;text-align:center}.release-alert{margin-bottom:20px}.release-alert strong{width:100%}}

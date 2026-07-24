@@ -17,26 +17,24 @@
     const style=document.createElement('style');
     style.id='trogdor-style';
     style.textContent=`
-      #trogdor-event{position:fixed;inset:0;z-index:2147483000;overflow:hidden;background:linear-gradient(0deg,rgba(96,15,0,.38),rgba(0,0,0,.08) 50%,transparent);pointer-events:none}
-      #trogdor-event .burnination-alert{position:absolute;top:10%;left:50%;transform:translateX(-50%) rotate(-2deg);font:900 clamp(32px,8vw,88px)/.9 Impact,Haettenschweiler,'Arial Narrow Bold',sans-serif;letter-spacing:.03em;color:#ffdf49;text-shadow:5px 5px 0 #a40c00,-3px -3px 0 #111;white-space:nowrap;animation:trogFlash .48s steps(2,end) 8}
-      #trogdor-event .country{position:absolute;left:0;right:0;bottom:0;height:190px;border-bottom:10px solid #35250c;background:linear-gradient(transparent 45%,rgba(87,101,35,.9) 46%,rgba(67,75,24,.96));}
-      #trogdor-event .cottage{position:absolute;right:7vw;bottom:27px;font-size:82px;filter:drop-shadow(0 5px 2px #0008);animation:cottageBurn 7s 2.4s forwards}
-      #trogdor-event .villager{position:absolute;bottom:75px;left:-150px;font-size:72px;filter:drop-shadow(0 5px 2px #0008);animation:villagerRun 7s linear forwards}
-      #trogdor-event .villager:after{content:'VILLAGER';display:block;margin-top:-10px;text-align:center;color:#fff;font:900 12px ui-monospace,monospace;letter-spacing:.12em;text-shadow:2px 2px #000}
-      #trogdor-event .dragon{position:absolute;bottom:55px;left:-360px;width:260px;height:150px;filter:drop-shadow(0 8px 3px #0009);animation:trogdorRun 7s .2s linear forwards}
-      #trogdor-event .dragon-label{position:absolute;left:48px;top:-17px;color:#ffdf49;font:900 23px Impact,Haettenschweiler,'Arial Narrow Bold',sans-serif;letter-spacing:.07em;text-shadow:2px 2px #8c0c00;transform:rotate(-5deg)}
-      #trogdor-event .flame{position:absolute;bottom:102px;left:-250px;font-size:60px;opacity:0;animation:flameRun 7s 1.2s linear forwards}
+      #trogdor-event{position:fixed;inset:0;z-index:2147483000;overflow:hidden;background:linear-gradient(0deg,rgba(96,15,0,.42),rgba(0,0,0,.08) 52%,transparent);pointer-events:none}
+      #trogdor-event .burnination-alert{position:absolute;top:8%;left:50%;transform:translateX(-50%) rotate(-2deg);font:900 clamp(32px,8vw,88px)/.9 Impact,Haettenschweiler,'Arial Narrow Bold',sans-serif;letter-spacing:.03em;color:#ffdf49;text-shadow:5px 5px 0 #a40c00,-3px -3px 0 #111;white-space:nowrap;animation:trogFlash .48s steps(2,end) 8}
+      #trogdor-event .country{position:absolute;left:0;right:0;bottom:0;height:200px;border-bottom:10px solid #35250c;background:linear-gradient(transparent 44%,rgba(87,101,35,.9) 45%,rgba(67,75,24,.97));}
+      #trogdor-event .cottage{position:absolute;right:7vw;bottom:28px;font-size:84px;filter:drop-shadow(0 5px 2px #0008);animation:cottageBurn 7s 2.4s forwards}
+      #trogdor-event .villager{position:absolute;bottom:78px;left:-150px;font-size:72px;filter:drop-shadow(0 5px 2px #0008);animation:villagerRun 7s linear forwards}
+      #trogdor-event .villager:after{content:'PEASANT';display:block;margin-top:-10px;text-align:center;color:#fff;font:900 12px ui-monospace,monospace;letter-spacing:.12em;text-shadow:2px 2px #000}
+      #trogdor-event .dragon{position:absolute;bottom:26px;left:-330px;width:285px;height:245px;filter:drop-shadow(0 9px 3px #000b);animation:trogdorRun 7s .18s linear forwards}
+      #trogdor-event .dragon-label{position:absolute;left:72px;top:-9px;color:#ffdf49;font:900 24px Impact,Haettenschweiler,'Arial Narrow Bold',sans-serif;letter-spacing:.07em;text-shadow:2px 2px #8c0c00;transform:rotate(-5deg)}
       #trogdor-event .stamp{position:absolute;right:18px;top:18px;border:3px solid #ff3549;padding:8px 11px;color:#ff3549;background:#07080de6;font:900 11px ui-monospace,monospace;letter-spacing:.12em;transform:rotate(3deg)}
-      #trogdor-event .audio-card{pointer-events:auto;position:absolute;left:50%;bottom:18px;transform:translateX(-50%);display:flex;align-items:center;gap:10px;padding:9px 12px;border:2px solid #ff3549;background:#08090bf2;box-shadow:0 12px 40px #000c;max-width:94vw}
+      #trogdor-event .audio-card{pointer-events:auto;position:absolute;left:50%;bottom:14px;transform:translateX(-50%);display:flex;align-items:center;gap:9px;padding:8px 10px;border:2px solid #ff3549;background:#08090bf5;box-shadow:0 12px 40px #000c;max-width:94vw}
       #trogdor-event .audio-card span{color:#fff;font:900 10px ui-monospace,monospace;letter-spacing:.08em;white-space:nowrap}
       #trogdor-event .audio-card a{color:#ffdf49;border:1px solid #ffdf49;padding:6px 9px;text-decoration:none;font:900 10px ui-monospace,monospace;letter-spacing:.08em}
       #trogdor-audio{position:absolute;left:-9999px;width:1px;height:1px;opacity:.01}
       @keyframes villagerRun{0%{transform:translateX(0) rotate(-7deg)}12%{transform:translateX(16vw) rotate(7deg)}24%{transform:translateX(32vw) rotate(-7deg)}36%{transform:translateX(48vw) rotate(7deg)}48%{transform:translateX(64vw) rotate(-7deg)}60%{transform:translateX(80vw) rotate(7deg)}72%{transform:translateX(96vw) rotate(-7deg)}100%{transform:translateX(calc(100vw + 220px)) rotate(7deg)}}
-      @keyframes trogdorRun{0%{transform:translateX(0) rotate(-2deg)}12%{transform:translateX(16vw) rotate(2deg)}24%{transform:translateX(32vw) rotate(-2deg)}36%{transform:translateX(48vw) rotate(2deg)}48%{transform:translateX(64vw) rotate(-2deg)}60%{transform:translateX(80vw) rotate(2deg)}72%{transform:translateX(96vw) rotate(-2deg)}100%{transform:translateX(calc(100vw + 470px)) rotate(2deg)}}
-      @keyframes flameRun{0%,12%{opacity:0;transform:translateX(0) scale(.6)}20%{opacity:1;transform:translateX(32vw) scale(1)}70%{opacity:1;transform:translateX(94vw) scale(1.2)}100%{opacity:0;transform:translateX(calc(100vw + 300px)) scale(1.6)}}
-      @keyframes cottageBurn{0%{filter:drop-shadow(0 5px 2px #0008)}25%{filter:drop-shadow(0 0 10px #ff7b00)}100%{filter:grayscale(1) brightness(.35) drop-shadow(0 0 18px #ff4500);transform:rotate(5deg)}}
+      @keyframes trogdorRun{0%{transform:translateX(0) rotate(-2deg)}12%{transform:translateX(16vw) rotate(2deg)}24%{transform:translateX(32vw) rotate(-2deg)}36%{transform:translateX(48vw) rotate(2deg)}48%{transform:translateX(64vw) rotate(-2deg)}60%{transform:translateX(80vw) rotate(2deg)}72%{transform:translateX(96vw) rotate(-2deg)}100%{transform:translateX(calc(100vw + 490px)) rotate(2deg)}}
+      @keyframes cottageBurn{0%{filter:drop-shadow(0 5px 2px #0008)}22%{filter:drop-shadow(0 0 12px #ff7b00)}100%{filter:grayscale(1) brightness(.32) drop-shadow(0 0 20px #ff4500);transform:rotate(5deg)}}
       @keyframes trogFlash{50%{opacity:.35;transform:translateX(-50%) rotate(2deg) scale(1.04)}}
-      @media(max-width:600px){#trogdor-event .villager{font-size:52px}#trogdor-event .dragon{width:195px;height:115px;bottom:70px}#trogdor-event .cottage{font-size:58px}#trogdor-event .audio-card{bottom:10px;flex-direction:column;gap:5px}#trogdor-event .audio-card span{white-space:normal;text-align:center}}
+      @media(max-width:600px){#trogdor-event .villager{font-size:50px}#trogdor-event .dragon{width:225px;height:195px;bottom:45px}#trogdor-event .cottage{font-size:58px}#trogdor-event .audio-card{bottom:8px;flex-direction:column;gap:5px}#trogdor-event .audio-card span{white-space:normal;text-align:center}}
     `;
     document.head.appendChild(style);
 
@@ -44,36 +42,53 @@
     overlay.id='trogdor-event';
     overlay.innerHTML=`
       <div class="burnination-alert">BURNINATION DETECTED</div>
-      <div class="stamp">ÜBERCORP EMERGENCY // TROGDOR</div>
+      <div class="stamp">ÜBERCORP EMERGENCY // WINGALING EVENT</div>
       <div class="country"><div class="cottage">🏠</div></div>
       <div class="villager">🏃‍♂️</div>
-      <div class="flame">🔥🔥🔥</div>
       <div class="dragon" aria-label="Trogdor the Burninator">
         <div class="dragon-label">TROGDOR!</div>
-        <svg viewBox="0 0 260 150" width="100%" height="100%" role="img" aria-label="cartoon dragon">
-          <path d="M65 28 C112 5 159 18 169 49 C178 76 142 86 119 74 C99 64 94 91 122 106 C147 120 189 109 210 79" fill="none" stroke="#17120b" stroke-width="17" stroke-linecap="round"/>
-          <path d="M70 31 C111 14 149 24 154 49 C159 65 137 69 121 61" fill="none" stroke="#69a431" stroke-width="11" stroke-linecap="round"/>
-          <path d="M118 75 C98 69 85 86 97 102 C111 122 158 128 197 94" fill="none" stroke="#69a431" stroke-width="13" stroke-linecap="round"/>
-          <path d="M91 54 L53 16 L103 32 Z" fill="#93c94f" stroke="#17120b" stroke-width="5"/>
-          <path d="M127 86 C147 57 177 52 203 63 L178 79 L205 92 C172 101 147 98 127 86 Z" fill="#d5e8ae" stroke="#17120b" stroke-width="5"/>
-          <path d="M148 76 C168 82 186 101 187 121 C172 123 162 112 158 101 C150 119 137 124 126 117 C132 101 139 86 148 76 Z" fill="#e8bc72" stroke="#17120b" stroke-width="6"/>
-          <path d="M166 105 C181 99 196 105 203 116 C196 125 181 129 170 123" fill="none" stroke="#17120b" stroke-width="9" stroke-linecap="round"/>
-          <circle cx="151" cy="44" r="4" fill="#111"/>
+        <svg viewBox="0 0 300 250" width="100%" height="100%" role="img" aria-label="Trogdor-style green S-shaped dragon with one beefy arm">
+          <g stroke="#121212" stroke-linejoin="round" stroke-linecap="round">
+            <!-- S-shaped dragon body -->
+            <path d="M200 41 C151 12 91 31 91 72 C91 104 145 103 164 123 C183 143 165 178 128 193 C96 206 76 199 64 188" fill="none" stroke="#2f9f2f" stroke-width="45"/>
+            <path d="M200 41 C151 12 91 31 91 72 C91 104 145 103 164 123 C183 143 165 178 128 193 C96 206 76 199 64 188" fill="none" stroke="#111" stroke-width="57" opacity=".95"/>
+            <path d="M200 41 C151 12 91 31 91 72 C91 104 145 103 164 123 C183 143 165 178 128 193 C96 206 76 199 64 188" fill="none" stroke="#2f9f2f" stroke-width="43"/>
+            <!-- squared-off head -->
+            <path d="M181 22 L242 35 L244 77 L194 78 L176 61 Z" fill="#2f9f2f" stroke-width="7"/>
+            <circle cx="222" cy="47" r="5" fill="#fff" stroke-width="3"/>
+            <circle cx="223" cy="47" r="2" fill="#111" stroke="none"/>
+            <!-- consummate V teeth -->
+            <path d="M198 67 l8 10 l8 -10 l8 10 l8 -10" fill="#fff" stroke-width="3"/>
+            <!-- tiny wingaling wings -->
+            <path d="M111 71 L63 27 L105 37 L111 14 L129 62 Z" fill="#58bc46" stroke-width="7"/>
+            <path d="M119 72 L79 51 L91 86 Z" fill="#7dd05e" stroke-width="5"/>
+            <!-- absurd beefy arm from neck -->
+            <path d="M105 68 C75 62 53 73 43 93 C34 112 41 133 58 137 C72 141 80 132 85 118 C91 135 108 142 122 133 C134 125 133 108 123 98 C115 91 110 82 105 68 Z" fill="#efb0a2" stroke-width="8"/>
+            <path d="M49 95 C27 91 20 103 27 116 C34 128 46 126 57 118" fill="#efb0a2" stroke-width="7"/>
+            <!-- stick legs -->
+            <path d="M127 194 L126 230 L108 230" fill="none" stroke-width="6"/>
+            <path d="M151 181 L158 224 L178 224" fill="none" stroke-width="6"/>
+            <!-- consummate V spines -->
+            <path d="M96 202 l8 -16 l8 13 l8 -18 l8 12" fill="#fff" stroke-width="4"/>
+            <!-- smoke + flame -->
+            <path d="M241 54 C262 47 273 56 268 67 C283 63 291 70 286 80" fill="none" stroke="#ddd" stroke-width="6"/>
+            <path d="M245 72 C267 77 277 88 294 87 C281 95 286 105 264 103 C270 113 255 118 241 105 Z" fill="#ffca2b" stroke="#e46218" stroke-width="5"/>
+          </g>
         </svg>
       </div>
-      <div class="audio-card"><span>🎵 TROGDOR SONG SHOULD START AUTOMATICALLY</span><a href="https://www.youtube.com/watch?v=90X5NJleYJQ&t=150s" target="_blank" rel="noopener">TAP IF SILENT</a></div>`;
+      <div class="audio-card"><span>OFFICIAL TROGDOR AUDIO</span><a href="https://trogdorboardgame.homestarrunner.com/soundboard/" target="_blank" rel="noopener">OPEN SOUNDBOARD</a><a href="https://www.youtube.com/watch?v=90X5NJleYJQ&t=150s" target="_blank" rel="noopener">PLAY SONG</a></div>`;
     document.body.appendChild(overlay);
 
     const player=document.createElement('iframe');
     player.id='trogdor-audio';
-    player.title='Official Homestar Runner Trogdor video';
+    player.title='Official Homestar Runner Strong Bad Email Dragon';
     player.allow='autoplay; encrypted-media; picture-in-picture';
     player.referrerPolicy='strict-origin-when-cross-origin';
     player.src='https://www.youtube.com/embed/90X5NJleYJQ?autoplay=1&start=150&playsinline=1&controls=0&rel=0';
     overlay.appendChild(player);
 
-    setTimeout(()=>overlay.remove(),10000);
-    setTimeout(()=>style.remove(),11000);
+    setTimeout(()=>overlay.remove(),10500);
+    setTimeout(()=>style.remove(),11500);
   }
 
   const form=q('#complianceForm');
@@ -85,13 +100,13 @@
       if(!trogdorActive){
         trogdorActive=true;
         launchTrogdor();
-        setTimeout(()=>{trogdorActive=false},10500);
+        setTimeout(()=>{trogdorActive=false},11000);
       }
       score.textContent='00';
       ring.style.background='conic-gradient(var(--red) 0deg,#252a31 0deg)';
       status.textContent='BURNINATION DETECTED';
       risk.textContent='PEASANT-LEVEL CATASTROPHE';
-      action.textContent='RUN FOR THE THATCHED-ROOF COTTAGES';
+      action.textContent='PROTECT THE THATCHED-ROOF COTTAGES';
       state.textContent='OH NO';
     }
 
@@ -101,7 +116,7 @@
 
     function fallback(n){
       let h=0;for(const c of n.toUpperCase())h=((h<<5)-h)+c.charCodeAt(0);let s=18+Math.abs(h%78);
-      if(/^trogdor$/i.test(n))return{score:0,status:'BURNINATION DETECTED',risk:'PEASANT-LEVEL CATASTROPHE',action:'RUN FOR THE THATCHED-ROOF COTTAGES',event:'trogdor'};
+      if(/^trogdor$/i.test(n))return{score:0,status:'BURNINATION DETECTED',risk:'PEASANT-LEVEL CATASTROPHE',action:'PROTECT THE THATCHED-ROOF COTTAGES',event:'trogdor'};
       if(/rusty|orlock|chroma|mungo|parrot|pavo|pirate|p1klz|p1-k/i.test(n))return{score:Math.min(s,14),status:'EXTREMELY INTERESTING',risk:'UNACCEPTABLY MUSICAL',action:'REMAIN WHERE YOU ARE'};
       if(s>=86)return{score:s,status:'MODEL CITIZEN',risk:'MINIMAL',action:'CONTINUE CONSUMING'};
       if(s>=65)return{score:s,status:'PROVISIONALLY ALIGNED',risk:'MANAGEABLE',action:'WATCH MORE CORPORATE MEDIA'};

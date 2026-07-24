@@ -34,7 +34,19 @@
       @keyframes trogdorRun{0%{transform:translateX(0) rotate(-2deg)}12%{transform:translateX(16vw) rotate(2deg)}24%{transform:translateX(32vw) rotate(-2deg)}36%{transform:translateX(48vw) rotate(2deg)}48%{transform:translateX(64vw) rotate(-2deg)}60%{transform:translateX(80vw) rotate(2deg)}72%{transform:translateX(96vw) rotate(-2deg)}100%{transform:translateX(calc(100vw + 490px)) rotate(2deg)}}
       @keyframes cottageBurn{0%{filter:drop-shadow(0 5px 2px #0008)}22%{filter:drop-shadow(0 0 12px #ff7b00)}100%{filter:grayscale(1) brightness(.32) drop-shadow(0 0 20px #ff4500);transform:rotate(5deg)}}
       @keyframes trogFlash{50%{opacity:.35;transform:translateX(-50%) rotate(2deg) scale(1.04)}}
-      @media(max-width:600px){#trogdor-event .villager{font-size:50px}#trogdor-event .dragon{width:225px;height:195px;bottom:45px}#trogdor-event .cottage{font-size:58px}#trogdor-event .audio-card{bottom:8px;flex-direction:column;gap:5px}#trogdor-event .audio-card span{white-space:normal;text-align:center}}
+      @media(max-width:600px){
+        #trogdor-event .burnination-alert{top:5%;width:88vw;white-space:normal;text-align:center;font-size:26px;text-shadow:3px 3px 0 #a40c00,-2px -2px 0 #111}
+        #trogdor-event .stamp{top:22%;right:4%;max-width:60vw;padding:5px 7px;font-size:8px;line-height:1.25}
+        #trogdor-event .country{height:125px}
+        #trogdor-event .villager{left:-80px;bottom:58px;font-size:36px}
+        #trogdor-event .villager:after{font-size:7px;margin-top:-4px}
+        #trogdor-event .dragon{left:-160px;bottom:40px;width:145px;height:125px}
+        #trogdor-event .dragon-label{left:36px;top:-6px;font-size:13px}
+        #trogdor-event .cottage{right:4vw;bottom:20px;font-size:42px}
+        #trogdor-event .audio-card{bottom:6px;width:88vw;flex-direction:row;flex-wrap:wrap;justify-content:center;gap:4px;padding:5px 6px}
+        #trogdor-event .audio-card span{width:100%;white-space:normal;text-align:center;font-size:8px}
+        #trogdor-event .audio-card a{padding:4px 6px;font-size:8px}
+      }
     `;
     document.head.appendChild(style);
 
@@ -49,28 +61,20 @@
         <div class="dragon-label">TROGDOR!</div>
         <svg viewBox="0 0 300 250" width="100%" height="100%" role="img" aria-label="Trogdor-style green S-shaped dragon with one beefy arm">
           <g stroke="#121212" stroke-linejoin="round" stroke-linecap="round">
-            <!-- S-shaped dragon body -->
             <path d="M200 41 C151 12 91 31 91 72 C91 104 145 103 164 123 C183 143 165 178 128 193 C96 206 76 199 64 188" fill="none" stroke="#2f9f2f" stroke-width="45"/>
             <path d="M200 41 C151 12 91 31 91 72 C91 104 145 103 164 123 C183 143 165 178 128 193 C96 206 76 199 64 188" fill="none" stroke="#111" stroke-width="57" opacity=".95"/>
             <path d="M200 41 C151 12 91 31 91 72 C91 104 145 103 164 123 C183 143 165 178 128 193 C96 206 76 199 64 188" fill="none" stroke="#2f9f2f" stroke-width="43"/>
-            <!-- squared-off head -->
             <path d="M181 22 L242 35 L244 77 L194 78 L176 61 Z" fill="#2f9f2f" stroke-width="7"/>
             <circle cx="222" cy="47" r="5" fill="#fff" stroke-width="3"/>
             <circle cx="223" cy="47" r="2" fill="#111" stroke="none"/>
-            <!-- consummate V teeth -->
             <path d="M198 67 l8 10 l8 -10 l8 10 l8 -10" fill="#fff" stroke-width="3"/>
-            <!-- tiny wingaling wings -->
             <path d="M111 71 L63 27 L105 37 L111 14 L129 62 Z" fill="#58bc46" stroke-width="7"/>
             <path d="M119 72 L79 51 L91 86 Z" fill="#7dd05e" stroke-width="5"/>
-            <!-- absurd beefy arm from neck -->
             <path d="M105 68 C75 62 53 73 43 93 C34 112 41 133 58 137 C72 141 80 132 85 118 C91 135 108 142 122 133 C134 125 133 108 123 98 C115 91 110 82 105 68 Z" fill="#efb0a2" stroke-width="8"/>
             <path d="M49 95 C27 91 20 103 27 116 C34 128 46 126 57 118" fill="#efb0a2" stroke-width="7"/>
-            <!-- stick legs -->
             <path d="M127 194 L126 230 L108 230" fill="none" stroke-width="6"/>
             <path d="M151 181 L158 224 L178 224" fill="none" stroke-width="6"/>
-            <!-- consummate V spines -->
             <path d="M96 202 l8 -16 l8 13 l8 -18 l8 12" fill="#fff" stroke-width="4"/>
-            <!-- smoke + flame -->
             <path d="M241 54 C262 47 273 56 268 67 C283 63 291 70 286 80" fill="none" stroke="#ddd" stroke-width="6"/>
             <path d="M245 72 C267 77 277 88 294 87 C281 95 286 105 264 103 C270 113 255 118 241 105 Z" fill="#ffca2b" stroke="#e46218" stroke-width="5"/>
           </g>

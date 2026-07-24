@@ -44,7 +44,7 @@ jobs:
           tentacles_css = '<link rel="stylesheet" href="/uber/assets/tentacles.css?v=tent1">'
           logo_js = '<script src="/uber/assets/logo.js?v=logo2"></script>'
           tentacles_js = '<script src="/uber/assets/tentacles.js?v=tent1"></script>'
-          easter_js = '<script src="/uber/assets/easter-eggs-stable.js?v=egg1"></script>'
+          easter_js = '<script src="/uber/assets/easter-eggs-stable.js?v=egg2"></script>'
           jimothy_js = '<script src="/uber/assets/jimothy.js?v=jim1"></script>'
 
           html_files = [Path('uber/index.html'), Path('uber/citizen.html'), Path('uber/careers.html')]
@@ -126,11 +126,13 @@ jobs:
             out="/tmp/uber-${page:-index}.html"
             curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --header 'Cache-Control: no-cache' --output "$out" "$url"
             grep -q 'Übercorp' "$out"
+            grep -q 'WE MAKE IT. YOU BUY IT.' "$out"
+            grep -q 'P1-KLS // PICKLES ONLINE.' "$out"
             grep -q 'logo.css?v=logo2' "$out"
             grep -q 'logo.js?v=logo2' "$out"
             grep -q 'tentacles.css?v=tent1' "$out"
             grep -q 'tentacles.js?v=tent1' "$out"
-            grep -q 'easter-eggs-stable.js?v=egg1' "$out"
+            grep -q 'easter-eggs-stable.js?v=egg2' "$out"
             grep -q 'jimothy.js?v=jim1' "$out"
             if grep -Eq '(rebuild\.js|octopus\.js|easter-eggs\.js)' "$out"; then
               echo "Obsolete experimental script still present in $page"
@@ -143,7 +145,7 @@ jobs:
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/logo.js 'https://madmorrigan.com/uber/assets/logo.js?v=logo2'
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/tentacles.css 'https://madmorrigan.com/uber/assets/tentacles.css?v=tent1'
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/tentacles.js 'https://madmorrigan.com/uber/assets/tentacles.js?v=tent1'
-          curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/easter.js 'https://madmorrigan.com/uber/assets/easter-eggs-stable.js?v=egg1'
+          curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/easter.js 'https://madmorrigan.com/uber/assets/easter-eggs-stable.js?v=egg2'
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/jimothy.js 'https://madmorrigan.com/uber/assets/jimothy.js?v=jim1'
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/wordmark.svg 'https://madmorrigan.com/uber/assets/ubercorp-wordmark-final.svg?v=logo2'
           test -s /tmp/site.css
@@ -156,7 +158,8 @@ jobs:
           grep -q 'data-tentacle' /tmp/tentacles.js
           grep -q 'STARWARS' /tmp/easter.js
           grep -q 'DETRITUS' /tmp/easter.js
-          grep -q 'P1KLZ' /tmp/easter.js
+          grep -q 'P1-KLS // PICKLES ONLINE' /tmp/easter.js
+          grep -q 'PICKLES:p1klz' /tmp/easter.js
           grep -q 'OCTOPUS' /tmp/easter.js
           grep -q 'ubercorp-wordmark-final.svg' /tmp/easter.js
           grep -q 'EMPLOYEE OF THE SUMMER' /tmp/jimothy.js

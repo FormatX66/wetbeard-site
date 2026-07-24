@@ -25,7 +25,7 @@ if (strcasecmp($name, 'trogdor') === 0) {
 $hash = hexdec(substr(hash('sha256', strtoupper($name)), 0, 6));
 $score = 18 + ($hash % 78);
 
-if (preg_match('/rusty|orlock|chroma|mungo|parrot|pavo|pirate|p1klz|p1-k/i', $name)) {
+if (preg_match('/rusty|orlock|chroma|mungo|parrot|pavo|pirate|p1klz|p1-klz|p1kls|p1-kls|pickles/i', $name)) {
     $score = min($score, 14);
     $status = 'EXTREMELY INTERESTING';
     $risk = 'UNACCEPTABLY MUSICAL';

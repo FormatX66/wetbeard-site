@@ -45,7 +45,7 @@
       #${NS} .eye:after{content:'';width:56px;height:56px;border-radius:50%;background:#bce9ff;box-shadow:0 0 16px #fff,0 0 40px #4ca8ff;animation:eeBlink 2.2s infinite}
       #${NS} .copy{position:absolute;left:50%;top:68%;transform:translateX(-50%);width:min(88vw,720px);text-align:center;color:#cfe8ff;font:800 14px ui-monospace,monospace;letter-spacing:.08em}.copy b{display:block;font-size:clamp(25px,5vw,50px);color:#fff;margin-bottom:10px}
       @keyframes eeBlink{0%,46%,54%,100%{transform:scaleY(1)}50%{transform:scaleY(.08)}}
-    `,`<div class="eye"></div><div class="copy"><b>P1KLZ ONLINE</b>I HAVE REVIEWED YOUR BROWSING HISTORY.<br><br>BOLD CHOICES.<br><br>Also, this website is very nice.</div>`);
+    `,`<div class="eye"></div><div class="copy"><b>P1-KLS // PICKLES ONLINE</b>I HAVE REVIEWED YOUR BROWSING HISTORY.<br><br>BOLD CHOICES.<br><br>Also, this website is very nice.</div>`);
   }
   function year1887(){
     mount(`
@@ -78,7 +78,7 @@
     const coins=Array.from({length:24},(_,i)=>`<span style="left:${(i*43)%100}%;animation-delay:${(i%8)*.15}s">✦</span>`).join('');
     mount(`#${NS}{background:#020306ed}#${NS} .pixel{position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);width:min(92vw,680px);text-align:center;color:#73ff8d;font:900 14px ui-monospace,monospace;letter-spacing:.08em;text-shadow:0 0 8px #31ff5b}.pixel b{display:block;font-size:clamp(35px,8vw,76px);margin-bottom:16px}.coin span{position:absolute;top:-40px;font-size:28px;animation:eeCoin 3s linear forwards}@keyframes eeCoin{to{transform:translateY(110vh) rotate(720deg)}}`,`<div class="pixel"><b>EXECUTIVE MODE</b>30 EXTRA COMPLIANCE POINTS HAVE BEEN ADDED.<br><br>They are imaginary.</div><div class="coin">${coins}</div>`);
   }
-  const eggs={STARWARS:starWars,FORCE:starWars,DETRITUS:detritus,P1KLZ:p1klz,'P1-KLZ':p1klz,'1887':year1887,OCTOPUS:octopus,COFFEE:coffee,'42':fortyTwo,RICHMOND:richmond};
+  const eggs={STARWARS:starWars,FORCE:starWars,DETRITUS:detritus,PICKLES:p1klz,P1KLS:p1klz,'P1-KLS':p1klz,P1KLZ:p1klz,'P1-KLZ':p1klz,'1887':year1887,OCTOPUS:octopus,COFFEE:coffee,'42':fortyTwo,RICHMOND:richmond};
   function check(value){const u=String(value||'').trim().toUpperCase();for(const [word,fn] of Object.entries(eggs)){if(u.endsWith(word)){fn();buffer='';return true}}return false}
   addEventListener('keydown',e=>{
     if(e.key==='Escape'){remove();return}

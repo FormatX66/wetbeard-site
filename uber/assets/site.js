@@ -117,7 +117,7 @@
     function fallback(n){
       let h=0;for(const c of n.toUpperCase())h=((h<<5)-h)+c.charCodeAt(0);let s=18+Math.abs(h%78);
       if(/^trogdor$/i.test(n))return{score:0,status:'BURNINATION DETECTED',risk:'PEASANT-LEVEL CATASTROPHE',action:'PROTECT THE THATCHED-ROOF COTTAGES',event:'trogdor'};
-      if(/rusty|orlock|chroma|mungo|parrot|pavo|pirate|p1klz|p1-k/i.test(n))return{score:Math.min(s,14),status:'EXTREMELY INTERESTING',risk:'UNACCEPTABLY MUSICAL',action:'REMAIN WHERE YOU ARE'};
+      if(/rusty|orlock|chroma|mungo|parrot|pavo|pirate|p1klz|p1-klz|p1kls|p1-kls|pickles/i.test(n))return{score:Math.min(s,14),status:'EXTREMELY INTERESTING',risk:'UNACCEPTABLY MUSICAL',action:'REMAIN WHERE YOU ARE'};
       if(s>=86)return{score:s,status:'MODEL CITIZEN',risk:'MINIMAL',action:'CONTINUE CONSUMING'};
       if(s>=65)return{score:s,status:'PROVISIONALLY ALIGNED',risk:'MANAGEABLE',action:'WATCH MORE CORPORATE MEDIA'};
       if(s>=40)return{score:s,status:'REQUIRES GUIDANCE',risk:'CONCERNING',action:'REPORT UNUSUAL THOUGHTS'};

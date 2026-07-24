@@ -35,6 +35,19 @@ jobs:
             "$deployed_at_utc" \
             > uber/deploy-version.json
 
+      - name: Prepare cache-busted octopus assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('uber/index.html')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace('assets/octopus.css?v=20260724-1','assets/octopus.css?v=20260724-4')
+          s=s.replace('assets/octopus.js?v=20260724-1','assets/octopus.js?v=20260724-4')
+          p.write_text(s,encoding='utf-8')
+          PY
+
       - name: Configure secure Bluehost connection
         env:
           BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
@@ -113,18 +126,20 @@ jobs:
             --output /tmp/uber-index.html \
             'https://madmorrigan.com/uber/'
           grep -q 'Übercorp' /tmp/uber-index.html
+          grep -q 'octopus.css?v=20260724-4' /tmp/uber-index.html
+          grep -q 'octopus.js?v=20260724-4' /tmp/uber-index.html
           curl --fail-with-body --silent --show-error \
             --retry 5 --retry-all-errors --retry-delay 3 \
             --header 'Cache-Control: no-cache' \
             --output /tmp/ubercorp-octopus.svg \
-            'https://madmorrigan.com/uber/assets/ubercorp-octopus-metallic.svg?v=20260724-3'
+            'https://madmorrigan.com/uber/assets/ubercorp-octopus-metallic.svg?v=20260724-4'
           grep -q '<svg' /tmp/ubercorp-octopus.svg
           grep -q 'data:image/webp;base64' /tmp/ubercorp-octopus.svg
           curl --fail-with-body --silent --show-error \
             --retry 5 --retry-all-errors --retry-delay 3 \
             --header 'Cache-Control: no-cache' \
             --output /tmp/ubercorp-octopus.css \
-            'https://madmorrigan.com/uber/assets/octopus.css'
+            'https://madmorrigan.com/uber/assets/octopus.css?v=20260724-4'
           grep -q 'ubercorp-octopus-metallic.svg' /tmp/ubercorp-octopus.css
           grep -q 'octoLogoGlow' /tmp/ubercorp-octopus.css
           curl --fail-with-body --silent --show-error \

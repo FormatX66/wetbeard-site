@@ -1,0 +1,97 @@
+name: Deploy UberCorp to Bluehost
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'uber/**'
+      - '.github/workflows/deploy-uber.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: uber-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Publish madmorrigan.com/uber
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Check out site files
+        uses: actions/checkout@v4
+
+      - name: Create deployment version marker
+        shell: bash
+        run: |
+          deployed_at_utc="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          printf '{\n  "commit_sha": "%s",\n  "deployed_at_utc": "%s",\n  "status": "deployed"\n}\n' \
+            "$GITHUB_SHA" \
+            "$deployed_at_utc" \
+            > uber/deploy-version.json
+
+      - name: Configure secure Bluehost connection
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+          BLUEHOST_SSH_PRIVATE_KEY: ${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$BLUEHOST_HOST"
+          test -n "$BLUEHOST_USERNAME"
+          test -n "$BLUEHOST_SSH_PRIVATE_KEY"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$BLUEHOST_SSH_PRIVATE_KEY" > "$HOME/.ssh/bluehost_deploy"
+          chmod 600 "$HOME/.ssh/bluehost_deploy"
+          ssh-keyscan -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts"
+
+      - name: Prepare UberCorp production folder
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 \
+            "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            'test -d public_html && mkdir -p public_html/uber'
+
+      - name: Deploy UberCorp files
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tar -C uber -czf - . | \
+          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 \
+            "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            'tar -xzf - -C public_html/uber'
+
+      - name: Verify deployed commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail-with-body --silent --show-error \
+            --retry 5 --retry-all-errors --retry-delay 3 \
+            --header 'Cache-Control: no-cache' \
+            --output uber-version-live.json \
+            'https://madmorrigan.com/uber/deploy-version.json'
+          python3 -c 'import json,sys; d=json.load(open(sys.argv[1],encoding="utf-8")); sys.exit(0 if d.get("commit_sha")==sys.argv[2] and d.get("status")=="deployed" else "UberCorp deploy verification failed")' \
+            uber-version-live.json "$GITHUB_SHA"
+
+      - name: Verify compliance API
+        shell: bash
+        run: |
+          set -euo pipefail
+          response="$(curl --fail-with-body --silent --show-error \
+            --retry 5 --retry-all-errors --retry-delay 3 \
+            --header 'Cache-Control: no-cache' \
+            'https://madmorrigan.com/uber/api/compliance-score.php?name=CorporateTest')"
+          python3 -c 'import json,sys; d=json.loads(sys.argv[1]); sys.exit(0 if d.get("ok") is True and isinstance(d.get("score"),int) else "UberCorp API health check failed")' "$response"

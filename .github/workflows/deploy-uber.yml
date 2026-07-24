@@ -32,7 +32,7 @@ jobs:
           deployed_at_utc="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
           printf '{\n  "commit_sha": "%s",\n  "deployed_at_utc": "%s",\n  "status": "deployed"\n}\n' "$GITHUB_SHA" "$deployed_at_utc" > uber/deploy-version.json
 
-      - name: Sanitize experiments and install logo plus tentacles
+      - name: Install stable visual layers and Easter eggs
         shell: bash
         run: |
           set -euo pipefail
@@ -44,21 +44,23 @@ jobs:
           tentacles_css = '<link rel="stylesheet" href="/uber/assets/tentacles.css?v=tent1">'
           logo_js = '<script src="/uber/assets/logo.js?v=logo2"></script>'
           tentacles_js = '<script src="/uber/assets/tentacles.js?v=tent1"></script>'
+          easter_js = '<script src="/uber/assets/easter-eggs-stable.js?v=egg1"></script>'
+          jimothy_js = '<script src="/uber/assets/jimothy.js?v=jim1"></script>'
 
           html_files = [Path('uber/index.html'), Path('uber/citizen.html'), Path('uber/careers.html')]
           for p in html_files:
               s = p.read_text(encoding='utf-8')
               s = re.sub(r'<link[^>]+(?:octopus|rebuild|logo|tentacles)\.css[^>]*>\s*', '', s, flags=re.I)
-              s = re.sub(r'<script[^>]+(?:octopus|rebuild|easter-eggs|jimothy|logo|tentacles)\.js[^>]*></script>\s*', '', s, flags=re.I)
+              s = re.sub(r'<script[^>]+(?:octopus|rebuild|easter-eggs(?:-stable)?|jimothy|logo|tentacles)\.js[^>]*></script>\s*', '', s, flags=re.I)
               s = s.replace('</head>', logo_css + tentacles_css + '</head>')
-              s = s.replace('</body>', logo_js + tentacles_js + '</body>')
+              s = s.replace('</body>', logo_js + tentacles_js + easter_js + jimothy_js + '</body>')
               p.write_text(s, encoding='utf-8')
 
           lab = Path('uber/lab/index.php')
           if lab.exists():
               s = lab.read_text(encoding='utf-8')
               s = re.sub(r'<link[^>]+(?:octopus|rebuild|logo|tentacles)\.css[^>]*>\s*', '', s, flags=re.I)
-              s = re.sub(r'<script[^>]+(?:octopus|rebuild|easter-eggs|jimothy|logo|tentacles)\.js[^>]*></script>\s*', '', s, flags=re.I)
+              s = re.sub(r'<script[^>]+(?:octopus|rebuild|easter-eggs(?:-stable)?|jimothy|logo|tentacles)\.js[^>]*></script>\s*', '', s, flags=re.I)
               s = s.replace('</head>', '<link rel="stylesheet" href="../assets/logo.css?v=logo2"><link rel="stylesheet" href="../assets/tentacles.css?v=tent1"></head>')
               s = s.replace('</body>', '<script src="../assets/logo.js?v=logo2"></script><script src="../assets/tentacles.js?v=tent1"></script></body>')
               lab.write_text(s, encoding='utf-8')
@@ -115,7 +117,7 @@ jobs:
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --header 'Cache-Control: no-cache' --output /tmp/uber-version.json 'https://madmorrigan.com/uber/deploy-version.json'
           python3 -c 'import json,sys; d=json.load(open(sys.argv[1],encoding="utf-8")); sys.exit(0 if d.get("commit_sha")==sys.argv[2] and d.get("status")=="deployed" else "Übercorp deploy verification failed")' /tmp/uber-version.json "$GITHUB_SHA"
 
-      - name: Verify core site logo and tentacles are healthy
+      - name: Verify logo tentacles and Easter eggs are healthy
         shell: bash
         run: |
           set -euo pipefail
@@ -128,8 +130,10 @@ jobs:
             grep -q 'logo.js?v=logo2' "$out"
             grep -q 'tentacles.css?v=tent1' "$out"
             grep -q 'tentacles.js?v=tent1' "$out"
-            if grep -Eq '(rebuild\.js|octopus\.js|easter-eggs\.js|jimothy\.js)' "$out"; then
-              echo "Experimental production script still present in $page"
+            grep -q 'easter-eggs-stable.js?v=egg1' "$out"
+            grep -q 'jimothy.js?v=jim1' "$out"
+            if grep -Eq '(rebuild\.js|octopus\.js|easter-eggs\.js)' "$out"; then
+              echo "Obsolete experimental script still present in $page"
               exit 1
             fi
           done
@@ -139,15 +143,23 @@ jobs:
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/logo.js 'https://madmorrigan.com/uber/assets/logo.js?v=logo2'
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/tentacles.css 'https://madmorrigan.com/uber/assets/tentacles.css?v=tent1'
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/tentacles.js 'https://madmorrigan.com/uber/assets/tentacles.js?v=tent1'
+          curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/easter.js 'https://madmorrigan.com/uber/assets/easter-eggs-stable.js?v=egg1'
+          curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/jimothy.js 'https://madmorrigan.com/uber/assets/jimothy.js?v=jim1'
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/wordmark.svg 'https://madmorrigan.com/uber/assets/ubercorp-wordmark-final.svg?v=logo2'
           test -s /tmp/site.css
-          test -s /tmp/site.js
+          grep -q 'launchTrogdor' /tmp/site.js
           grep -q '.uc-page-brand' /tmp/logo.css
           if grep -q 'ucLogoSweep\|animation:' /tmp/logo.css; then echo 'Logo shimmer unexpectedly present'; exit 1; fi
           grep -q 'ubercorp-wordmark-final.svg' /tmp/logo.js
           grep -q '#ucTentacles' /tmp/tentacles.css
           grep -q "id:'ucTentacles'" /tmp/tentacles.js
           grep -q 'data-tentacle' /tmp/tentacles.js
+          grep -q 'STARWARS' /tmp/easter.js
+          grep -q 'DETRITUS' /tmp/easter.js
+          grep -q 'P1KLZ' /tmp/easter.js
+          grep -q 'OCTOPUS' /tmp/easter.js
+          grep -q 'ubercorp-wordmark-final.svg' /tmp/easter.js
+          grep -q 'EMPLOYEE OF THE SUMMER' /tmp/jimothy.js
           grep -q 'aria-label="Übercorp wordmark"' /tmp/wordmark.svg
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --output /tmp/uber-lab.html 'https://madmorrigan.com/uber/lab/'
           grep -q 'WEBSITE IMPROVEMENT TERMINAL' /tmp/uber-lab.html

@@ -5,7 +5,10 @@ function bot_identity_key(array $row): string {
     $platform = strtolower(trim((string)($row['platform'] ?? 'unknown')));
     $userId = trim((string)($row['user_id'] ?? ''));
     $username = strtolower(trim((string)($row['username'] ?? '')));
-    return $platform . ':' . ($userId !== '' ? 'id:' . $userId : 'user:' . $username);
+    if ($userId !== '') return $platform . ':id:' . $userId;
+    if ($username !== '') return $platform . ':user:' . $username;
+    $commentId = trim((string)($row['external_comment_id'] ?? ''));
+    return $platform . ':anonymous:' . ($commentId !== '' ? $commentId : substr(hash('sha256', json_encode($row) ?: uniqid('', true)), 0, 20));
 }
 
 function bot_report_key(string $identity): string {

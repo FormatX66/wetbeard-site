@@ -14,7 +14,34 @@
     #${NS} .ee-close{position:absolute;right:0;top:0;z-index:40;pointer-events:auto;border:0;border-left:1px solid #77818b;border-bottom:1px solid #77818b;background:#0b0e12f2;color:#eef4f8;width:42px;height:42px;padding:0;font:900 20px/42px ui-monospace,monospace;cursor:pointer;text-align:center}
     #${NS} .ee-close:hover{background:#222a33}
     #${NS} .ee-close-host{padding-top:max(48px,inherit)}
-    @media(max-width:600px){#${NS} .card{padding:48px 20px 20px}#${NS} p{font-size:13px}#${NS} .ee-close{width:40px;height:40px;line-height:40px}}
+    @media(max-width:600px){
+      #${NS} .card{padding:48px 20px 20px;max-height:86vh;overflow:auto}
+      #${NS} p{font-size:13px}
+      #${NS} .ee-close{width:40px;height:40px;line-height:40px}
+      #${NS} .eye{width:112px!important;height:112px!important;border-width:11px!important;top:30%!important}
+      #${NS} .eye:after{width:36px!important;height:36px!important}
+      #${NS} .laundry,#${NS} .copy{top:52%!important;width:88vw!important;max-height:40vh;overflow:auto;font-size:12px!important;letter-spacing:.04em!important}
+      #${NS} .laundry b,#${NS} .copy b{font-size:24px!important}
+      #${NS} .sock{font-size:30px!important}
+      #${NS} .crawl{left:5%!important;right:5%!important;font-size:14px!important;line-height:1.25!important;transform:rotateX(18deg)!important}
+      #${NS} .crawl h2{font-size:1.08em!important}
+      #${NS} .ship{left:-105px!important;top:43%!important;font-size:64px!important}
+      #${NS} .ship:after{left:-8px!important;top:48px!important;font-size:16px!important;letter-spacing:8px!important}
+      #${NS} .warning{top:7%!important;width:88vw!important;padding:42px 10px 10px!important;font-size:15px!important}
+      #${NS} .octo{width:88vw!important;top:37%!important}
+      #${NS} .msg{bottom:8%!important;width:88vw!important;font-size:15px!important;letter-spacing:.04em!important}
+      #${NS} .cup{font-size:88px!important;top:38%!important}
+      #${NS} .steam{font-size:44px!important;top:11%!important}
+      #${NS} .coffee{bottom:12%!important;width:84vw!important;font-size:12px!important}
+      #${NS} .answer{font-size:min(42vw,170px)!important;top:38%!important}
+      #${NS} .ac{bottom:10%!important;width:86vw!important;white-space:normal!important;font-size:11px!important}
+      #${NS} .possum{left:-90px!important;bottom:17%!important;font-size:62px!important}
+      #${NS} .possum:after{font-size:7px!important}
+      #${NS} .rva{right:4%!important;top:8%!important;font-size:9px!important;padding:7px 9px!important}
+      #${NS} .pixel{width:88vw!important;top:44%!important;font-size:12px!important}
+      #${NS} .pixel b{font-size:32px!important}
+      #${NS} .coin span{font-size:18px!important}
+    }
   `;
   function mount(css,html,ms=6500){
     remove();

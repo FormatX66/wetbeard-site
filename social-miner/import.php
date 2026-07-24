@@ -12,6 +12,13 @@ try {
     $sessionOk = !empty($_SESSION['miner_auth']);
     $shortcutOk = shortcut_authorized();
     if (!$sessionOk && !$shortcutOk) json_response(['ok'=>false,'error'=>'Authentication required'],401);
+
+    if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['progress'])) {
+        if (!$sessionOk) json_response(['ok'=>false,'error'=>'Session authentication required'],401);
+        $requested = trim((string)($_GET['job'] ?? ''));
+        json_response(['ok'=>true,'progress'=>import_progress_get($requested !== '' ? $requested : null)]);
+    }
+
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') json_response(['ok'=>false,'error'=>'POST required'],405);
     if ($sessionOk && !$shortcutOk) require_csrf();
     $source = $shortcutOk ? 'iphone-shortcut' : 'manual-upload';

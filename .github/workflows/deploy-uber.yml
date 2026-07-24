@@ -49,6 +49,11 @@ jobs:
               s=re.sub(r'<script src="/uber/assets/jimothy\.js\?v=[^\"]+"></script>','',s)
               s=s.replace('</body>',easter+jimothy+'</body>')
               p.write_text(s,encoding='utf-8')
+          lab=Path('uber/lab/index.php')
+          s=lab.read_text(encoding='utf-8')
+          s=re.sub(r"\.\./assets/octopus\.css\?v=[^\"']+",f"../assets/octopus.css?v={key}",s)
+          s=re.sub(r"\.\./assets/octopus\.js\?v=[^\"']+",f"../assets/octopus.js?v={key}",s)
+          lab.write_text(s,encoding='utf-8')
           PY
       - name: Configure secure Bluehost connection
         env:
@@ -94,7 +99,7 @@ jobs:
           set -euo pipefail
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --header 'Cache-Control: no-cache' --output uber-version-live.json 'https://madmorrigan.com/uber/deploy-version.json'
           python3 -c 'import json,sys; d=json.load(open(sys.argv[1],encoding="utf-8")); sys.exit(0 if d.get("commit_sha")==sys.argv[2] and d.get("status")=="deployed" else "Übercorp deploy verification failed")' uber-version-live.json "$GITHUB_SHA"
-      - name: Verify live site, canonical Octopod network, Easter eggs, Lab, and compliance API
+      - name: Verify live site, canonical wordmark network, Easter eggs, Lab, and compliance API
         shell: bash
         run: |
           set -euo pipefail
@@ -109,19 +114,23 @@ jobs:
             grep -q "easter-eggs.js?v=${cache_key}" "/tmp/${page}"
             grep -q "jimothy.js?v=${cache_key}" "/tmp/${page}"
           done
-          curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --header 'Cache-Control: no-cache' --output /tmp/ubercorp-octopus.svg "https://madmorrigan.com/uber/assets/ubercorp-octopus-metallic.svg?v=${cache_key}"
-          grep -q 'aria-label="Übercorp Octopod"' /tmp/ubercorp-octopus.svg
-          grep -q '<circle cx="112"' /tmp/ubercorp-octopus.svg
+          curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --header 'Cache-Control: no-cache' --output /tmp/ubercorp-wordmark.svg "https://madmorrigan.com/uber/assets/ubercorp-wordmark-metallic.svg?v=${cache_key}"
+          grep -q 'aria-label="Übercorp metallic wordmark"' /tmp/ubercorp-wordmark.svg
+          grep -q 'data:image/png;base64' /tmp/ubercorp-wordmark.svg
+          grep -q 'markMask' /tmp/ubercorp-wordmark.svg
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --header 'Cache-Control: no-cache' --output /tmp/ubercorp-octopus.css "https://madmorrigan.com/uber/assets/octopus.css?v=${cache_key}"
-          grep -q '.page-octopod' /tmp/ubercorp-octopus.css
+          grep -q 'ubercorp-wordmark-metallic.svg' /tmp/ubercorp-octopus.css
+          grep -q 'wordmarkFlow' /tmp/ubercorp-octopus.css
           grep -q 'z-index:0' /tmp/ubercorp-octopus.css
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --header 'Cache-Control: no-cache' --output /tmp/ubercorp-octopus.js "https://madmorrigan.com/uber/assets/octopus.js?v=${cache_key}"
+          grep -q 'ubercorp-wordmark-metallic.svg' /tmp/ubercorp-octopus.js
           grep -q 'ensureLogo' /tmp/ubercorp-octopus.js
-          grep -q 'page-octopod' /tmp/ubercorp-octopus.js
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --header 'Cache-Control: no-cache' --output /tmp/jimothy.js "https://madmorrigan.com/uber/assets/jimothy.js?v=${cache_key}"
           grep -q 'EMPLOYEE OF THE SUMMER' /tmp/jimothy.js
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --header 'Cache-Control: no-cache' --output /tmp/uber-lab.html 'https://madmorrigan.com/uber/lab/'
           grep -q 'WEBSITE IMPROVEMENT TERMINAL' /tmp/uber-lab.html
+          grep -q "octopus.css?v=${cache_key}" /tmp/uber-lab.html
+          grep -q "octopus.js?v=${cache_key}" /tmp/uber-lab.html
           response="$(curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --header 'Cache-Control: no-cache' 'https://madmorrigan.com/uber/api/compliance-score.php?name=CorporateTest')"
           python3 -c 'import json,sys; d=json.loads(sys.argv[1]); sys.exit(0 if d.get("ok") is True and isinstance(d.get("score"),int) else "Übercorp API health check failed")' "$response"
       - name: Record successful production deployment

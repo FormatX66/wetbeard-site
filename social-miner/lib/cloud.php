@@ -51,9 +51,9 @@ function mark_cloud_seen(string $key, array $meta): void {
     });
 }
 
-function import_downloaded_cloud_file(string $tmp, string $name, string $provider, string $remoteId, string $version): array {
+function import_downloaded_cloud_file(string $tmp, string $name, string $provider, string $remoteId, string $version, string $jobId): array {
     $platform = str_contains(strtolower($name),'facebook') ? 'facebook' : 'instagram';
-    $stats = import_meta_export_file($tmp, $name, $platform, '', $provider.' recurring export');
+    $stats = import_meta_export_file($tmp, $name, $platform, '', $provider.' recurring export', $jobId, $provider);
     $key = cloud_seen_key($provider,$remoteId,$version);
     mark_cloud_seen($key,['provider'=>$provider,'remote_id'=>$remoteId,'version'=>$version,'name'=>$name,'comments_imported'=>$stats['comments_imported']]);
     return $stats;
@@ -84,15 +84,20 @@ function poll_google_drive(): array {
         $version=(string)($file['md5Checksum']??$file['modifiedTime']??'');
         $key=cloud_seen_key('gdrive',$id,$version);
         if (isset($seen[$key])) continue;
+        $jobId = import_progress_job_id();
+        import_progress_set($jobId,'gdrive','download',5,'Google Drive export found — downloading…',['filename'=>$name]);
         $tmp=tempnam(sys_get_temp_dir(),'sminer-gd-');
         if ($tmp===false) throw new RuntimeException('Unable to allocate cloud temp file.');
         try {
             $download=cloud_http('GET','https://www.googleapis.com/drive/v3/files/'.rawurlencode($id).'?alt=media',['Authorization: Bearer '.$access]);
             if (file_put_contents($tmp,$download['body'])===false) throw new RuntimeException('Unable to store Google Drive download.');
-            $stats=import_downloaded_cloud_file($tmp,$name,'gdrive',$id,$version);
+            import_progress_set($jobId,'gdrive','downloaded',35,'Google Drive download complete — starting analysis.',['filename'=>$name,'size_bytes'=>strlen($download['body'])]);
+            $stats=import_downloaded_cloud_file($tmp,$name,'gdrive',$id,$version,$jobId);
             $out[]=['provider'=>'gdrive','ok'=>true,'file'=>$name,'comments'=>$stats['comments_imported']];
-        } catch (Throwable $e) { $out[]=['provider'=>'gdrive','ok'=>false,'file'=>$name,'error'=>$e->getMessage()]; }
-        finally { @unlink($tmp); }
+        } catch (Throwable $e) {
+            import_progress_set($jobId,'gdrive','failed',100,'Google Drive import failed: '.$e->getMessage(),['status'=>'error','filename'=>$name]);
+            $out[]=['provider'=>'gdrive','ok'=>false,'file'=>$name,'error'=>$e->getMessage()];
+        } finally { @unlink($tmp); }
     }
     return $out;
 }
@@ -115,6 +120,8 @@ function poll_dropbox(): array {
         if ($path==='' || !preg_match('/\.(zip|json)$/i',$name)) continue;
         $key=cloud_seen_key('dropbox',$id!==''?$id:$path,$rev);
         if (isset($seen[$key])) continue;
+        $jobId = import_progress_job_id();
+        import_progress_set($jobId,'dropbox','download',5,'Dropbox export found — downloading…',['filename'=>$name]);
         $tmp=tempnam(sys_get_temp_dir(),'sminer-db-'); if($tmp===false) throw new RuntimeException('Unable to allocate cloud temp file.');
         try {
             $download=cloud_http('POST','https://content.dropboxapi.com/2/files/download',[
@@ -122,10 +129,13 @@ function poll_dropbox(): array {
                 'Dropbox-API-Arg: '.json_encode(['path'=>$path],JSON_UNESCAPED_SLASHES),
             ]);
             if(file_put_contents($tmp,$download['body'])===false) throw new RuntimeException('Unable to store Dropbox download.');
-            $stats=import_downloaded_cloud_file($tmp,$name,'dropbox',$id!==''?$id:$path,$rev);
+            import_progress_set($jobId,'dropbox','downloaded',35,'Dropbox download complete — starting analysis.',['filename'=>$name,'size_bytes'=>strlen($download['body'])]);
+            $stats=import_downloaded_cloud_file($tmp,$name,'dropbox',$id!==''?$id:$path,$rev,$jobId);
             $out[]=['provider'=>'dropbox','ok'=>true,'file'=>$name,'comments'=>$stats['comments_imported']];
-        } catch(Throwable $e){$out[]=['provider'=>'dropbox','ok'=>false,'file'=>$name,'error'=>$e->getMessage()];}
-        finally{@unlink($tmp);}
+        } catch(Throwable $e){
+            import_progress_set($jobId,'dropbox','failed',100,'Dropbox import failed: '.$e->getMessage(),['status'=>'error','filename'=>$name]);
+            $out[]=['provider'=>'dropbox','ok'=>false,'file'=>$name,'error'=>$e->getMessage()];
+        } finally{@unlink($tmp);}
     }
     return $out;
 }

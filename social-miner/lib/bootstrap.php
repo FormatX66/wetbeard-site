@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-const MINER_VERSION = '0.2.0';
+const MINER_VERSION = '0.3.0';
 
 function app_root(): string { return dirname(__DIR__); }
 function storage_dir(): string { return app_root() . '/storage'; }

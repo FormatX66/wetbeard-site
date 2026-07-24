@@ -1,0 +1,20 @@
+body.uc-tentacles-enabled{position:relative;overflow-x:hidden;isolation:isolate;background:#07080a}
+#ucTentacles{position:absolute;inset:0 0 auto 0;width:100%;height:100%;z-index:0;pointer-events:none;overflow:visible;opacity:.34}
+#ucTentacles .trace-base{fill:none;stroke:#919ba7;stroke-width:2.7;vector-effect:non-scaling-stroke;opacity:.07}
+#ucTentacles .trace-live{fill:none;stroke:url(#ucTentacleMetal);stroke-width:3.1;vector-effect:non-scaling-stroke;stroke-linecap:round;stroke-linejoin:round;filter:url(#ucTentacleGlow);opacity:.27}
+#ucTentacles .trace-hot{fill:none;stroke:url(#ucTentaclePulse);stroke-width:1.35;vector-effect:non-scaling-stroke;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:11 29;filter:url(#ucTentacleGlowStrong);opacity:.32}
+#ucTentacles .node{fill:#eef7ff;stroke:#fff;stroke-width:.8;vector-effect:non-scaling-stroke;filter:url(#ucTentacleGlow);opacity:.15}
+#ucTentacles .node.hot{opacity:.36}
+#ucTentacles .packet{fill:#fff;stroke:#d9f3ff;stroke-width:.7;filter:url(#ucTentacleGlowStrong);opacity:.42}
+body.uc-tentacles-enabled>.utility,body.uc-tentacles-enabled>.header,body.uc-tentacles-enabled>main,body.uc-tentacles-enabled>.footer,body.uc-tentacles-enabled>.shell{position:relative}
+body.uc-tentacles-enabled>.utility,body.uc-tentacles-enabled>.header{z-index:30}
+body.uc-tentacles-enabled>main,body.uc-tentacles-enabled>.footer,body.uc-tentacles-enabled>.shell{z-index:2}
+.uc-tentacles-enabled main>section,.uc-tentacles-enabled .shell>section,.uc-tentacles-enabled .ticker,.uc-tentacles-enabled footer{position:relative}
+.uc-tentacles-enabled main>section>.wrap,.uc-tentacles-enabled footer>.wrap,.uc-tentacles-enabled .ticker>span{position:relative;z-index:6}
+.uc-tentacles-enabled main>section::before{content:"";position:absolute;inset:0;z-index:5;pointer-events:none;background:linear-gradient(rgba(7,8,10,.20),rgba(7,8,10,.20)),linear-gradient(90deg,rgba(7,8,10,.62),rgba(7,8,10,.08) 18%,rgba(7,8,10,.06) 82%,rgba(7,8,10,.62));opacity:.72}
+.uc-tentacles-enabled main>section.dark::before{opacity:.82}
+.uc-tentacles-enabled .dark{background:rgba(6,7,9,.90)}
+.uc-tentacles-enabled .hero{background:radial-gradient(circle at 78% 38%,rgba(217,30,50,.10),transparent 25%),linear-gradient(135deg,rgba(8,9,12,.92),rgba(17,21,27,.88))}
+@media(max-width:850px){#ucTentacles{opacity:.29}#ucTentacles .trace-live{stroke-width:2.8;opacity:.23}#ucTentacles .trace-hot{stroke-width:1.2;opacity:.28}}
+@media(max-width:520px){#ucTentacles{opacity:.24}#ucTentacles .trace-base{stroke-width:2.2;opacity:.05}#ucTentacles .trace-live{stroke-width:2.5;opacity:.20}#ucTentacles .trace-hot{stroke-width:1.1;opacity:.24}#ucTentacles .packet{opacity:.32}.uc-tentacles-enabled main>section::before{opacity:.84}}
+@media(prefers-reduced-motion:reduce){#ucTentacles .trace-hot,#ucTentacles .packet{display:none}#ucTentacles *{animation:none!important;transition:none!important}}

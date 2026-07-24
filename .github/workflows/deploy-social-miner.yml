@@ -54,17 +54,17 @@ jobs:
           chmod 600 "$HOME/.ssh/bluehost_deploy"
           ssh-keyscan -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts"
 
-      - name: Establish recoverable admin login once
+      - name: Set Social Miner admin password
         env:
           BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
           BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
-          BOOTSTRAP_ADMIN_HASH: '$2y$12$kUtc5ykorp2d.MbPgUEJgOELTZgZPNuoZ8dlaS5mm74ekNUDpwbny'
+          BOOTSTRAP_ADMIN_HASH: '$2y$12$M.a9Eg1pkyUbttGaJMNU/.2J4OgpYTPCJvCRDocx2PdJnDyd3sXpa'
         shell: bash
         run: |
           set -euo pipefail
           config_b64="$(php -r 'echo base64_encode("<?php return " . var_export(["admin_password_hash" => $argv[1]], true) . ";\n");' "$BOOTSTRAP_ADMIN_HASH")"
           ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
-            "set -e; mkdir -p public_html/social-miner/storage public_html/social-miner/storage/inbox public_html/social-miner/storage/inbox/processed public_html/social-miner/storage/inbox/failed; chmod 700 public_html/social-miner/storage public_html/social-miner/storage/inbox public_html/social-miner/storage/inbox/processed public_html/social-miner/storage/inbox/failed; marker=public_html/social-miner/.admin-bootstrap-v2; if [ ! -f \"\$marker\" ]; then printf '%s' '$config_b64' | base64 -d > public_html/social-miner/config.local.php; chmod 600 public_html/social-miner/config.local.php; touch \"\$marker\"; chmod 600 \"\$marker\"; fi"
+            "set -e; mkdir -p public_html/social-miner/storage public_html/social-miner/storage/inbox public_html/social-miner/storage/inbox/processed public_html/social-miner/storage/inbox/failed; chmod 700 public_html/social-miner/storage public_html/social-miner/storage/inbox public_html/social-miner/storage/inbox/processed public_html/social-miner/storage/inbox/failed; printf '%s' '$config_b64' | base64 -d > public_html/social-miner/config.local.php; chmod 600 public_html/social-miner/config.local.php"
 
       - name: Deploy Social Miner files
         env:

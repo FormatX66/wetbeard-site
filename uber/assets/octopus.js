@@ -8,7 +8,8 @@
   function ensureLogo(){
     let logo=document.querySelector('.page-octopod');if(logo)return logo;
     logo=document.createElement('div');logo.className='page-octopod canonical-wordmark';
-    logo.innerHTML='<img src="/uber/assets/ubercorp-wordmark-metallic.svg" alt="Übercorp">';
+    logo.innerHTML='<img src="/uber/assets/ubercorp-wordmark-liquid-v2.svg" alt="Übercorp"><span class="wordmark-fallback">Übercorp</span>';
+    const img=logo.querySelector('img');img?.addEventListener('error',()=>logo.classList.add('asset-failed'));
     const main=document.querySelector('main');
     if(main){main.insertBefore(logo,main.firstChild);return logo;}
     const shell=document.querySelector('.shell');

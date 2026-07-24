@@ -26,7 +26,7 @@
       #${NS} .jim-photo{width:92px;height:112px;background:linear-gradient(#b9bec0,#7e8589);display:grid;place-items:center;font-size:54px;float:right;margin-left:20px;border:5px solid #fff;box-shadow:0 4px 12px #0003}
       #${NS} .jim-grid{display:grid;grid-template-columns:1fr 1fr;border-top:2px solid #222;margin-top:18px}.jim-grid div{padding:10px;border-right:1px solid #777;border-bottom:1px solid #777}.jim-grid b,.jim-grid span{display:block}.jim-grid span{font:800 9px ui-monospace,monospace;color:#5c6266}
       #${NS} .jim-meter{height:10px;background:#bbb;margin-top:6px;overflow:hidden}.jim-meter i{display:block;height:100%;width:7%;background:#111;animation:jimKpi 3s ease-in-out infinite alternate}@keyframes jimKpi{to{width:103%}}
-    `,`<div class="ee-card jim-card"><div class="jim-photo">👔</div><div class="ee-kicker" style="color:#555">ÜBERCORP HUMAN RESOURCES // PERSONNEL FILE</div><div class="ee-title" style="font-size:clamp(44px,8vw,76px)">JIMOTHY</div><div class="ee-copy" style="color:#333">Employee name appears to have been entered incorrectly. HR has elected to preserve the error permanently.</div><div class="jim-grid"><div><span>JOB TITLE</span><b>Assistant to the Regional Galactic Manager</b></div><div><span>EMPLOYEE STATUS</span><b>TECHNICALLY PRESENT</b></div><div><span>PRODUCTIVITY</span><b>7%</b><div class="jim-meter"><i></i></div></div><div><span>MANAGEMENT NOTE</span><b>“Who is Jimothy?”</b></div></div><div class="ee-stamp">EMPLOYEE OF THE MINUTE</div></div>`);
+    `,`<div class="ee-card jim-card"><div class="jim-photo">👔</div><div class="ee-kicker" style="color:#555">Übercorp HUMAN RESOURCES // PERSONNEL FILE</div><div class="ee-title" style="font-size:clamp(44px,8vw,76px)">JIMOTHY</div><div class="ee-copy" style="color:#333">Employee name appears to have been entered incorrectly. HR has elected to preserve the error permanently.</div><div class="jim-grid"><div><span>JOB TITLE</span><b>Assistant to the Regional Galactic Manager</b></div><div><span>EMPLOYEE STATUS</span><b>TECHNICALLY PRESENT</b></div><div><span>PRODUCTIVITY</span><b>7%</b><div class="jim-meter"><i></i></div></div><div><span>MANAGEMENT NOTE</span><b>“Who is Jimothy?”</b></div></div><div class="ee-stamp">EMPLOYEE OF THE MINUTE</div></div>`);
   }
   function starWars(){
     const stars=Array.from({length:90},(_,i)=>`<i style="left:${(i*37)%100}%;top:${(i*61)%100}%;animation-delay:-${(i%17)/3}s"></i>`).join('');
@@ -37,7 +37,7 @@
       #${NS} .crawl h2{text-align:center;font-size:1.5em;margin-bottom:1em}.crawl p{margin:0 0 1.4em}
       #${NS} .sabers{position:absolute;inset:auto 8% 8% 8%;display:flex;justify-content:space-between}.saber{width:38%;height:5px;background:#eef8ff;box-shadow:0 0 8px #fff,0 0 18px currentColor,0 0 34px currentColor}.saber:first-child{color:#53d8ff;transform:rotate(12deg)}.saber:last-child{color:#ff5467;transform:rotate(-12deg)}
       @keyframes crawlUp{0%{bottom:-115%}100%{bottom:125%}}
-    `,`<div class="stars">${stars}</div><div class="crawl"><h2>ÜBERCORP QUARTERLY REPORT<br>EPISODE XXV</h2><p>It is a period of aggressive vertical integration. Rebel musicians, operating from a suspicious touring vessel, have disrupted several perfectly profitable sectors.</p><p>Corporate security insists there is no galactic conflict. The enormous laser invoices suggest otherwise.</p><p>Remain calm. Continue consuming. The quarterly numbers are strong with this one.</p></div><div class="sabers"><span class="saber"></span><span class="saber"></span></div>`,10500);
+    `,`<div class="stars">${stars}</div><div class="crawl"><h2>Übercorp QUARTERLY REPORT<br>EPISODE XXV</h2><p>It is a period of aggressive vertical integration. Rebel musicians, operating from a suspicious touring vessel, have disrupted several perfectly profitable sectors.</p><p>Corporate security insists there is no galactic conflict. The enormous laser invoices suggest otherwise.</p><p>Remain calm. Continue consuming. The quarterly numbers are strong with this one.</p></div><div class="sabers"><span class="saber"></span><span class="saber"></span></div>`,10500);
   }
   function detritus(){
     mount(`
@@ -65,11 +65,12 @@
   }
   function octopus(){
     document.body.classList.add('octo-overdrive');
-    const d=mount(`
-      #${NS}{background:radial-gradient(circle at 50% 35%,rgba(225,241,255,.14),transparent 45%)}
-      #${NS} .big-octo{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);width:min(72vw,620px);aspect-ratio:1;background:url('/uber/assets/ubercorp-octopus-metallic.svg') center/contain no-repeat;filter:drop-shadow(0 0 30px #dff4ff66);animation:octoBeat .8s ease-in-out infinite alternate}
+    mount(`
+      #${NS}{background:radial-gradient(circle at 50% 40%,rgba(225,241,255,.16),transparent 47%)}
+      #${NS} .big-octo{position:absolute;left:50%;top:45%;transform:translate(-50%,-50%);width:min(92vw,900px);aspect-ratio:840/260;background:url('/uber/assets/ubercorp-wordmark-metallic.svg') center/contain no-repeat;filter:drop-shadow(0 0 28px #dff4ff55);animation:octoBeat .8s ease-in-out infinite alternate}
+      #${NS} .big-octo:after{content:'';position:absolute;inset:0;background:linear-gradient(105deg,transparent 0%,#fff0 25%,#d7f4ffb8 44%,#fff 50%,#eadcff99 58%,transparent 75%);background-size:220% 100%;-webkit-mask:url('/uber/assets/ubercorp-wordmark-metallic.svg') center/contain no-repeat;mask:url('/uber/assets/ubercorp-wordmark-metallic.svg') center/contain no-repeat;animation:logoSweep 2.2s linear infinite}
       #${NS} .octo-msg{position:absolute;left:50%;bottom:8%;transform:translateX(-50%);color:#fff;font:900 clamp(18px,4vw,38px) ui-monospace,monospace;letter-spacing:.1em;text-align:center;text-shadow:0 0 18px #dff4ff}
-      @keyframes octoBeat{to{transform:translate(-50%,-50%) scale(1.035);filter:drop-shadow(0 0 50px #effaffaa)}}
+      @keyframes octoBeat{to{transform:translate(-50%,-50%) scale(1.025);filter:drop-shadow(0 0 48px #effaff99)}}@keyframes logoSweep{to{background-position:-120% 0}}
     `,`<div class="big-octo"></div><div class="octo-msg">BRAND COMPLIANCE: 100%<br>THE TENTACLES ARE WORKING AS INTENDED</div>`);
     setTimeout(()=>document.body.classList.remove('octo-overdrive'),6300);
   }

@@ -73,6 +73,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          sed -i 's/Admin key/Password/g; s/Invalid admin key\./Invalid password./g' social-miner/index.php
           tar -C social-miner -czf - \
             index.php api.php webhook.php import.php cron-import.php .htaccess .user.ini README.md lib storage/.htaccess | \
           ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \

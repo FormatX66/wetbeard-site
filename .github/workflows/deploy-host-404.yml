@@ -1,0 +1,87 @@
+name: Deploy host-wide System Is Down 404
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'uber/404.html'
+      - '.github/workflows/deploy-host-404.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: host-404-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Install madmorrigan.com root 404
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Check out site files
+        uses: actions/checkout@v4
+
+      - name: Configure secure Bluehost connection
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+          BLUEHOST_SSH_PRIVATE_KEY: ${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$BLUEHOST_HOST"
+          test -n "$BLUEHOST_USERNAME"
+          test -n "$BLUEHOST_SSH_PRIVATE_KEY"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$BLUEHOST_SSH_PRIVATE_KEY" > "$HOME/.ssh/bluehost_deploy"
+          chmod 600 "$HOME/.ssh/bluehost_deploy"
+          ssh-keyscan -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts"
+
+      - name: Install root 404 page
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          scp -i "$HOME/.ssh/bluehost_deploy" -P 22 uber/404.html "$BLUEHOST_USERNAME@$BLUEHOST_HOST:public_html/404.html"
+
+      - name: Install root ErrorDocument rule without replacing existing rules
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          ht='public_html/.htaccess'
+          tmp="$(mktemp)"
+          if [ -f "$ht" ]; then
+            awk '
+              /^# BEGIN CHATGPT SYSTEM IS DOWN 404$/ {skip=1; next}
+              /^# END CHATGPT SYSTEM IS DOWN 404$/ {skip=0; next}
+              !skip {print}
+            ' "$ht" > "$tmp"
+          else
+            : > "$tmp"
+          fi
+          printf '\n# BEGIN CHATGPT SYSTEM IS DOWN 404\nErrorDocument 404 /404.html\n# END CHATGPT SYSTEM IS DOWN 404\n' >> "$tmp"
+          cat "$tmp" > "$ht"
+          rm -f "$tmp"
+          REMOTE
+
+      - name: Verify host-wide 404 behavior
+        shell: bash
+        run: |
+          set -euo pipefail
+          test_url="https://madmorrigan.com/__system_is_down_404_test_${GITHUB_RUN_ID}.html"
+          status="$(curl --silent --show-error --location --output /tmp/host404.html --write-out '%{http_code}' --header 'Cache-Control: no-cache' "$test_url")"
+          test "$status" = '404'
+          grep -Fq 'THE SYSTEM IS DOWN' /tmp/host404.html
+          grep -Fq '404 // SYSTEM FAILURE' /tmp/host404.html
+          echo "Host-wide 404 verified at $test_url"

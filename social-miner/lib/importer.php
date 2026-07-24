@@ -22,6 +22,47 @@ function record_import(array $row): void {
     });
 }
 
+function import_progress_job_id(?string $candidate = null): string {
+    $candidate = trim((string)$candidate);
+    if ($candidate !== '' && preg_match('/^[A-Za-z0-9_-]{8,80}$/', $candidate)) return $candidate;
+    return bin2hex(random_bytes(12));
+}
+
+function import_progress_set(string $jobId, string $source, string $stage, int $percent, string $message, array $extra = []): void {
+    if ($jobId === '') return;
+    $percent = max(0, min(100, $percent));
+    $now = gmdate('c');
+    update_json_file('import-progress.json', function(array &$data) use ($jobId,$source,$stage,$percent,$message,$extra,$now): void {
+        $jobs = is_array($data['jobs'] ?? null) ? $data['jobs'] : [];
+        $existing = is_array($jobs[$jobId] ?? null) ? $jobs[$jobId] : [];
+        $row = array_merge($existing, $extra, [
+            'job_id'=>$jobId,
+            'source'=>$source,
+            'stage'=>$stage,
+            'percent'=>$percent,
+            'message'=>$message,
+            'updated_at'=>$now,
+            'started_at'=>$existing['started_at'] ?? $now,
+            'status'=>($extra['status'] ?? ($percent >= 100 ? 'complete' : 'running')),
+        ]);
+        $jobs[$jobId] = $row;
+        uasort($jobs, fn($a,$b)=>strcmp((string)($b['updated_at']??''),(string)($a['updated_at']??'')));
+        $jobs = array_slice($jobs, 0, 25, true);
+        $data = ['current_job'=>$jobId,'jobs'=>$jobs];
+    });
+}
+
+function import_progress_get(?string $jobId = null): ?array {
+    $data = read_json_file('import-progress.json', []);
+    $jobs = is_array($data['jobs'] ?? null) ? $data['jobs'] : [];
+    if ($jobId !== null && $jobId !== '') return isset($jobs[$jobId]) && is_array($jobs[$jobId]) ? $jobs[$jobId] : null;
+    $current = (string)($data['current_job'] ?? '');
+    if ($current !== '' && isset($jobs[$current]) && is_array($jobs[$current])) return $jobs[$current];
+    if (!$jobs) return null;
+    $first = reset($jobs);
+    return is_array($first) ? $first : null;
+}
+
 function scalar_text(mixed $v): string {
     if (is_string($v)) return trim($v);
     if (is_int($v) || is_float($v)) return (string)$v;
@@ -167,51 +208,90 @@ function process_export_json_bytes(string $platform, string $sourceFile, string 
     walk_export_json($platform, $sourceFile, $decoded, $target, '', 0, $stats);
 }
 
-function import_meta_export_file(string $path, string $originalName, string $platform, string $target = '', string $label = ''): array {
+function import_meta_export_file(string $path, string $originalName, string $platform, string $target = '', string $label = '', string $jobId = '', string $source = 'manual'): array {
     if (!in_array($platform, ['instagram','facebook'], true)) throw new InvalidArgumentException('Platform must be instagram or facebook.');
     if (!is_file($path)) throw new RuntimeException('Import file is missing.');
+    $jobId = import_progress_job_id($jobId);
 
     $stats = [
-        'id' => bin2hex(random_bytes(10)), 'platform'=>$platform, 'label'=>$label, 'filename'=>$originalName,
+        'id' => bin2hex(random_bytes(10)), 'job_id'=>$jobId, 'platform'=>$platform, 'label'=>$label, 'filename'=>$originalName,
         'target'=>$target, 'comments_imported'=>0, 'high_risk'=>0, 'medium_risk'=>0,
         'json_files_seen'=>0, 'json_bytes_seen'=>0, 'skipped_files'=>[], 'created_at'=>gmdate('c'),
     ];
     $lower = strtolower($originalName);
+    import_progress_set($jobId,$source,'inspect',42,'Upload received — inspecting Meta export…',['filename'=>$originalName,'platform'=>$platform,'comments'=>0]);
 
     if (str_ends_with($lower, '.json')) {
+        import_progress_set($jobId,$source,'parse',50,'Reading JSON export…',['filename'=>$originalName]);
         $bytes = file_get_contents($path);
         if ($bytes === false) throw new RuntimeException('Unable to read JSON import.');
         process_export_json_bytes($platform, $originalName, $bytes, $target, $stats);
+        import_progress_set($jobId,$source,'risk_analysis',82,'Comment and risk analysis complete.',['filename'=>$originalName,'comments'=>$stats['comments_imported'],'high_risk'=>$stats['high_risk'],'medium_risk'=>$stats['medium_risk'],'json_files_seen'=>$stats['json_files_seen']]);
     } elseif (str_ends_with($lower, '.zip')) {
         if (!class_exists('ZipArchive')) throw new RuntimeException('ZIP support is not enabled on this PHP server. Upload JSON files individually.');
         $zip = new ZipArchive();
         $rc = $zip->open($path);
         if ($rc !== true) throw new RuntimeException('Unable to open ZIP export (code '.$rc.').');
         try {
-            $processed = 0;
-            for ($i=0; $i<$zip->numFiles && $processed<IMPORT_MAX_FILES; $i++) {
+            $eligible = [];
+            for ($i=0; $i<$zip->numFiles && count($eligible)<IMPORT_MAX_FILES; $i++) {
                 $st = $zip->statIndex($i);
                 if (!is_array($st)) continue;
                 $name = (string)($st['name'] ?? '');
                 if ($name === '' || str_ends_with($name, '/') || !str_ends_with(strtolower($name), '.json')) continue;
+                $eligible[] = $i;
+            }
+            $total = count($eligible);
+            import_progress_set($jobId,$source,'unpack',46,$total > 0 ? 'Archive opened — found '.$total.' JSON files.' : 'Archive opened — looking for comment data…',['filename'=>$originalName,'json_files_total'=>$total]);
+            $processed = 0;
+            foreach ($eligible as $i) {
+                $st = $zip->statIndex($i);
+                if (!is_array($st)) continue;
+                $name = (string)($st['name'] ?? '');
                 $size = (int)($st['size'] ?? 0);
                 if ($size > IMPORT_MAX_JSON_BYTES || ($stats['json_bytes_seen'] + $size) > IMPORT_MAX_TOTAL_JSON_BYTES) {
                     $stats['skipped_files'][] = $name . ' (size limit)';
-                    continue;
+                    $processed++;
+                } else {
+                    $bytes = $zip->getFromIndex($i, IMPORT_MAX_JSON_BYTES + 1);
+                    if (!is_string($bytes)) {
+                        $stats['skipped_files'][] = $name . ' (read failed)';
+                    } else {
+                        process_export_json_bytes($platform, $name, $bytes, $target, $stats);
+                    }
+                    $processed++;
                 }
-                $bytes = $zip->getFromIndex($i, IMPORT_MAX_JSON_BYTES + 1);
-                if (!is_string($bytes)) { $stats['skipped_files'][] = $name . ' (read failed)'; continue; }
-                process_export_json_bytes($platform, $name, $bytes, $target, $stats);
-                $processed++;
+                $fraction = $total > 0 ? $processed / $total : 1;
+                $pct = 46 + (int)floor(34 * $fraction);
+                import_progress_set($jobId,$source,'parse',$pct,'Scanning export files: '.$processed.' / '.max(1,$total),[
+                    'filename'=>$originalName,
+                    'json_files_seen'=>$stats['json_files_seen'],
+                    'json_files_total'=>$total,
+                    'comments'=>$stats['comments_imported'],
+                    'high_risk'=>$stats['high_risk'],
+                    'medium_risk'=>$stats['medium_risk'],
+                ]);
             }
         } finally { $zip->close(); }
+        import_progress_set($jobId,$source,'risk_analysis',82,'Comment and risk analysis complete.',['filename'=>$originalName,'comments'=>$stats['comments_imported'],'high_risk'=>$stats['high_risk'],'medium_risk'=>$stats['medium_risk'],'json_files_seen'=>$stats['json_files_seen']]);
     } else {
         throw new InvalidArgumentException('Upload a Meta export ZIP or JSON file.');
     }
 
+    $botCount = null;
+    if (function_exists('build_bot_reports')) {
+        import_progress_set($jobId,$source,'bot_analysis',90,'Running bot / automation behavior analysis…',['filename'=>$originalName,'comments'=>$stats['comments_imported']]);
+        $botCount = count(build_bot_reports(comments_all()));
+        import_progress_set($jobId,$source,'finalize',98,'Bot analysis complete — finalizing report.',['filename'=>$originalName,'comments'=>$stats['comments_imported'],'accounts_analyzed'=>$botCount]);
+    } else {
+        import_progress_set($jobId,$source,'finalize',96,'Finalizing import report…',['filename'=>$originalName,'comments'=>$stats['comments_imported']]);
+    }
+
+    $stats['accounts_analyzed'] = $botCount;
     $stats['skipped_files'] = array_slice($stats['skipped_files'], 0, 50);
     record_import($stats);
     append_jsonl('import-log.jsonl', $stats);
+    import_progress_set($jobId,$source,'complete',100,'Import and analysis complete.',['status'=>'complete','filename'=>$originalName,'comments'=>$stats['comments_imported'],'high_risk'=>$stats['high_risk'],'medium_risk'=>$stats['medium_risk'],'accounts_analyzed'=>$botCount,'completed_at'=>gmdate('c')]);
     return $stats;
 }
 
@@ -242,12 +322,15 @@ function process_inbox_files(): array {
         $name = basename($path);
         if (!preg_match('/\.(zip|json)$/i', $name)) continue;
         $platform = str_starts_with(strtolower($name), 'facebook') ? 'facebook' : 'instagram';
+        $jobId = import_progress_job_id();
         try {
-            $stats = import_meta_export_file($path, $name, $platform, '', 'scheduled inbox');
+            import_progress_set($jobId,'server-inbox','queued',38,'Server inbox export found — starting analysis.',['filename'=>$name,'platform'=>$platform]);
+            $stats = import_meta_export_file($path, $name, $platform, '', 'scheduled inbox', $jobId, 'server-inbox');
             $dest = $done . '/' . gmdate('Ymd-His') . '-' . preg_replace('/[^A-Za-z0-9._-]/','_',$name);
             rename($path, $dest);
             $results[]=['file'=>$name,'ok'=>true,'comments'=>$stats['comments_imported']];
         } catch (Throwable $e) {
+            import_progress_set($jobId,'server-inbox','failed',100,'Import failed: '.$e->getMessage(),['status'=>'error','filename'=>$name]);
             $dest = $failed . '/' . gmdate('Ymd-His') . '-' . preg_replace('/[^A-Za-z0-9._-]/','_',$name);
             @rename($path, $dest);
             $results[]=['file'=>$name,'ok'=>false,'error'=>$e->getMessage()];

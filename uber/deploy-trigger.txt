@@ -1,2 +1,2 @@
 Übercorp production deployment trigger.
-Build: corrected brand capitalization across homepage, Citizen Portal, and Careers.
+Build: click Easter eggs, novel lore surprises, and close-button positioning.

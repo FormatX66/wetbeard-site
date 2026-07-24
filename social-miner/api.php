@@ -5,6 +5,7 @@ require __DIR__ . '/lib/analyzer.php';
 require __DIR__ . '/lib/meta.php';
 require __DIR__ . '/lib/importer.php';
 require __DIR__ . '/lib/cloud.php';
+require __DIR__ . '/lib/bot.php';
 $action = $_GET['action'] ?? '';
 
 try {
@@ -21,6 +22,7 @@ try {
             'storage_writable'=>$ok,
             'zip_available'=>class_exists('ZipArchive'),
             'curl_available'=>function_exists('curl_init'),
+            'bot_analysis'=>true,
         ], $ok?200:500);
     }
 
@@ -140,6 +142,47 @@ try {
         }
         $rows=array_values($groups); usort($rows,fn($a,$b)=>[$b['high_count'],$b['medium_count'],$b['comment_count']]<=>[$a['high_count'],$a['medium_count'],$a['comment_count']]);
         json_response(['ok'=>true,'users'=>array_slice($rows,0,1000)]);
+    }
+
+    if ($action === 'bot_users') {
+        $reports = build_bot_reports(comments_all());
+        $summary = array_map(fn($r) => [
+            'report_id'=>$r['report_id'],
+            'platform'=>$r['platform'],
+            'username'=>$r['username'],
+            'user_id'=>$r['user_id'],
+            'bot_percentage'=>$r['bot_percentage'],
+            'label'=>$r['label'],
+            'confidence'=>$r['confidence'],
+            'comment_count'=>$r['comment_count'],
+            'high_risk_count'=>$r['high_risk_count'],
+            'medium_risk_count'=>$r['medium_risk_count'],
+            'latest_activity'=>$r['latest_activity'],
+            'top_signals'=>array_slice($r['signals'],0,3),
+        ], array_slice($reports,0,1000));
+        json_response(['ok'=>true,'accounts'=>$summary]);
+    }
+
+    if ($action === 'bot_report') {
+        $id = trim((string)($_GET['id'] ?? ''));
+        if ($id === '') throw new InvalidArgumentException('Report ID is required.');
+        $report = find_bot_report(comments_all(), $id);
+        if (!$report) json_response(['ok'=>false,'error'=>'Bot report not found'],404);
+        json_response(['ok'=>true,'report'=>$report]);
+    }
+
+    if ($action === 'bot_export') {
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="social-miner-bot-report-'.gmdate('Ymd-His').'.csv"');
+        header('Cache-Control: no-store');
+        $out=fopen('php://output','wb');
+        fputcsv($out,['platform','username','user_id','bot_percentage','label','confidence','comment_count','high_risk_count','medium_risk_count','duplicate_ratio','cross_account_shared_ratio','link_ratio','median_interval_seconds','minimum_interval_seconds','burst_10s_ratio','burst_60s_ratio','interval_cv','top_signals']);
+        foreach(build_bot_reports(comments_all()) as $r) {
+            $m=$r['metrics'];
+            $signals=implode(' | ',array_map(fn($s)=>$s['name'].' +'.$s['points'].' ('.$s['value'].')',$r['signals']));
+            fputcsv($out,[$r['platform'],$r['username'],$r['user_id'],$r['bot_percentage'],$r['label'],$r['confidence'],$r['comment_count'],$r['high_risk_count'],$r['medium_risk_count'],$m['duplicate_ratio'],$m['cross_account_shared_ratio'],$m['link_ratio'],$m['median_interval_seconds'],$m['minimum_interval_seconds'],$m['burst_10s_ratio'],$m['burst_60s_ratio'],$m['interval_cv'],$signals]);
+        }
+        fclose($out); exit;
     }
 
     if ($action === 'export') {

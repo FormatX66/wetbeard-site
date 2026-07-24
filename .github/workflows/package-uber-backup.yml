@@ -1,0 +1,58 @@
+name: Package Übercorp Backup
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/package-uber-backup.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out full repository history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Package verified Übercorp build
+        shell: bash
+        run: |
+          set -euo pipefail
+          BUILD_SHA='8a52ced75739b26ea99eaa162fb8b91bfeffc1a6'
+          BACKUP_NAME='ubercorp-backup-2026-07-24-8a52ced.zip'
+          STAGE="$(mktemp -d)"
+          git cat-file -e "${BUILD_SHA}^{commit}"
+          git archive "$BUILD_SHA" uber .github/workflows/deploy-uber.yml | tar -x -C "$STAGE"
+          cat > "$STAGE/BACKUP-MANIFEST.txt" <<EOF
+          Übercorp website backup
+          Source repository: FormatX66/wetbeard-site
+          Verified production build commit: ${BUILD_SHA}
+          Production URL: https://madmorrigan.com/uber/
+          Packaged UTC: $(date -u +'%Y-%m-%dT%H:%M:%SZ')
+
+          Contents:
+          - uber/                         Complete Übercorp site source at the verified commit
+          - .github/workflows/deploy-uber.yml  Bluehost deployment workflow at the verified commit
+          EOF
+          mkdir -p backups
+          (cd "$STAGE" && zip -qr "$GITHUB_WORKSPACE/backups/$BACKUP_NAME" .)
+          unzip -t "backups/$BACKUP_NAME"
+
+      - name: Store backup in repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add backups/ubercorp-backup-2026-07-24-8a52ced.zip
+          if git diff --cached --quiet; then
+            echo 'Backup already exists.'
+            exit 0
+          fi
+          git commit -m 'Store Übercorp backup 8a52ced [skip ci]'
+          git push

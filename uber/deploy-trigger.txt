@@ -1,2 +1,2 @@
-UberCorp production deployment trigger.
-Build: multi-page corporate site with Citizen Portal and Careers.
+Übercorp production deployment trigger.
+Build: corrected brand capitalization across homepage, Citizen Portal, and Careers.

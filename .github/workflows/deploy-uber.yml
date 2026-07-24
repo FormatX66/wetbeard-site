@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: uber-production
@@ -86,12 +86,32 @@ jobs:
           python3 -c 'import json,sys; d=json.load(open(sys.argv[1],encoding="utf-8")); sys.exit(0 if d.get("commit_sha")==sys.argv[2] and d.get("status")=="deployed" else "UberCorp deploy verification failed")' \
             uber-version-live.json "$GITHUB_SHA"
 
-      - name: Verify compliance API
+      - name: Verify live site and compliance API
         shell: bash
         run: |
           set -euo pipefail
+          curl --fail-with-body --silent --show-error \
+            --retry 5 --retry-all-errors --retry-delay 3 \
+            --header 'Cache-Control: no-cache' \
+            --output /tmp/uber-index.html \
+            'https://madmorrigan.com/uber/'
+          grep -q 'ÜBERCORP' /tmp/uber-index.html
           response="$(curl --fail-with-body --silent --show-error \
             --retry 5 --retry-all-errors --retry-delay 3 \
             --header 'Cache-Control: no-cache' \
             'https://madmorrigan.com/uber/api/compliance-score.php?name=CorporateTest')"
           python3 -c 'import json,sys; d=json.loads(sys.argv[1]); sys.exit(0 if d.get("ok") is True and isinstance(d.get("score"),int) else "UberCorp API health check failed")' "$response"
+
+      - name: Record successful production deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p deployments
+          deployed_at_utc="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          printf '{\n  "site": "uber",\n  "url": "https://madmorrigan.com/uber/",\n  "commit_sha": "%s",\n  "verified_at_utc": "%s",\n  "status": "verified-live"\n}\n' \
+            "$GITHUB_SHA" "$deployed_at_utc" > deployments/uber-live.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add deployments/uber-live.json
+          git commit -m 'Record UberCorp live deployment [skip ci]'
+          git push

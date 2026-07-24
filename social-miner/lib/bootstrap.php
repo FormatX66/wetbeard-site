@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-const MINER_VERSION = '0.3.0';
+const MINER_VERSION = '0.4.0';
 
 function app_root(): string { return dirname(__DIR__); }
 function storage_dir(): string { return app_root() . '/storage'; }
@@ -41,6 +41,10 @@ function read_json_file(string $file, array $default = []): array {
 function update_json_file(string $file, callable $mutator, array $default = []): mixed {
     ensure_storage();
     $path = storage_path($file);
+    $parent = dirname($path);
+    if (!is_dir($parent) && !mkdir($parent, 0700, true) && !is_dir($parent)) {
+        throw new RuntimeException('Unable to create storage subdirectory.');
+    }
     $fh = fopen($path, 'c+b');
     if (!$fh) throw new RuntimeException('Unable to open storage file: ' . $file);
     try {
@@ -122,9 +126,12 @@ function comments_all(): array {
 
 function comment_upsert(array $row): void {
     $key = (string)$row['platform'] . ':' . (string)$row['external_comment_id'];
-    if ($row['external_comment_id'] === '') return;
+    if (($row['external_comment_id'] ?? '') === '') return;
     update_json_file('comments.json', function(array &$data) use ($key,$row): void {
         $existing = $data[$key] ?? [];
+        $incomingImportIds = is_array($row['import_ids'] ?? null) ? $row['import_ids'] : [];
+        $existingImportIds = is_array($existing['import_ids'] ?? null) ? $existing['import_ids'] : [];
+        $row['import_ids'] = array_values(array_unique(array_filter(array_merge($existingImportIds, $incomingImportIds), 'is_string')));
         $row['collected_at'] = $existing['collected_at'] ?? gmdate('c');
         $row['updated_at'] = gmdate('c');
         $data[$key] = array_merge($existing, $row);

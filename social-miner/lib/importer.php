@@ -11,6 +11,22 @@ function import_history(): array {
     return $rows;
 }
 
+function import_find(string $id): ?array {
+    if ($id === '') return null;
+    foreach (import_history() as $row) if ((string)($row['id'] ?? '') === $id) return $row;
+    return null;
+}
+
+function import_comments(string $id): array {
+    if ($id === '') return [];
+    $rows = array_values(array_filter(comments_all(), function(array $row) use ($id): bool {
+        $ids = is_array($row['import_ids'] ?? null) ? $row['import_ids'] : [];
+        return in_array($id, $ids, true);
+    }));
+    usort($rows, fn($a,$b)=>strcmp((string)($b['created_time']??$b['collected_at']??''),(string)($a['created_time']??$a['collected_at']??'')));
+    return $rows;
+}
+
 function record_import(array $row): void {
     update_json_file('imports.json', function(array &$data) use ($row): void {
         $key = (string)($row['id'] ?? bin2hex(random_bytes(8)));
@@ -74,9 +90,8 @@ function flatten_export_record(mixed $value, string $prefix = '', int $depth = 0
     if (is_array($value)) {
         foreach ($value as $k => $v) {
             $key = $prefix === '' ? (string)$k : $prefix . '.' . (string)$k;
-            if (is_array($v)) {
-                flatten_export_record($v, $key, $depth + 1, $out);
-            } else {
+            if (is_array($v)) flatten_export_record($v, $key, $depth + 1, $out);
+            else {
                 $s = scalar_text($v);
                 if ($s !== '') $out[$key] = $s;
             }
@@ -88,11 +103,9 @@ function flatten_export_record(mixed $value, string $prefix = '', int $depth = 0
 function pick_flat_value(array $flat, array $needles, int $maxLen = 0): string {
     foreach ($needles as $needle) {
         foreach ($flat as $key => $value) {
-            $lk = strtolower((string)$key);
-            if (str_contains($lk, $needle)) {
-                $s = trim((string)$value);
-                if ($s !== '' && ($maxLen <= 0 || strlen($s) <= $maxLen)) return $s;
-            }
+            if (!str_contains(strtolower((string)$key), $needle)) continue;
+            $s = trim((string)$value);
+            if ($s !== '' && ($maxLen <= 0 || strlen($s) <= $maxLen)) return $s;
         }
     }
     return '';
@@ -102,12 +115,12 @@ function pick_export_timestamp(array $flat): string {
     foreach ($flat as $key => $value) {
         $lk = strtolower((string)$key);
         if (!preg_match('/(?:^|\.)(timestamp|created_time|creation_time|time)$/', $lk)) continue;
-        if (ctype_digit($value)) {
+        if (ctype_digit((string)$value)) {
             $n = (int)$value;
             if ($n > 10_000_000_000) $n = (int)floor($n / 1000);
             if ($n > 946684800 && $n < 4102444800) return gmdate('c', $n);
         }
-        $t = strtotime($value);
+        $t = strtotime((string)$value);
         if ($t !== false) return gmdate('c', $t);
     }
     return '';
@@ -115,13 +128,10 @@ function pick_export_timestamp(array $flat): string {
 
 function comment_candidate_from_record(string $platform, string $sourceFile, string $recordPath, mixed $record, string $target = ''): ?array {
     if (!is_array($record)) return null;
-
     $hasDirectCommentSignal = false;
     foreach ($record as $key => $value) {
         $lk = strtolower((string)$key);
-        if (!is_array($value) && preg_match('/(^|_)(comment|message|text|body|content)($|_)/', $lk)) {
-            $hasDirectCommentSignal = true; break;
-        }
+        if (!is_array($value) && preg_match('/(^|_)(comment|message|text|body|content)($|_)/', $lk)) { $hasDirectCommentSignal = true; break; }
     }
     $hasStructuredPayload = isset($record['string_map_data']) || isset($record['string_list_data']);
     if (!$hasDirectCommentSignal && !$hasStructuredPayload) return null;
@@ -129,10 +139,8 @@ function comment_candidate_from_record(string $platform, string $sourceFile, str
     $flat = [];
     flatten_export_record($record, '', 0, $flat);
     if (!$flat) return null;
-
     $flatKeys = strtolower(implode(' ', array_keys($flat)));
-    $commentish = str_contains(strtolower($sourceFile), 'comment') || str_contains($flatKeys, 'comment');
-    if (!$commentish) return null;
+    if (!str_contains(strtolower($sourceFile), 'comment') && !str_contains($flatKeys, 'comment')) return null;
 
     $raw = json_encode($record, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     if ($raw === false) return null;
@@ -143,12 +151,12 @@ function comment_candidate_from_record(string $platform, string $sourceFile, str
 
     $username = '';
     foreach ($flat as $key=>$value) {
-        if (strtolower($key) === 'title' && strlen($value) <= 250) { $username = $value; break; }
+        if (strtolower((string)$key) === 'title' && strlen((string)$value) <= 250) { $username = (string)$value; break; }
     }
     if ($username === '') $username = pick_flat_value($flat, ['username','author','from.name','from.username','profile_name','name'], 250);
     if ($username === '') {
         foreach ($flat as $key=>$value) {
-            if (strtolower($key) === 'string_list_data.0.value' && strlen($value) <= 250) { $username = $value; break; }
+            if (strtolower((string)$key) === 'string_list_data.0.value' && strlen((string)$value) <= 250) { $username = (string)$value; break; }
         }
     }
 
@@ -162,36 +170,33 @@ function comment_candidate_from_record(string $platform, string $sourceFile, str
     $fingerprint = hash('sha256', $platform.'|'.$username.'|'.$timestamp.'|'.$text.'|'.$url.'|'.$mediaId.'|'.$fallbackIdentity);
     $analysis = analyze_comment($text);
     return [
-        'platform' => $platform,
-        'external_comment_id' => 'export:' . substr($fingerprint, 0, 40),
-        'external_media_id' => $mediaId !== '' ? $mediaId : ('export:' . substr(hash('sha256',$sourceFile),0,20)),
-        'parent_external_id' => '',
-        'user_id' => $userId,
-        'username' => $username,
-        'text' => $text,
-        'created_time' => $timestamp,
-        'like_count' => 0,
-        'permalink' => $url,
-        'risk_level' => $analysis['risk_level'],
-        'flags_json' => json_encode($analysis['flags'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
-        'raw_json' => $raw,
-        'source_type' => 'meta_export',
-        'source_file' => $sourceFile,
-        'source_path' => $recordPath,
+        'platform'=>$platform,
+        'external_comment_id'=>'export:' . substr($fingerprint, 0, 40),
+        'external_media_id'=>$mediaId !== '' ? $mediaId : ('export:' . substr(hash('sha256',$sourceFile),0,20)),
+        'parent_external_id'=>'',
+        'user_id'=>$userId,
+        'username'=>$username,
+        'text'=>$text,
+        'created_time'=>$timestamp,
+        'like_count'=>0,
+        'permalink'=>$url,
+        'risk_level'=>$analysis['risk_level'],
+        'flags_json'=>json_encode($analysis['flags'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+        'raw_json'=>$raw,
+        'source_type'=>'meta_export',
+        'source_file'=>$sourceFile,
+        'source_path'=>$recordPath,
     ];
 }
 
 function walk_export_json(string $platform, string $sourceFile, mixed $node, string $target, string $path, int $depth, array &$stats): void {
     if ($depth > 16 || !is_array($node)) return;
-
     $candidate = comment_candidate_from_record($platform, $sourceFile, $path, $node, $target);
     if ($candidate !== null) {
+        $candidate['import_ids'] = [(string)$stats['id']];
         comment_upsert($candidate);
-        $stats['comments_imported']++;
-        if ($candidate['risk_level'] === 'high') $stats['high_risk']++;
-        elseif ($candidate['risk_level'] === 'medium') $stats['medium_risk']++;
+        $stats['comments_seen']++;
     }
-
     foreach ($node as $k => $child) {
         if (!is_array($child)) continue;
         $childPath = $path === '' ? (string)$k : $path . '.' . (string)$k;
@@ -212,21 +217,19 @@ function import_meta_export_file(string $path, string $originalName, string $pla
     if (!in_array($platform, ['instagram','facebook'], true)) throw new InvalidArgumentException('Platform must be instagram or facebook.');
     if (!is_file($path)) throw new RuntimeException('Import file is missing.');
     $jobId = import_progress_job_id($jobId);
-
     $stats = [
-        'id' => bin2hex(random_bytes(10)), 'job_id'=>$jobId, 'platform'=>$platform, 'label'=>$label, 'filename'=>$originalName,
-        'target'=>$target, 'comments_imported'=>0, 'high_risk'=>0, 'medium_risk'=>0,
-        'json_files_seen'=>0, 'json_bytes_seen'=>0, 'skipped_files'=>[], 'created_at'=>gmdate('c'),
+        'id'=>bin2hex(random_bytes(10)), 'job_id'=>$jobId, 'platform'=>$platform, 'label'=>$label, 'filename'=>$originalName,
+        'target'=>$target, 'source'=>$source, 'comments_imported'=>0, 'comments_seen'=>0, 'high_risk'=>0, 'medium_risk'=>0,
+        'json_files_seen'=>0, 'json_bytes_seen'=>0, 'skipped_files'=>[], 'created_at'=>gmdate('c'), 'review_ready'=>false,
     ];
     $lower = strtolower($originalName);
-    import_progress_set($jobId,$source,'inspect',42,'Upload received — inspecting Meta export…',['filename'=>$originalName,'platform'=>$platform,'comments'=>0]);
+    import_progress_set($jobId,$source,'inspect',42,'Background worker started — inspecting Meta export…',['filename'=>$originalName,'platform'=>$platform,'comments'=>0]);
 
     if (str_ends_with($lower, '.json')) {
         import_progress_set($jobId,$source,'parse',50,'Reading JSON export…',['filename'=>$originalName]);
         $bytes = file_get_contents($path);
         if ($bytes === false) throw new RuntimeException('Unable to read JSON import.');
         process_export_json_bytes($platform, $originalName, $bytes, $target, $stats);
-        import_progress_set($jobId,$source,'risk_analysis',82,'Comment and risk analysis complete.',['filename'=>$originalName,'comments'=>$stats['comments_imported'],'high_risk'=>$stats['high_risk'],'medium_risk'=>$stats['medium_risk'],'json_files_seen'=>$stats['json_files_seen']]);
     } elseif (str_ends_with($lower, '.zip')) {
         if (!class_exists('ZipArchive')) throw new RuntimeException('ZIP support is not enabled on this PHP server. Upload JSON files individually.');
         $zip = new ZipArchive();
@@ -251,47 +254,51 @@ function import_meta_export_file(string $path, string $originalName, string $pla
                 $size = (int)($st['size'] ?? 0);
                 if ($size > IMPORT_MAX_JSON_BYTES || ($stats['json_bytes_seen'] + $size) > IMPORT_MAX_TOTAL_JSON_BYTES) {
                     $stats['skipped_files'][] = $name . ' (size limit)';
-                    $processed++;
                 } else {
                     $bytes = $zip->getFromIndex($i, IMPORT_MAX_JSON_BYTES + 1);
-                    if (!is_string($bytes)) {
-                        $stats['skipped_files'][] = $name . ' (read failed)';
-                    } else {
-                        process_export_json_bytes($platform, $name, $bytes, $target, $stats);
-                    }
-                    $processed++;
+                    if (!is_string($bytes)) $stats['skipped_files'][] = $name . ' (read failed)';
+                    else process_export_json_bytes($platform, $name, $bytes, $target, $stats);
                 }
+                $processed++;
                 $fraction = $total > 0 ? $processed / $total : 1;
                 $pct = 46 + (int)floor(34 * $fraction);
                 import_progress_set($jobId,$source,'parse',$pct,'Scanning export files: '.$processed.' / '.max(1,$total),[
-                    'filename'=>$originalName,
-                    'json_files_seen'=>$stats['json_files_seen'],
-                    'json_files_total'=>$total,
-                    'comments'=>$stats['comments_imported'],
-                    'high_risk'=>$stats['high_risk'],
-                    'medium_risk'=>$stats['medium_risk'],
+                    'filename'=>$originalName,'json_files_seen'=>$stats['json_files_seen'],'json_files_total'=>$total,'comments'=>$stats['comments_seen']
                 ]);
             }
         } finally { $zip->close(); }
-        import_progress_set($jobId,$source,'risk_analysis',82,'Comment and risk analysis complete.',['filename'=>$originalName,'comments'=>$stats['comments_imported'],'high_risk'=>$stats['high_risk'],'medium_risk'=>$stats['medium_risk'],'json_files_seen'=>$stats['json_files_seen']]);
     } else {
         throw new InvalidArgumentException('Upload a Meta export ZIP or JSON file.');
     }
 
+    $reviewComments = import_comments((string)$stats['id']);
+    $stats['comments_imported'] = count($reviewComments);
+    $stats['high_risk'] = count(array_filter($reviewComments, fn($r)=>(string)($r['risk_level']??'')==='high'));
+    $stats['medium_risk'] = count(array_filter($reviewComments, fn($r)=>(string)($r['risk_level']??'')==='medium'));
+    import_progress_set($jobId,$source,'risk_analysis',82,'Comment and risk analysis complete.',[
+        'filename'=>$originalName,'comments'=>$stats['comments_imported'],'high_risk'=>$stats['high_risk'],'medium_risk'=>$stats['medium_risk'],'json_files_seen'=>$stats['json_files_seen']
+    ]);
+
     $botCount = null;
     if (function_exists('build_bot_reports')) {
         import_progress_set($jobId,$source,'bot_analysis',90,'Running bot / automation behavior analysis…',['filename'=>$originalName,'comments'=>$stats['comments_imported']]);
-        $botCount = count(build_bot_reports(comments_all()));
-        import_progress_set($jobId,$source,'finalize',98,'Bot analysis complete — finalizing report.',['filename'=>$originalName,'comments'=>$stats['comments_imported'],'accounts_analyzed'=>$botCount]);
+        $botCount = count(build_bot_reports($reviewComments));
+        import_progress_set($jobId,$source,'finalize',98,'Bot analysis complete — building review page.',['filename'=>$originalName,'comments'=>$stats['comments_imported'],'accounts_analyzed'=>$botCount]);
     } else {
-        import_progress_set($jobId,$source,'finalize',96,'Finalizing import report…',['filename'=>$originalName,'comments'=>$stats['comments_imported']]);
+        import_progress_set($jobId,$source,'finalize',96,'Building review page…',['filename'=>$originalName,'comments'=>$stats['comments_imported']]);
     }
 
     $stats['accounts_analyzed'] = $botCount;
+    $stats['review_ready'] = true;
+    $stats['review_url'] = 'review.php?id=' . rawurlencode((string)$stats['id']);
+    $stats['completed_at'] = gmdate('c');
     $stats['skipped_files'] = array_slice($stats['skipped_files'], 0, 50);
     record_import($stats);
     append_jsonl('import-log.jsonl', $stats);
-    import_progress_set($jobId,$source,'complete',100,'Import and analysis complete.',['status'=>'complete','filename'=>$originalName,'comments'=>$stats['comments_imported'],'high_risk'=>$stats['high_risk'],'medium_risk'=>$stats['medium_risk'],'accounts_analyzed'=>$botCount,'completed_at'=>gmdate('c')]);
+    import_progress_set($jobId,$source,'complete',100,'Import and analysis complete — review page ready.',[
+        'status'=>'complete','filename'=>$originalName,'comments'=>$stats['comments_imported'],'high_risk'=>$stats['high_risk'],
+        'medium_risk'=>$stats['medium_risk'],'accounts_analyzed'=>$botCount,'import_id'=>$stats['id'],'review_url'=>$stats['review_url'],'completed_at'=>$stats['completed_at']
+    ]);
     return $stats;
 }
 
@@ -309,32 +316,82 @@ function shortcut_authorized(): bool {
     return hash_equals($expected, trim($m[1]));
 }
 
+function queue_uploaded_export(string $tmp, string $originalName, string $platform, string $target, string $label, string $jobId, string $source, int $size): array {
+    if (!in_array($platform, ['instagram','facebook'], true)) throw new InvalidArgumentException('Platform must be instagram or facebook.');
+    if (!preg_match('/\.(zip|json)$/i', $originalName)) throw new InvalidArgumentException('Upload a Meta export ZIP or JSON file.');
+    ensure_storage();
+    $dir = storage_path('inbox');
+    if (!is_dir($dir) && !mkdir($dir, 0700, true) && !is_dir($dir)) throw new RuntimeException('Unable to create background import queue.');
+    @chmod($dir,0700);
+    $safe = preg_replace('/[^A-Za-z0-9._-]/','_',basename($originalName)) ?: 'meta-export.zip';
+    $queuedName = $jobId . '--' . $safe;
+    $dest = $dir . '/' . $queuedName;
+    if (!@move_uploaded_file($tmp, $dest) && !@rename($tmp, $dest)) throw new RuntimeException('Unable to queue uploaded file for background processing.');
+    @chmod($dest,0600);
+    $meta = [
+        'job_id'=>$jobId,'source'=>$source,'original_name'=>$originalName,'platform'=>$platform,'target'=>$target,'label'=>$label,
+        'size_bytes'=>$size,'queued_at'=>gmdate('c')
+    ];
+    $metaBytes = json_encode($meta, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE);
+    if ($metaBytes === false || file_put_contents($dest.'.meta', $metaBytes."\n", LOCK_EX) === false) {
+        @unlink($dest);
+        throw new RuntimeException('Unable to write background import metadata.');
+    }
+    @chmod($dest.'.meta',0600);
+    import_progress_set($jobId,$source,'queued',41,'Upload complete — queued for background analysis. You can close this page.',[
+        'status'=>'queued','filename'=>$originalName,'platform'=>$platform,'size_bytes'=>$size
+    ]);
+    return ['job_id'=>$jobId,'queued'=>true,'filename'=>$originalName,'source'=>$source];
+}
+
 function process_inbox_files(): array {
     ensure_storage();
     $dir = storage_path('inbox');
-    if (!is_dir($dir)) @mkdir($dir, 0700, true);
     $done = storage_path('inbox/processed');
     $failed = storage_path('inbox/failed');
-    @mkdir($done, 0700, true); @mkdir($failed, 0700, true);
+    @mkdir($dir,0700,true); @mkdir($done,0700,true); @mkdir($failed,0700,true);
+
+    $lock = fopen(storage_path('inbox/.worker.lock'), 'c+b');
+    if (!$lock) return [['ok'=>false,'error'=>'Unable to create queue worker lock.']];
+    if (!flock($lock, LOCK_EX|LOCK_NB)) { fclose($lock); return []; }
+
     $results=[];
-    foreach (glob($dir.'/*') ?: [] as $path) {
-        if (!is_file($path)) continue;
-        $name = basename($path);
-        if (!preg_match('/\.(zip|json)$/i', $name)) continue;
-        $platform = str_starts_with(strtolower($name), 'facebook') ? 'facebook' : 'instagram';
-        $jobId = import_progress_job_id();
-        try {
-            import_progress_set($jobId,'server-inbox','queued',38,'Server inbox export found — starting analysis.',['filename'=>$name,'platform'=>$platform]);
-            $stats = import_meta_export_file($path, $name, $platform, '', 'scheduled inbox', $jobId, 'server-inbox');
-            $dest = $done . '/' . gmdate('Ymd-His') . '-' . preg_replace('/[^A-Za-z0-9._-]/','_',$name);
-            rename($path, $dest);
-            $results[]=['file'=>$name,'ok'=>true,'comments'=>$stats['comments_imported']];
-        } catch (Throwable $e) {
-            import_progress_set($jobId,'server-inbox','failed',100,'Import failed: '.$e->getMessage(),['status'=>'error','filename'=>$name]);
-            $dest = $failed . '/' . gmdate('Ymd-His') . '-' . preg_replace('/[^A-Za-z0-9._-]/','_',$name);
-            @rename($path, $dest);
-            $results[]=['file'=>$name,'ok'=>false,'error'=>$e->getMessage()];
+    try {
+        foreach (glob($dir.'/*') ?: [] as $path) {
+            if (!is_file($path) || str_ends_with($path,'.meta') || str_ends_with($path,'.lock')) continue;
+            $queuedName = basename($path);
+            if (!preg_match('/\.(zip|json)$/i', $queuedName)) continue;
+            $metaPath = $path.'.meta';
+            $meta = [];
+            if (is_file($metaPath)) {
+                $decoded = json_decode((string)file_get_contents($metaPath), true);
+                if (is_array($decoded)) $meta = $decoded;
+            }
+            $parts = explode('--',$queuedName,2);
+            $jobId = import_progress_job_id((string)($meta['job_id'] ?? ($parts[0] ?? '')));
+            $originalName = basename((string)($meta['original_name'] ?? ($parts[1] ?? $queuedName)));
+            $platform = strtolower((string)($meta['platform'] ?? (str_starts_with(strtolower($originalName),'facebook')?'facebook':'instagram')));
+            $target = (string)($meta['target'] ?? '');
+            $label = (string)($meta['label'] ?? (empty($meta)?'scheduled inbox':'background upload'));
+            $source = (string)($meta['source'] ?? 'server-inbox');
+            try {
+                import_progress_set($jobId,$source,'worker_start',42,'Background worker picked up queued export.',['filename'=>$originalName,'platform'=>$platform,'status'=>'running']);
+                $stats = import_meta_export_file($path,$originalName,$platform,$target,$label,$jobId,$source);
+                $dest = $done . '/' . gmdate('Ymd-His') . '-' . preg_replace('/[^A-Za-z0-9._-]/','_',$queuedName);
+                @rename($path,$dest);
+                if (is_file($metaPath)) @rename($metaPath,$dest.'.meta');
+                $results[]=['file'=>$originalName,'ok'=>true,'comments'=>$stats['comments_imported'],'import_id'=>$stats['id'],'review_url'=>$stats['review_url']];
+            } catch (Throwable $e) {
+                import_progress_set($jobId,$source,'failed',100,'Import failed: '.$e->getMessage(),['status'=>'error','filename'=>$originalName]);
+                $dest = $failed . '/' . gmdate('Ymd-His') . '-' . preg_replace('/[^A-Za-z0-9._-]/','_',$queuedName);
+                @rename($path,$dest);
+                if (is_file($metaPath)) @rename($metaPath,$dest.'.meta');
+                $results[]=['file'=>$originalName,'ok'=>false,'error'=>$e->getMessage()];
+            }
         }
+    } finally {
+        flock($lock,LOCK_UN);
+        fclose($lock);
     }
     return $results;
 }

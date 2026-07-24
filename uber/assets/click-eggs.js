@@ -30,6 +30,7 @@
   function multi(el,count,fn,windowMs=2600){
     if(!el)return;
     el.style.cursor='pointer';
+    el.style.touchAction='manipulation';
     el.addEventListener('click',()=>{
       const now=Date.now();
       let s=state.get(el)||{n:0,t:now};
@@ -45,8 +46,13 @@
   function bind(){
     const cobaltTrigger=firstByText('.brand small,header small','ORDER');
     if(cobaltTrigger){
-      cobaltTrigger.style.touchAction='manipulation';
       multi(cobaltTrigger,8,()=>show('blue','COBALT // INTERNAL EYES ONLY','THE BLUE BOTTLE PROTOCOL','The public company sells products. Cobalt keeps a much older promise. Albrecht Über named the inner circle for the cobalt-blue medicine bottles that carried his patent remedies—and entrusted it with the continuing search for the true source of übergeist.','PUBLIC HISTORY: REDACTED'),8000);
+    }
+
+    const future=firstByText('.hero h1 span','FUTURE');
+    if(future){
+      future.setAttribute('aria-label','Future');
+      multi(future,6,()=>{window.location.href='/uber/404.html?source=future';},7000);
     }
 
     const orb=document.querySelector('.orb,.octo-orb');

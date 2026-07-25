@@ -1,0 +1,103 @@
+name: Deployment Platform v2 - Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      site:
+        description: Site to roll back
+        required: true
+        default: ubercorp
+  push:
+    branches:
+      - dev/ubercorp-workflow-v2
+    paths:
+      - 'deploy-platform/requests/rollback-*.json'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deployment-platform-v2-production
+  cancel-in-progress: false
+
+jobs:
+  rollback:
+    name: Restore latest production backup and verify
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Check out workflow branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/ubercorp-workflow-v2
+          fetch-depth: 0
+
+      - name: Resolve rollback point
+        id: release
+        shell: bash
+        run: |
+          set -euo pipefail
+          site='${{ github.event.inputs.site || 'ubercorp' }}'
+          manifest="deploy-platform/sites/${site}.json"
+          receipt="deployments-v2/production-${site}.json"
+          test -f "$manifest"
+          test -f "$receipt"
+          python3 - <<'PY' "$manifest" "$receipt" >> "$GITHUB_OUTPUT"
+          import json,sys
+          m=json.load(open(sys.argv[1],encoding='utf-8'))
+          r=json.load(open(sys.argv[2],encoding='utf-8'))
+          assert r['site']==m['id'] and r['status']=='verified-live'
+          assert r.get('backup_id')
+          print(f"site={m['id']}")
+          print(f"backup_id={r['backup_id']}")
+          print(f"target={m['production']['target_path']}")
+          print(f"url={m['production']['public_url']}")
+          print(f"manifest={sys.argv[1]}")
+          PY
+
+      - name: Restore backup
+        env:
+          DEPLOY_HOST: ${{ secrets.BLUEHOST_HOST }}
+          DEPLOY_USER: ${{ secrets.BLUEHOST_USERNAME }}
+          DEPLOY_KEY: ${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}
+          REMOTE_TARGET: ${{ steps.release.outputs.target }}
+          REMOTE_BACKUP_DIR: public_html/dev-platform/backups/${{ steps.release.outputs.site }}
+          BACKUP_ID: ${{ steps.release.outputs.backup_id }}
+          DEPLOY_PORT: '22'
+        shell: bash
+        run: bash deploy-platform/scripts/restore-remote.sh
+
+      - name: Verify restored production
+        shell: bash
+        run: |
+          set -euo pipefail
+          url='${{ steps.release.outputs.url }}'
+          curl --fail-with-body --silent --show-error --retry 6 --retry-all-errors --retry-delay 3 --header 'Cache-Control: no-cache' --output /tmp/prod.html "$url"
+          python3 - <<'PY' '${{ steps.release.outputs.manifest }}'
+          import json,sys
+          m=json.load(open(sys.argv[1],encoding='utf-8'))
+          html=open('/tmp/prod.html',encoding='utf-8').read()
+          for needle in m.get('checks',[]): assert needle in html
+          PY
+
+      - name: Record rollback receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p deployments-v2
+          verified_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          cat > "deployments-v2/rollback-${{ steps.release.outputs.site }}.json" <<EOF
+          {
+            "site": "${{ steps.release.outputs.site }}",
+            "environment": "production",
+            "restored_backup_id": "${{ steps.release.outputs.backup_id }}",
+            "verified_at_utc": "${verified_at}",
+            "status": "verified-live"
+          }
+          EOF
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "deployments-v2/rollback-${{ steps.release.outputs.site }}.json"
+          git commit -m 'Record workflow v2 rollback [skip ci]' || exit 0
+          git pull --rebase origin dev/ubercorp-workflow-v2
+          git push origin HEAD:dev/ubercorp-workflow-v2

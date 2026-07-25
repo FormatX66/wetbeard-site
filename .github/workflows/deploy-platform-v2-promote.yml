@@ -1,0 +1,171 @@
+name: Deployment Platform v2 - Promote
+
+on:
+  workflow_dispatch:
+    inputs:
+      site:
+        description: Verified staging site to promote
+        required: true
+        default: ubercorp
+  push:
+    branches:
+      - dev/ubercorp-workflow-v2
+    paths:
+      - 'deploy-platform/requests/promote-*.json'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deployment-platform-v2-production
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    name: Backup, promote verified staging, verify production
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Check out workflow branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/ubercorp-workflow-v2
+          fetch-depth: 0
+
+      - name: Resolve verified staging release
+        id: release
+        shell: bash
+        run: |
+          set -euo pipefail
+          site='${{ github.event.inputs.site || 'ubercorp' }}'
+          manifest="deploy-platform/sites/${site}.json"
+          receipt="deployments-v2/staging-${site}.json"
+          test -f "$manifest"
+          test -f "$receipt"
+          python3 - <<'PY' "$manifest" "$receipt" >> "$GITHUB_OUTPUT"
+          import json,sys
+          m=json.load(open(sys.argv[1],encoding='utf-8'))
+          r=json.load(open(sys.argv[2],encoding='utf-8'))
+          assert r['site']==m['id']
+          assert r['environment']=='staging'
+          assert r['status']=='verified-live'
+          assert r['host']==m['staging']['host']==m['production']['host']
+          print(f"site={m['id']}")
+          print(f"source_sha={r['source_sha']}")
+          print(f"staging_url={m['staging']['public_url']}")
+          print(f"target={m['production']['target_path']}")
+          print(f"url={m['production']['public_url']}")
+          print(f"manifest={sys.argv[1]}")
+          PY
+
+      - name: Re-verify staging immediately before promotion
+        shell: bash
+        run: |
+          set -euo pipefail
+          url='${{ steps.release.outputs.staging_url }}'
+          curl --fail-with-body --silent --show-error --retry 4 --retry-all-errors --output /tmp/stage.html "$url"
+          curl --fail-with-body --silent --show-error --output /tmp/stage-marker.json "${url}deployment-platform.json"
+          python3 - <<'PY' '${{ steps.release.outputs.manifest }}'
+          import json,sys
+          m=json.load(open(sys.argv[1],encoding='utf-8'))
+          marker=json.load(open('/tmp/stage-marker.json',encoding='utf-8'))
+          html=open('/tmp/stage.html',encoding='utf-8').read()
+          assert marker['site']==m['id'] and marker['environment']=='staging'
+          for needle in m.get('checks',[]): assert needle in html
+          PY
+
+      - name: Create immutable production backup
+        id: backup
+        env:
+          DEPLOY_HOST: ${{ secrets.BLUEHOST_HOST }}
+          DEPLOY_USER: ${{ secrets.BLUEHOST_USERNAME }}
+          DEPLOY_KEY: ${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}
+          REMOTE_SOURCE: ${{ steps.release.outputs.target }}
+          REMOTE_BACKUP_DIR: public_html/dev-platform/backups/${{ steps.release.outputs.site }}
+          DEPLOY_PORT: '22'
+        shell: bash
+        run: |
+          set -euo pipefail
+          backup_id="prod-$(date -u +'%Y%m%dT%H%M%SZ')-${{ steps.release.outputs.source_sha }}"
+          echo "backup_id=$backup_id" >> "$GITHUB_OUTPUT"
+          export BACKUP_ID="$backup_id"
+          bash deploy-platform/scripts/backup-remote.sh
+
+      - name: Materialize exact verified staging source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git worktree add --detach /tmp/promote-source '${{ steps.release.outputs.source_sha }}'
+          python3 - <<'PY' '${{ steps.release.outputs.manifest }}' /tmp/promote-manifest.json
+          import json,sys
+          m=json.load(open(sys.argv[1],encoding='utf-8'))
+          m['source_dir']='/tmp/promote-source/'+m['source_dir']
+          json.dump(m,open(sys.argv[2],'w',encoding='utf-8'),indent=2)
+          PY
+          ALLOW_PRODUCTION_BUILD=1 python3 deploy-platform/scripts/prepare-site.py /tmp/promote-manifest.json production /tmp/site-production
+
+      - name: Validate production package
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s /tmp/site-production/index.html
+          python3 - <<'PY' '${{ steps.release.outputs.manifest }}'
+          import json,sys,pathlib
+          m=json.load(open(sys.argv[1],encoding='utf-8'))
+          html=pathlib.Path('/tmp/site-production/index.html').read_text(encoding='utf-8')
+          for needle in m.get('checks',[]): assert needle in html
+          marker=json.loads(pathlib.Path('/tmp/site-production/deployment-platform.json').read_text())
+          assert marker['environment']=='production'
+          assert marker['target_path']==m['production']['target_path']
+          PY
+
+      - name: Deploy exact verified package to production
+        env:
+          DEPLOY_HOST: ${{ secrets.BLUEHOST_HOST }}
+          DEPLOY_USER: ${{ secrets.BLUEHOST_USERNAME }}
+          DEPLOY_KEY: ${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}
+          DEPLOY_TARGET: ${{ steps.release.outputs.target }}
+          DEPLOY_SOURCE: /tmp/site-production
+          DEPLOY_PORT: '22'
+        shell: bash
+        run: bash deploy-platform/scripts/deploy-ssh.sh
+
+      - name: Verify production
+        shell: bash
+        run: |
+          set -euo pipefail
+          url='${{ steps.release.outputs.url }}'
+          curl --fail-with-body --silent --show-error --retry 6 --retry-all-errors --retry-delay 3 --header 'Cache-Control: no-cache' --output /tmp/prod.html "$url"
+          curl --fail-with-body --silent --show-error --output /tmp/prod-marker.json "${url}deployment-platform.json"
+          python3 - <<'PY' '${{ steps.release.outputs.manifest }}'
+          import json,sys
+          m=json.load(open(sys.argv[1],encoding='utf-8'))
+          marker=json.load(open('/tmp/prod-marker.json',encoding='utf-8'))
+          html=open('/tmp/prod.html',encoding='utf-8').read()
+          assert marker['site']==m['id'] and marker['environment']=='production'
+          for needle in m.get('checks',[]): assert needle in html
+          PY
+
+      - name: Record promotion and rollback point
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p deployments-v2
+          verified_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          cat > "deployments-v2/production-${{ steps.release.outputs.site }}.json" <<EOF
+          {
+            "site": "${{ steps.release.outputs.site }}",
+            "environment": "production",
+            "url": "${{ steps.release.outputs.url }}",
+            "source_sha": "${{ steps.release.outputs.source_sha }}",
+            "backup_id": "${{ steps.backup.outputs.backup_id }}",
+            "verified_at_utc": "${verified_at}",
+            "status": "verified-live"
+          }
+          EOF
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "deployments-v2/production-${{ steps.release.outputs.site }}.json"
+          git commit -m 'Record workflow v2 production promotion [skip ci]' || exit 0
+          git pull --rebase origin dev/ubercorp-workflow-v2
+          git push origin HEAD:dev/ubercorp-workflow-v2

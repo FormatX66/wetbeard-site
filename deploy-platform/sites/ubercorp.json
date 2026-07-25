@@ -1,0 +1,23 @@
+{
+  "id": "ubercorp",
+  "name": "Übercorp",
+  "source_dir": "uber",
+  "staging": {
+    "host": "bluehost",
+    "target_path": "public_html/dev-platform/sites/ubercorp",
+    "public_url": "https://madmorrigan.com/dev-platform/sites/ubercorp/",
+    "base_path": "/dev-platform/sites/ubercorp/"
+  },
+  "production": {
+    "host": "bluehost",
+    "target_path": "public_html/uber",
+    "public_url": "https://madmorrigan.com/uber/",
+    "base_path": "/uber/",
+    "locked": true
+  },
+  "checks": [
+    "Übercorp",
+    "WE MAKE IT. YOU BUY IT.",
+    "DETRITUS"
+  ]
+}

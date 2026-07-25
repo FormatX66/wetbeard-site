@@ -1,0 +1,54 @@
+name: Roll back isolated workflow test lab
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: workflow-test-lab-only
+  cancel-in-progress: false
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev/workflow-test-lab
+      - name: Validate hard isolation before rollback
+        run: python3 workflow-test-platform/scripts/validate.py
+      - name: Restore latest isolated backup
+        env:
+          DEPLOY_HOST: ${{ secrets.BLUEHOST_HOST }}
+          DEPLOY_USER: ${{ secrets.BLUEHOST_USERNAME }}
+          DEPLOY_KEY: ${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}
+          TARGET_PATH: public_html/workflow-test-lab
+          BACKUP_ROOT: public_html/workflow-test-lab-backups
+          DEPLOY_PORT: '22'
+        run: bash workflow-test-platform/scripts/rollback-latest.sh
+      - name: Verify restored site
+        shell: bash
+        run: |
+          set -euo pipefail
+          url='https://madmorrigan.com/workflow-test-lab/'
+          curl --fail-with-body --silent --show-error --retry 6 --retry-all-errors --retry-delay 2 -o /tmp/restored.html "$url"
+          grep -Fq 'WORKFLOW TEST LAB' /tmp/restored.html
+          grep -Fq 'TEST SITE ONLY // NO PRODUCTION ROUTES' /tmp/restored.html
+      - name: Record rollback receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p workflow-test-receipts
+          now="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          cat > workflow-test-receipts/rollback.json <<EOF
+          {"site":"workflow-test-lab","target":"public_html/workflow-test-lab","verified_at_utc":"${now}","run_id":"${GITHUB_RUN_ID}","status":"verified-rollback"}
+          EOF
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add workflow-test-receipts/rollback.json
+          git commit -m 'Record isolated test rollback [skip ci]' || exit 0
+          git pull --rebase origin dev/workflow-test-lab
+          git push origin HEAD:dev/workflow-test-lab

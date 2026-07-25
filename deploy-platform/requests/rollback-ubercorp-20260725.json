@@ -1,0 +1,7 @@
+{
+  "site": "ubercorp",
+  "action": "rollback_latest_production_backup",
+  "backup_id": "prod-20260725T111301Z-a40b552ce84f6bd67ac986de598513d637d2a437",
+  "reason": "preserve approved stable logo/tentacle/Easter-egg deploy layer",
+  "requested_at_utc": "2026-07-25T11:17:00Z"
+}

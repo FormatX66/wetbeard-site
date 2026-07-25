@@ -1,0 +1,59 @@
+name: Package exact live Übercorp
+
+on:
+  push:
+    branches:
+      - dev/workflow-test-lab
+    paths:
+      - '.github/workflows/package-live-ubercorp.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure read-only snapshot connection
+        env:
+          HOST: ${{ secrets.BLUEHOST_HOST }}
+          USER: ${{ secrets.BLUEHOST_USERNAME }}
+          KEY: ${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$KEY" > "$HOME/.ssh/live_snapshot_key"
+          chmod 600 "$HOME/.ssh/live_snapshot_key"
+          ssh-keyscan -p 22 -H "$HOST" >> "$HOME/.ssh/known_hosts"
+          mkdir -p /tmp/live-snapshot
+          ssh -i "$HOME/.ssh/live_snapshot_key" -p 22 "$USER@$HOST" 'tar -C public_html -czf - uber' | tar -xzf - -C /tmp/live-snapshot
+      - name: Verify snapshot markers
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s /tmp/live-snapshot/uber/index.html
+          grep -Fq 'Übercorp' /tmp/live-snapshot/uber/index.html
+          test -s /tmp/live-snapshot/uber/assets/logo.js
+          test -s /tmp/live-snapshot/uber/assets/tentacles.js
+          test -s /tmp/live-snapshot/uber/assets/easter-eggs-stable.js
+          test -s /tmp/live-snapshot/uber/assets/click-eggs.js
+      - name: Create ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd /tmp/live-snapshot
+          zip -qr "$GITHUB_WORKSPACE/ubercorp-live-working-2026-07-25.zip" uber
+          sha256sum "$GITHUB_WORKSPACE/ubercorp-live-working-2026-07-25.zip" > "$GITHUB_WORKSPACE/ubercorp-live-working-2026-07-25.sha256"
+      - name: Upload exact live snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: ubercorp-live-working-2026-07-25
+          path: |
+            ubercorp-live-working-2026-07-25.zip
+            ubercorp-live-working-2026-07-25.sha256
+          if-no-files-found: error
+          retention-days: 90

@@ -1,5 +1,5 @@
 {
-  "action": "none",
+  "action": "rollback",
   "site": "builder-demo",
-  "nonce": "initial"
+  "nonce": "2026-07-25T13:24:00Z"
 }

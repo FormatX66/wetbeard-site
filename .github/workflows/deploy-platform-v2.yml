@@ -15,6 +15,7 @@ on:
     branches:
       - dev/ubercorp-workflow-v2
     paths:
+      - 'uber/**'
       - 'deploy-platform/**'
       - '.github/workflows/deploy-platform-v2.yml'
 
@@ -23,13 +24,12 @@ permissions:
 
 concurrency:
   group: deployment-platform-v2-staging
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   stage:
     name: Stage site without touching production
     runs-on: ubuntu-latest
-    environment: production
     steps:
       - name: Check out v2 branch
         uses: actions/checkout@v4
@@ -63,6 +63,15 @@ jobs:
             *) echo 'Refusing target outside public_html/dev-platform'; exit 1;;
           esac
 
+      - name: Run source preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 deploy-platform/local/check-site.py '${{ steps.site.outputs.site_id }}'
+          while IFS= read -r -d '' file; do
+            php -l "$file"
+          done < <(find uber -type f -name '*.php' -print0)
+
       - name: Build isolated staging copy
         shell: bash
         run: |
@@ -74,9 +83,14 @@ jobs:
         run: |
           set -euo pipefail
           test -s /tmp/site-stage/index.html
-          grep -Fq 'Übercorp' /tmp/site-stage/index.html
-          grep -Fq '/dev-platform/sites/ubercorp/' /tmp/site-stage/index.html || true
           test -s /tmp/site-stage/deployment-platform.json
+          python3 - <<'PY' '${{ steps.site.outputs.manifest }}'
+          import json,sys,pathlib
+          m=json.load(open(sys.argv[1],encoding='utf-8'))
+          html=pathlib.Path('/tmp/site-stage/index.html').read_text(encoding='utf-8')
+          for needle in m.get('checks',[]):
+              assert needle in html, f'Missing staging check: {needle}'
+          PY
 
       - name: Deploy to Bluehost staging adapter
         if: ${{ steps.site.outputs.host == 'bluehost' }}
@@ -103,12 +117,15 @@ jobs:
           set -euo pipefail
           url='${{ steps.site.outputs.url }}'
           curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 --header 'Cache-Control: no-cache' --output /tmp/stage.html "$url"
-          grep -Fq 'Übercorp' /tmp/stage.html
           curl --fail-with-body --silent --show-error --output /tmp/stage-marker.json "${url}deployment-platform.json"
-          python3 - <<'PY'
-          import json
-          d=json.load(open('/tmp/stage-marker.json',encoding='utf-8'))
-          assert d['site']=='ubercorp'
-          assert d['environment']=='staging'
-          print('Staging deployment verified:', d['public_url'])
+          python3 - <<'PY' '${{ steps.site.outputs.manifest }}'
+          import json,sys
+          manifest=json.load(open(sys.argv[1],encoding='utf-8'))
+          marker=json.load(open('/tmp/stage-marker.json',encoding='utf-8'))
+          html=open('/tmp/stage.html',encoding='utf-8').read()
+          assert marker['site']==manifest['id']
+          assert marker['environment']=='staging'
+          for needle in manifest.get('checks',[]):
+              assert needle in html, f'Live staging missing check: {needle}'
+          print('Staging deployment verified:', marker['public_url'])
           PY

@@ -1,0 +1,106 @@
+name: GPT Website Builder - Preview
+
+on:
+  push:
+    branches: [dev/workflow-test-lab]
+    paths:
+      - 'gpt-site-builder/request.json'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gpt-site-builder-preview
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev/workflow-test-lab
+          fetch-depth: 0
+      - name: Resolve request and site
+        id: site
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json,re
+          r=json.load(open('gpt-site-builder/request.json',encoding='utf-8'))
+          assert r.get('action')=='deploy'
+          site=r['site']; assert re.fullmatch(r'[a-z0-9][a-z0-9-]{1,48}',site)
+          s=json.load(open(f'gpt-site-builder/specs/{site}.json',encoding='utf-8'))
+          assert s['id']==site
+          for k in ('source_dir','host','target_path','public_url','release_root','backup_root'): print(f'{k}={s[k]}')
+          print(f'site={site}')
+          PY
+      - name: Validate isolated site
+        run: python3 gpt-site-builder/scripts/validate_site.py "gpt-site-builder/specs/${{ steps.site.outputs.site }}.json"
+      - name: Resolve host credentials
+        id: host
+        shell: bash
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USER: ${{ secrets.BLUEHOST_USERNAME }}
+          BLUEHOST_KEY: ${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}
+          OCDSOFT_HOST: ${{ secrets.OCDSOFT_HOST }}
+          OCDSOFT_USER: ${{ secrets.OCDSOFT_USERNAME }}
+          OCDSOFT_KEY: ${{ secrets.OCDSOFT_SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          case '${{ steps.site.outputs.host }}' in
+            bluehost) printf '%s' "$BLUEHOST_HOST" > /tmp/host; printf '%s' "$BLUEHOST_USER" > /tmp/user; printf '%s' "$BLUEHOST_KEY" > /tmp/key;;
+            ocdsoft) printf '%s' "$OCDSOFT_HOST" > /tmp/host; printf '%s' "$OCDSOFT_USER" > /tmp/user; printf '%s' "$OCDSOFT_KEY" > /tmp/key;;
+            *) exit 1;;
+          esac
+          test -s /tmp/host; test -s /tmp/user; test -s /tmp/key
+      - name: Add deployment metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > '${{ steps.site.outputs.source_dir }}/deployment.json' <<EOF
+          {"site":"${{ steps.site.outputs.site }}","release_id":"${GITHUB_SHA}","host":"${{ steps.site.outputs.host }}","status":"verified-live"}
+          EOF
+      - name: Backup and atomically deploy preview
+        shell: bash
+        env:
+          SOURCE_DIR: ${{ steps.site.outputs.source_dir }}
+          TARGET_PATH: ${{ steps.site.outputs.target_path }}
+          RELEASE_ROOT: ${{ steps.site.outputs.release_root }}
+          BACKUP_ROOT: ${{ steps.site.outputs.backup_root }}
+          RELEASE_ID: ${{ github.sha }}
+        run: |
+          export DEPLOY_HOST="$(cat /tmp/host)" DEPLOY_USER="$(cat /tmp/user)" DEPLOY_KEY="$(cat /tmp/key)"
+          bash gpt-site-builder/scripts/deploy_preview.sh
+      - name: Verify public preview
+        shell: bash
+        run: |
+          set -euo pipefail
+          url='${{ steps.site.outputs.public_url }}'
+          curl --fail-with-body --silent --show-error --retry 6 --retry-all-errors --retry-delay 2 -o /tmp/site.html "$url"
+          curl --fail-with-body --silent --show-error --retry 6 --retry-all-errors --retry-delay 2 -o /tmp/deployment.json "${url}deployment.json"
+          python3 - <<'PY' "gpt-site-builder/specs/${{ steps.site.outputs.site }}.json"
+          import json,sys
+          spec=json.load(open(sys.argv[1],encoding='utf-8')); html=open('/tmp/site.html',encoding='utf-8').read(); dep=json.load(open('/tmp/deployment.json',encoding='utf-8'))
+          assert dep['site']==spec['id'] and dep['status']=='verified-live'
+          for marker in spec.get('health_markers',[]): assert marker in html
+          PY
+      - name: Record verified receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p gpt-site-builder/receipts
+          now="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          cat > 'gpt-site-builder/receipts/${{ steps.site.outputs.site }}.json' <<EOF
+          {"site":"${{ steps.site.outputs.site }}","url":"${{ steps.site.outputs.public_url }}","host":"${{ steps.site.outputs.host }}","source_sha":"${GITHUB_SHA}","verified_at_utc":"${now}","status":"verified-live"}
+          EOF
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add 'gpt-site-builder/receipts/${{ steps.site.outputs.site }}.json'
+          git commit -m 'Record GPT builder preview [skip ci]' || exit 0
+          git pull --rebase origin dev/workflow-test-lab
+          git push origin HEAD:dev/workflow-test-lab

@@ -1,0 +1,27 @@
+{
+  "name": "Website Deployment Platform v2",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/devcontainers/features/node:2": {
+      "version": "22"
+    },
+    "ghcr.io/devcontainers/features/php:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/common-utils:2": {}
+  },
+  "forwardPorts": [5173, 8081],
+  "portsAttributes": {
+    "5173": {
+      "label": "Phone Preview",
+      "onAutoForward": "openPreview",
+      "visibility": "private"
+    },
+    "8081": {
+      "label": "PHP Backend",
+      "onAutoForward": "silent",
+      "visibility": "private"
+    }
+  },
+  "postCreateCommand": "npm install && chmod +x deploy-platform/codespaces/start-preview.sh",
+  "postStartCommand": "echo 'Run npm run dev to start the phone preview.'"
+}

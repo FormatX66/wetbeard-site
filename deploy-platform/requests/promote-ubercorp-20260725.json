@@ -1,0 +1,6 @@
+{
+  "site": "ubercorp",
+  "action": "promote_verified_staging",
+  "requested_source_sha": "8931812705f55de6ffd6168f11ec5a7f2184c576",
+  "requested_at_utc": "2026-07-25T01:50:00Z"
+}

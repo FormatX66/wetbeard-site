@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   snapshot:
@@ -17,6 +17,8 @@ jobs:
     environment: production
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: dev/workflow-test-lab
       - name: Configure read-only snapshot connection
         env:
           HOST: ${{ secrets.BLUEHOST_HOST }}
@@ -57,3 +59,24 @@ jobs:
             ubercorp-live-working-2026-07-25.sha256
           if-no-files-found: error
           retention-days: 90
+      - name: Record snapshot receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p workflow-test-receipts
+          hash="$(cut -d' ' -f1 ubercorp-live-working-2026-07-25.sha256)"
+          cat > workflow-test-receipts/live-ubercorp-snapshot.json <<EOF
+          {
+            "artifact_name": "ubercorp-live-working-2026-07-25",
+            "run_id": "${GITHUB_RUN_ID}",
+            "source": "bluehost:public_html/uber",
+            "sha256": "${hash}",
+            "status": "verified-snapshot"
+          }
+          EOF
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add workflow-test-receipts/live-ubercorp-snapshot.json
+          git commit -m 'Record exact live Übercorp snapshot [skip ci]'
+          git pull --rebase origin dev/workflow-test-lab
+          git push origin HEAD:dev/workflow-test-lab

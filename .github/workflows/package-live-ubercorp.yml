@@ -48,15 +48,28 @@ jobs:
         run: |
           set -euo pipefail
           cd /tmp/live-snapshot
-          zip -qr "$GITHUB_WORKSPACE/ubercorp-live-working-2026-07-25.zip" uber
-          sha256sum "$GITHUB_WORKSPACE/ubercorp-live-working-2026-07-25.zip" > "$GITHUB_WORKSPACE/ubercorp-live-working-2026-07-25.sha256"
-      - name: Upload exact live snapshot
+          zip -qr "$GITHUB_WORKSPACE/ubercorp-live-working-current-2026-07-25.zip" uber
+          sha256sum "$GITHUB_WORKSPACE/ubercorp-live-working-current-2026-07-25.zip" > "$GITHUB_WORKSPACE/ubercorp-live-working-current-2026-07-25.sha256"
+      - name: Encrypt snapshot for private transfer
+        shell: bash
+        run: |
+          set -euo pipefail
+          openssl cms -encrypt \
+            -binary \
+            -outform DER \
+            -aes-256-cbc \
+            -in ubercorp-live-working-current-2026-07-25.zip \
+            -out ubercorp-live-working-current-2026-07-25.zip.cms \
+            .github/ubercorp-snapshot-public-cert.pem
+          rm -f ubercorp-live-working-current-2026-07-25.zip
+          test -s ubercorp-live-working-current-2026-07-25.zip.cms
+      - name: Upload encrypted live snapshot
         uses: actions/upload-artifact@v4
         with:
-          name: ubercorp-live-working-2026-07-25
+          name: ubercorp-live-working-current-2026-07-25-encrypted
           path: |
-            ubercorp-live-working-2026-07-25.zip
-            ubercorp-live-working-2026-07-25.sha256
+            ubercorp-live-working-current-2026-07-25.zip.cms
+            ubercorp-live-working-current-2026-07-25.sha256
           if-no-files-found: error
           retention-days: 90
       - name: Record snapshot receipt
@@ -64,10 +77,10 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p workflow-test-receipts
-          hash="$(cut -d' ' -f1 ubercorp-live-working-2026-07-25.sha256)"
+          hash="$(cut -d' ' -f1 ubercorp-live-working-current-2026-07-25.sha256)"
           cat > workflow-test-receipts/live-ubercorp-snapshot.json <<EOF
           {
-            "artifact_name": "ubercorp-live-working-2026-07-25",
+            "artifact_name": "ubercorp-live-working-current-2026-07-25-encrypted",
             "run_id": "${GITHUB_RUN_ID}",
             "source": "bluehost:public_html/uber",
             "sha256": "${hash}",

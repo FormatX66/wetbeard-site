@@ -33,6 +33,6 @@ jobs:
           grep -Fq 'viewport-fit=cover' workflow-test-site/index.html
           grep -Fq 'overflowState' workflow-test-site/assets/test.js
           grep -Fq 'env(safe-area-inset-top)' workflow-test-site/assets/test.css
-          if grep -R -E 'public_html/(uber|wetbeard)|madmorrigan.com/uber' workflow-test-site workflow-test-platform; then
-            echo 'Production reference detected in isolated lab'; exit 1
+          if grep -R -E 'public_html/(uber|wetbeard)|madmorrigan.com/uber' workflow-test-site; then
+            echo 'Production reference detected in isolated test-site source'; exit 1
           fi

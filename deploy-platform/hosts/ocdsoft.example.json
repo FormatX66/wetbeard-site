@@ -1,0 +1,12 @@
+{
+  "id": "ocdsoft",
+  "transport": "ssh-tar",
+  "port": 22,
+  "capabilities": ["ssh", "sftp", "tar"],
+  "secrets": {
+    "host": "OCDSOFT_HOST",
+    "username": "OCDSOFT_USERNAME",
+    "private_key": "OCDSOFT_SSH_PRIVATE_KEY"
+  },
+  "notes": "Template only. Confirm the provider's actual SSH/SFTP details and document root before enabling deployments."
+}

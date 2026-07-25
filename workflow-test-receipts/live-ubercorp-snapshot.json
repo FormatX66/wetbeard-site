@@ -1,7 +1,7 @@
 {
-  "artifact_name": "ubercorp-live-working-2026-07-25",
-  "run_id": "30157380971",
+  "artifact_name": "ubercorp-live-working-current-2026-07-25-encrypted",
+  "run_id": "30180319029",
   "source": "bluehost:public_html/uber",
-  "sha256": "d62907840acbc0666a13d13b1c8b58b67c7d44d1ddb2fb7f3bd9dd5e3b5727de",
+  "sha256": "a891fa7984121c18075f7729f6fd0a883c3e43fcc58c840cea2cd56933360f23",
   "status": "verified-snapshot"
 }

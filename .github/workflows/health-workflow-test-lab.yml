@@ -1,0 +1,30 @@
+name: Health check isolated workflow test lab
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 */6 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify isolated URL and deployment marker
+        shell: bash
+        run: |
+          set -euo pipefail
+          url='https://madmorrigan.com/workflow-test-lab/'
+          curl --fail-with-body --silent --show-error --retry 4 --retry-all-errors --retry-delay 2 -o /tmp/site.html "$url"
+          curl --fail-with-body --silent --show-error --retry 4 --retry-all-errors --retry-delay 2 -o /tmp/deployment.json "${url}deployment.json"
+          grep -Fq 'WORKFLOW TEST LAB' /tmp/site.html
+          grep -Fq 'RESPONSIVE TARGET 01' /tmp/site.html
+          grep -Fq 'TEST SITE ONLY // NO PRODUCTION ROUTES' /tmp/site.html
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/deployment.json',encoding='utf-8'))
+          assert d['site']=='workflow-test-lab'
+          assert d['status']=='verified-live'
+          PY

@@ -1,0 +1,73 @@
+name: Deploy isolated workflow test lab
+
+on:
+  push:
+    branches:
+      - dev/workflow-test-lab
+    paths:
+      - 'workflow-test-site/**'
+      - '.github/workflows/deploy-workflow-test-lab.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: workflow-test-lab-only
+  cancel-in-progress: true
+
+env:
+  TEST_TARGET: public_html/workflow-test-lab
+  TEST_URL: https://madmorrigan.com/workflow-test-lab/
+
+jobs:
+  deploy-test-only:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev/workflow-test-lab
+      - name: Hard isolation guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$TEST_TARGET" = 'public_html/workflow-test-lab'
+          case "$TEST_TARGET" in
+            *uber*|*wetbeard*|public_html) echo 'Unsafe target refused'; exit 1;;
+          esac
+          test -s workflow-test-site/index.html
+          test -s workflow-test-site/assets/calibration-target.svg
+          grep -Fq 'TEST SITE ONLY // NO PRODUCTION ROUTES' workflow-test-site/index.html
+      - name: Configure SSH
+        env:
+          HOST: ${{ secrets.BLUEHOST_HOST }}
+          USER: ${{ secrets.BLUEHOST_USERNAME }}
+          KEY: ${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$KEY" > "$HOME/.ssh/workflow_test_key"
+          chmod 600 "$HOME/.ssh/workflow_test_key"
+          ssh-keyscan -p 22 -H "$HOST" >> "$HOME/.ssh/known_hosts"
+          echo "HOST=$HOST" >> "$GITHUB_ENV"
+          echo "USER=$USER" >> "$GITHUB_ENV"
+      - name: Deploy only isolated test directory
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote="$USER@$HOST"
+          ssh -i "$HOME/.ssh/workflow_test_key" -p 22 "$remote" "rm -rf '$TEST_TARGET.next'; mkdir -p '$TEST_TARGET.next'"
+          tar -C workflow-test-site -czf - . | ssh -i "$HOME/.ssh/workflow_test_key" -p 22 "$remote" "tar -xzf - -C '$TEST_TARGET.next'"
+          ssh -i "$HOME/.ssh/workflow_test_key" -p 22 "$remote" "set -e; test -s '$TEST_TARGET.next/index.html'; rm -rf '$TEST_TARGET'; mv '$TEST_TARGET.next' '$TEST_TARGET'"
+      - name: Verify calibration site
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail-with-body --silent --show-error --retry 6 --retry-all-errors --retry-delay 2 -o /tmp/test.html "$TEST_URL"
+          curl --fail-with-body --silent --show-error --retry 6 --retry-all-errors --retry-delay 2 -o /tmp/target.svg "${TEST_URL}assets/calibration-target.svg"
+          grep -Fq 'WORKFLOW TEST LAB' /tmp/test.html
+          grep -Fq 'RESPONSIVE TARGET 01' /tmp/test.html
+          grep -Fq 'TEST SITE ONLY // NO PRODUCTION ROUTES' /tmp/test.html
+          grep -Fq 'Calibration target' /tmp/target.svg

@@ -2,6 +2,11 @@ name: Roll back isolated workflow test lab
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - dev/workflow-test-lab
+    paths:
+      - 'workflow-test-platform/requests/rollback-*.json'
 
 permissions:
   contents: write

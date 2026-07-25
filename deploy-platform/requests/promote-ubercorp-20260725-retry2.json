@@ -1,0 +1,6 @@
+{
+  "site": "ubercorp",
+  "action": "promote_verified_staging",
+  "strategy": "atomic_swap_reuse_known_host",
+  "requested_at_utc": "2026-07-25T11:12:00Z"
+}

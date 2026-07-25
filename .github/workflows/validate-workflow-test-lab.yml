@@ -1,0 +1,38 @@
+name: Validate isolated workflow test lab
+
+on:
+  push:
+    branches:
+      - dev/workflow-test-lab
+    paths:
+      - 'workflow-test-site/**'
+      - 'workflow-test-platform/**'
+      - '.github/workflows/validate-workflow-test-lab.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev/workflow-test-lab
+      - name: Validate source and hard isolation
+        run: python3 workflow-test-platform/scripts/validate.py
+      - name: Check HTML/SVG/JS/CSS files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s workflow-test-site/index.html
+          test -s workflow-test-site/assets/test.css
+          test -s workflow-test-site/assets/test.js
+          test -s workflow-test-site/assets/calibration-target.svg
+          grep -Fq 'viewport-fit=cover' workflow-test-site/index.html
+          grep -Fq 'overflowState' workflow-test-site/assets/test.js
+          grep -Fq 'env(safe-area-inset-top)' workflow-test-site/assets/test.css
+          if grep -R -E 'public_html/(uber|wetbeard)|madmorrigan.com/uber' workflow-test-site workflow-test-platform; then
+            echo 'Production reference detected in isolated lab'; exit 1
+          fi

@@ -30,6 +30,7 @@ jobs:
   stage:
     name: Stage site without touching production
     runs-on: ubuntu-latest
+    environment: production
     steps:
       - name: Check out v2 branch
         uses: actions/checkout@v4

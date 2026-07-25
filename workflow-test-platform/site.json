@@ -1,0 +1,24 @@
+{
+  "id": "workflow-test-lab",
+  "name": "Workflow Test Lab",
+  "source_dir": "workflow-test-site",
+  "branch": "dev/workflow-test-lab",
+  "host": "bluehost",
+  "target_path": "public_html/workflow-test-lab",
+  "public_url": "https://madmorrigan.com/workflow-test-lab/",
+  "release_root": "public_html/workflow-test-lab-releases",
+  "backup_root": "public_html/workflow-test-lab-backups",
+  "retain_releases": 5,
+  "retain_backups": 5,
+  "forbidden_paths": [
+    "public_html/uber",
+    "public_html/wetbeard",
+    "public_html/dev-platform",
+    "public_html"
+  ],
+  "health_markers": [
+    "WORKFLOW TEST LAB",
+    "RESPONSIVE TARGET 01",
+    "TEST SITE ONLY // NO PRODUCTION ROUTES"
+  ]
+}

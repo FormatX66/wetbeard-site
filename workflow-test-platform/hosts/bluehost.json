@@ -1,0 +1,10 @@
+{
+  "id": "bluehost",
+  "adapter": "ssh-tar",
+  "port": 22,
+  "secrets": {
+    "host": "BLUEHOST_HOST",
+    "user": "BLUEHOST_USERNAME",
+    "key": "BLUEHOST_SSH_PRIVATE_KEY"
+  }
+}

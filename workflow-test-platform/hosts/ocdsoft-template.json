@@ -1,0 +1,12 @@
+{
+  "id": "ocdsoft-template",
+  "adapter": "ssh-tar",
+  "port": 22,
+  "configured": false,
+  "secrets": {
+    "host": "OCDSOFT_HOST",
+    "user": "OCDSOFT_USERNAME",
+    "key": "OCDSOFT_SSH_PRIVATE_KEY"
+  },
+  "notes": "Template only. No deployment workflow references this profile until credentials and target root are explicitly configured."
+}

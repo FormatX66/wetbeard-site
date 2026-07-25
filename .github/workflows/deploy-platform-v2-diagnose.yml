@@ -1,0 +1,57 @@
+name: Deployment Platform v2 - Diagnose
+
+on:
+  push:
+    branches:
+      - dev/ubercorp-workflow-v2
+    paths:
+      - 'deploy-platform/requests/diagnose-*.json'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev/ubercorp-workflow-v2
+      - name: Inspect remote deployment state
+        env:
+          DEPLOY_HOST: ${{ secrets.BLUEHOST_HOST }}
+          DEPLOY_USER: ${{ secrets.BLUEHOST_USERNAME }}
+          DEPLOY_KEY: ${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$DEPLOY_KEY" > "$HOME/.ssh/deploy_platform_key"
+          chmod 600 "$HOME/.ssh/deploy_platform_key"
+          ssh-keyscan -p 22 -H "$DEPLOY_HOST" >> "$HOME/.ssh/known_hosts"
+          remote="$DEPLOY_USER@$DEPLOY_HOST"
+          ssh -i "$HOME/.ssh/deploy_platform_key" -p 22 "$remote" 'set -u;
+            echo "== identity =="; id;
+            echo "== paths =="; ls -ld "$HOME" public_html public_html/uber public_html/dev-platform 2>&1 || true;
+            echo "== space =="; df -h "$HOME" 2>&1 || true; df -i "$HOME" 2>&1 || true;
+            echo "== sizes =="; du -sh public_html/uber public_html/dev-platform 2>&1 || true;
+            echo "== write test production =="; touch public_html/uber/.v2-write-test && echo WRITE_OK && rm -f public_html/uber/.v2-write-test || echo WRITE_FAILED;
+            echo "== write test dev-platform =="; mkdir -p public_html/dev-platform/diagnostic && touch public_html/dev-platform/diagnostic/write-test && echo DEV_WRITE_OK && rm -f public_html/dev-platform/diagnostic/write-test || echo DEV_WRITE_FAILED;
+            echo "== v2 siblings =="; ls -ld public_html/uber.v2-* 2>&1 || true;
+            echo "== backups =="; ls -lh public_html/dev-platform/backups/ubercorp 2>&1 | tail -20 || true;
+          ' > /tmp/remote-diagnostic.txt 2>&1
+          cat /tmp/remote-diagnostic.txt
+      - name: Record diagnostic
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p deployments-v2
+          cp /tmp/remote-diagnostic.txt deployments-v2/last-remote-diagnostic.txt
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add deployments-v2/last-remote-diagnostic.txt
+          git commit -m 'Record workflow v2 remote diagnostic [skip ci]' || exit 0
+          git pull --rebase origin dev/ubercorp-workflow-v2
+          git push origin HEAD:dev/ubercorp-workflow-v2

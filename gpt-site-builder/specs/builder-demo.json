@@ -1,0 +1,12 @@
+{
+  "id": "builder-demo",
+  "name": "GPT Builder Acceptance Site",
+  "source_dir": "builder-sites/builder-demo",
+  "host": "bluehost",
+  "target_path": "public_html/gpt-builder-preview/builder-demo",
+  "public_url": "https://madmorrigan.com/gpt-builder-preview/builder-demo/",
+  "release_root": "public_html/gpt-builder-system/releases/builder-demo",
+  "backup_root": "public_html/gpt-builder-system/backups/builder-demo",
+  "retain": 5,
+  "health_markers": ["GPT BUILDER ACCEPTANCE SITE", "ISOLATED PREVIEW", "RESPONSIVE TARGET"]
+}

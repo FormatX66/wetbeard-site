@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: workflow-test-lab-only
@@ -71,3 +71,23 @@ jobs:
           grep -Fq 'RESPONSIVE TARGET 01' /tmp/test.html
           grep -Fq 'TEST SITE ONLY // NO PRODUCTION ROUTES' /tmp/test.html
           grep -Fq 'Calibration target' /tmp/target.svg
+      - name: Record isolated test receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p workflow-test-receipts
+          cat > workflow-test-receipts/test-site.json <<EOF
+          {
+            "url": "${TEST_URL}",
+            "target": "${TEST_TARGET}",
+            "source_sha": "${GITHUB_SHA}",
+            "run_id": "${GITHUB_RUN_ID}",
+            "status": "verified-live"
+          }
+          EOF
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add workflow-test-receipts/test-site.json
+          git commit -m 'Record isolated workflow test deployment [skip ci]'
+          git pull --rebase origin dev/workflow-test-lab
+          git push origin HEAD:dev/workflow-test-lab

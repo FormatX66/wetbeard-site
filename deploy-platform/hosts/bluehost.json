@@ -1,0 +1,11 @@
+{
+  "id": "bluehost",
+  "transport": "ssh-tar",
+  "port": 22,
+  "capabilities": ["ssh", "sftp", "tar", "apache-htaccess", "php"],
+  "secrets": {
+    "host": "BLUEHOST_HOST",
+    "username": "BLUEHOST_USERNAME",
+    "private_key": "BLUEHOST_SSH_PRIVATE_KEY"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "wetbeard-site-workflow-v2",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bash deploy-platform/codespaces/start-preview.sh",
+    "dev:vite": "vite --host 0.0.0.0 --port 5173",
+    "check:ubercorp": "python3 deploy-platform/local/check-site.py ubercorp"
+  },
+  "devDependencies": {
+    "vite": "^7.0.0"
+  }
+}

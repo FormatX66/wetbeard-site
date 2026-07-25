@@ -1,0 +1,55 @@
+name: Workflow v2 preflight
+
+on:
+  push:
+    branches:
+      - dev/ubercorp-workflow-v2
+    paths:
+      - 'uber/**'
+      - 'deploy-platform/**'
+      - '.devcontainer/**'
+      - 'package.json'
+      - 'vite.config.js'
+      - '.github/workflows/workflow-v2-preflight.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Validate Übercorp source
+        run: python3 deploy-platform/local/check-site.py ubercorp
+
+      - name: Validate Vite config
+        run: npx vite --version
+
+      - name: Verify PHP syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do
+            php -l "$file"
+          done < <(find uber -type f -name '*.php' -print0)
+
+      - name: Confirm production guardrails
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -R "public_html/dev-platform" deploy-platform .github/workflows/deploy-platform-v2.yml
+          if grep -R "public_html/uber/" deploy-platform .github/workflows/deploy-platform-v2.yml; then
+            echo 'Production path detected in workflow v2.'
+            exit 1
+          fi

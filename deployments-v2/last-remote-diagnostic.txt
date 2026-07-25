@@ -2,31 +2,32 @@
 uid=1624(madmorri) gid=1620(madmorri) groups=1620(madmorri)
 == paths ==
 drwx--x--x 27 madmorri madmorri 4096 Jul 21 10:14 /home1/madmorri
-drwxr-x--- 15 madmorri nobody   4096 Jul 25 00:57 public_html
-drwxr-xr-x  5 madmorri madmorri 4096 Jul 25 05:06 public_html/dev-platform
-drwxr-xr-x  6 madmorri madmorri 4096 Jul 25 05:06 public_html/uber
+drwxr-x--- 16 madmorri nobody   4096 Jul 25 05:13 public_html
+drwxr-xr-x  6 madmorri madmorri 4096 Jul 25 05:13 public_html/dev-platform
+drwxr-xr-x  6 madmorri madmorri 4096 Jul 25 05:13 public_html/uber
 == space ==
 Filesystem      Size  Used Avail Use% Mounted on
-/dev/sde        1.5T  1.4T   84G  95% /home1/madmorri
+/dev/sde        1.5T  1.4T   85G  95% /home1/madmorri
 Filesystem        Inodes    IUsed    IFree IUse% Mounted on
-/dev/sde       100728832 14513662 86215170   15% /home1/madmorri
+/dev/sde       100728832 14513038 86215794   15% /home1/madmorri
 == sizes ==
-712K	public_html/uber
-1.3M	public_html/dev-platform
+560K	public_html/uber
+2.1M	public_html/dev-platform
 == write test production ==
 WRITE_OK
 == write test dev-platform ==
 DEV_WRITE_OK
 == v2 siblings ==
-ls: cannot access 'public_html/uber.v2-*': No such file or directory
+drwxr-xr-x 6 madmorri madmorri 4096 Jul 25 05:10 public_html/uber.v2-prev
 == backups ==
-total 656K
+total 984K
 -rw-r--r-- 1 madmorri madmorri 326K Jul 25 04:58 prod-20260725T105826Z-cee735d76fb5df35cbb83f130ddd0eff6e69d939.tar.gz
 -rw-r--r-- 1 madmorri madmorri 326K Jul 25 05:03 prod-20260725T110335Z-346f76bae2c9dca5a35c7bda8b696b556046aa64.tar.gz
+-rw-r--r-- 1 madmorri madmorri 326K Jul 25 05:13 prod-20260725T111301Z-a40b552ce84f6bd67ac986de598513d637d2a437.tar.gz
 == releases ==
-find: 'public_html/dev-platform/releases/uber': No such file or directory
-LATEST_RELEASE=
+public_html/dev-platform/releases/uber/a40b552ce84f6bd67ac986de598513d637d2a437/index.html
+LATEST_RELEASE=public_html/dev-platform/releases/uber/a40b552ce84f6bd67ac986de598513d637d2a437
 == safe copy test ==
-COPY_FAILED
+COPY_OK
 == safe sibling rename test ==
 RENAME_OK

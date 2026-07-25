@@ -1,0 +1,12 @@
+{
+  "id": "control",
+  "name": "GPT Website Builder Control",
+  "source_dir": "builder-sites/control",
+  "host": "bluehost",
+  "target_path": "public_html/gpt-builder-preview/control",
+  "public_url": "https://madmorrigan.com/gpt-builder-preview/control/",
+  "release_root": "public_html/gpt-builder-system/releases/control",
+  "backup_root": "public_html/gpt-builder-system/backups/control",
+  "retain": 5,
+  "health_markers": ["GPT WEBSITE BUILDER", "PHONE CONTROL", "ISOLATED PREVIEWS"]
+}

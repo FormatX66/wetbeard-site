@@ -3,7 +3,7 @@
   "environment": "staging",
   "host": "bluehost",
   "url": "https://madmorrigan.com/dev-platform/sites/ubercorp/",
-  "source_sha": "8931812705f55de6ffd6168f11ec5a7f2184c576",
-  "verified_at_utc": "2026-07-25T01:44:29Z",
+  "source_sha": "65c505276edc3da2475ba7785bf5257c26ce8ef2",
+  "verified_at_utc": "2026-07-25T10:55:44Z",
   "status": "verified-live"
 }

@@ -13,21 +13,41 @@
       <p class="label">RESPONSIVE TARGET 01</p>
       <img src="assets/calibration-target.svg" alt="Responsive calibration target" class="target">
       <h1>Scale. Align. Verify.</h1>
-      <p>This page exists only to test the deployment workflow and responsive rendering. It has no shared assets or paths with production websites.</p>
+      <p>This site exists only to test deployment, scaling and rendering. It has no production routes and no shared deployment target with any working website.</p>
+    </section>
+
+    <section class="calibration-card deploy-status">
+      <p class="label">DEPLOYMENT STATUS</p>
+      <div class="status-row"><span class="lamp" id="statusLamp"></span><strong id="deployState">LOADING</strong></div>
+      <dl><div><dt>Release</dt><dd id="releaseId">–</dd></div><div><dt>Deployed</dt><dd id="deployedAt">–</dd></div><div><dt>Branch</dt><dd id="branchName">–</dd></div><div><dt>Target</dt><dd>workflow-test-lab</dd></div></dl>
     </section>
 
     <section class="grid">
       <article class="calibration-card"><p class="label">ASPECT RATIOS</p><div class="ratios"><div class="r square">1:1</div><div class="r landscape">16:9</div><div class="r portrait">9:16</div></div></article>
-      <article class="calibration-card"><p class="label">ALIGNMENT GRID</p><div class="alignment"><i></i><i></i><i></i><i></i><i></i><i></i><b>+</b></div></article>
-      <article class="calibration-card"><p class="label">TYPE SCALE</p><div class="type-test"><span class="t1">12 PX</span><span class="t2">16 PX</span><span class="t3">24 PX</span><span class="t4">40 PX</span></div></article>
-      <article class="calibration-card"><p class="label">EDGE + SAFE AREA</p><div class="safe"><span>SAFE</span></div></article>
-      <article class="calibration-card"><p class="label">GEOMETRY</p><div class="shapes"><span class="circle"></span><span class="square-shape"></span><span class="diamond"></span></div></article>
-      <article class="calibration-card"><p class="label">PIXEL RULER</p><div class="ruler"><span>0</span><span>25</span><span>50</span><span>75</span><span>100%</span></div></article>
+      <article class="calibration-card"><p class="label">ALIGNMENT GRID</p><div class="alignment"><b>+</b></div></article>
+      <article class="calibration-card"><p class="label">TYPE SCALE</p><div class="type-test"><span class="t1">12 PX ABC xyz 012</span><span class="t2">16 PX ABC xyz 012</span><span class="t3">24 PX ABC xyz 012</span><span class="t4">40 PX</span></div></article>
+      <article class="calibration-card"><p class="label">EDGE + SAFE AREA</p><div class="safe"><span>SAFE</span><i>TOP</i><i>RIGHT</i><i>BOTTOM</i><i>LEFT</i></div></article>
+      <article class="calibration-card"><p class="label">GEOMETRY / DISTORTION</p><div class="shapes"><span class="circle"></span><span class="square-shape"></span><span class="diamond"></span></div></article>
+      <article class="calibration-card"><p class="label">PIXEL / PERCENT RULER</p><div class="ruler"><span>0</span><span>25</span><span>50</span><span>75</span><span>100%</span></div></article>
+      <article class="calibration-card"><p class="label">OVERFLOW TEST</p><div class="overflow"><div>LEFT EDGE</div><div>CENTER</div><div>RIGHT EDGE</div></div><p class="note">No horizontal page scroll should appear.</p></article>
+      <article class="calibration-card"><p class="label">BUTTON / TAP TARGETS</p><div class="tap-grid"><button>44</button><button>48</button><button>56</button><button>64</button></div><p class="note">Targets expose cramped mobile spacing immediately.</p></article>
+      <article class="calibration-card"><p class="label">CSS CONTAINER RESPONSE</p><div class="container-test"><span>A</span><span>B</span><span>C</span></div></article>
+      <article class="calibration-card"><p class="label">SVG RENDERING</p><svg class="inline-svg" viewBox="0 0 200 120" role="img" aria-label="Inline SVG geometry test"><rect x="2" y="2" width="196" height="116" rx="12"/><circle cx="100" cy="60" r="34"/><path d="M15 60H185M100 12V108"/></svg></article>
     </section>
 
     <section class="calibration-card device-readout">
       <p class="label">LIVE RENDER READOUT</p>
-      <dl><div><dt>Width</dt><dd id="vw">–</dd></div><div><dt>Height</dt><dd id="vh">–</dd></div><div><dt>DPR</dt><dd id="dpr">–</dd></div><div><dt>Orientation</dt><dd id="orientation">–</dd></div></dl>
+      <dl><div><dt>Width</dt><dd id="vw">–</dd></div><div><dt>Height</dt><dd id="vh">–</dd></div><div><dt>DPR</dt><dd id="dpr">–</dd></div><div><dt>Orientation</dt><dd id="orientation">–</dd></div><div><dt>Safe Top</dt><dd id="safeTop">CSS</dd></div><div><dt>Horizontal Overflow</dt><dd id="overflowState">–</dd></div></dl>
+    </section>
+
+    <section class="calibration-card checklist">
+      <p class="label">VISUAL PASS CHECKLIST</p>
+      <label><input type="checkbox"> Target remains circular, centered and undistorted</label>
+      <label><input type="checkbox"> No content clips outside cards</label>
+      <label><input type="checkbox"> No horizontal page scrolling</label>
+      <label><input type="checkbox"> Text remains readable without zooming</label>
+      <label><input type="checkbox"> Tap targets have clear separation</label>
+      <label><input type="checkbox"> Safe-area spacing clears phone edges/notches</label>
     </section>
   </main>
   <footer>TEST SITE ONLY // NO PRODUCTION ROUTES</footer>

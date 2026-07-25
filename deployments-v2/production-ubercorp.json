@@ -1,0 +1,10 @@
+{
+  "site": "ubercorp",
+  "environment": "production",
+  "url": "https://madmorrigan.com/uber/",
+  "source_sha": "a40b552ce84f6bd67ac986de598513d637d2a437",
+  "backup_id": "prod-20260725T111301Z-a40b552ce84f6bd67ac986de598513d637d2a437",
+  "verified_at_utc": "2026-07-25T11:13:10Z",
+  "status": "verified-live",
+  "note": "Promotion verified basic checks; rollback initiated after stable deploy-layer compatibility audit."
+}

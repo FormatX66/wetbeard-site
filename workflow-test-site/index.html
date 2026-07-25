@@ -16,6 +16,19 @@
       <p>This site exists only to test deployment, scaling and rendering. It has no production routes and no shared deployment target with any working website.</p>
     </section>
 
+    <section class="calibration-card connect-host">
+      <p class="label">CONNECT A WEB HOST</p>
+      <h2>Just enter the login.</h2>
+      <p class="note">We test common hosting connections and recommend the safest method. The password is used only for this connection test and is not saved.</p>
+      <form id="hostConnectForm" autocomplete="off">
+        <label>Domain or host<input id="hostField" name="host" placeholder="example.com" autocapitalize="none" spellcheck="false" required></label>
+        <label>Username<input id="hostUser" name="username" autocomplete="username" required></label>
+        <label>Password<input id="hostPass" name="password" type="password" autocomplete="current-password" required></label>
+        <button type="submit" id="hostConnectButton">CONNECT HOST</button>
+      </form>
+      <div id="hostConnectResult" class="connection-result" hidden></div>
+    </section>
+
     <section class="calibration-card deploy-status">
       <p class="label">DEPLOYMENT STATUS</p>
       <div class="status-row"><span class="lamp" id="statusLamp"></span><strong id="deployState">LOADING</strong></div>

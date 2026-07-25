@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+import os
 import shutil
 import sys
 from pathlib import Path
@@ -22,8 +23,8 @@ def main() -> None:
     if environment not in data:
         fail(f'environment {environment!r} not defined in {manifest_path}')
     env = data[environment]
-    if environment == 'production' and env.get('locked'):
-        fail('production is locked in the site manifest')
+    if environment == 'production' and env.get('locked') and os.environ.get('ALLOW_PRODUCTION_BUILD') != '1':
+        fail('production is locked in the site manifest; ALLOW_PRODUCTION_BUILD=1 is required')
 
     source = Path(data['source_dir'])
     if not source.is_dir():

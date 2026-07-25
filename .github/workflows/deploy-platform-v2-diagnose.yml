@@ -41,6 +41,17 @@ jobs:
             echo "== write test dev-platform =="; mkdir -p public_html/dev-platform/diagnostic && touch public_html/dev-platform/diagnostic/write-test && echo DEV_WRITE_OK && rm -f public_html/dev-platform/diagnostic/write-test || echo DEV_WRITE_FAILED;
             echo "== v2 siblings =="; ls -ld public_html/uber.v2-* 2>&1 || true;
             echo "== backups =="; ls -lh public_html/dev-platform/backups/ubercorp 2>&1 | tail -20 || true;
+            echo "== releases =="; find public_html/dev-platform/releases/uber -maxdepth 2 -type f -name index.html -print 2>&1 || true;
+            latest="$(find public_html/dev-platform/releases/uber -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort | tail -1)";
+            echo "LATEST_RELEASE=$latest";
+            echo "== safe copy test ==";
+            rm -rf public_html/dev-platform/diagnostic/uber-copy-test;
+            if [ -n "$latest" ] && cp -a "$latest" public_html/dev-platform/diagnostic/uber-copy-test && test -s public_html/dev-platform/diagnostic/uber-copy-test/index.html; then echo COPY_OK; else echo COPY_FAILED; fi;
+            echo "== safe sibling rename test ==";
+            rm -rf public_html/dev-platform/diagnostic/a public_html/dev-platform/diagnostic/b;
+            mkdir -p public_html/dev-platform/diagnostic/a; echo test > public_html/dev-platform/diagnostic/a/index.html;
+            if mv public_html/dev-platform/diagnostic/a public_html/dev-platform/diagnostic/b && test -s public_html/dev-platform/diagnostic/b/index.html; then echo RENAME_OK; else echo RENAME_FAILED; fi;
+            rm -rf public_html/dev-platform/diagnostic/uber-copy-test public_html/dev-platform/diagnostic/b;
           ' > /tmp/remote-diagnostic.txt 2>&1
           cat /tmp/remote-diagnostic.txt
       - name: Record diagnostic

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Workflow Test Lab</title>
+  <link rel="stylesheet" href="assets/test.css">
+</head>
+<body>
+  <header class="top"><div><strong>WORKFLOW TEST LAB</strong><span>ISOLATED CALIBRATION SITE</span></div><output id="viewport">viewport</output></header>
+  <main>
+    <section class="hero calibration-card">
+      <p class="label">RESPONSIVE TARGET 01</p>
+      <img src="assets/calibration-target.svg" alt="Responsive calibration target" class="target">
+      <h1>Scale. Align. Verify.</h1>
+      <p>This page exists only to test the deployment workflow and responsive rendering. It has no shared assets or paths with production websites.</p>
+    </section>
+
+    <section class="grid">
+      <article class="calibration-card"><p class="label">ASPECT RATIOS</p><div class="ratios"><div class="r square">1:1</div><div class="r landscape">16:9</div><div class="r portrait">9:16</div></div></article>
+      <article class="calibration-card"><p class="label">ALIGNMENT GRID</p><div class="alignment"><i></i><i></i><i></i><i></i><i></i><i></i><b>+</b></div></article>
+      <article class="calibration-card"><p class="label">TYPE SCALE</p><div class="type-test"><span class="t1">12 PX</span><span class="t2">16 PX</span><span class="t3">24 PX</span><span class="t4">40 PX</span></div></article>
+      <article class="calibration-card"><p class="label">EDGE + SAFE AREA</p><div class="safe"><span>SAFE</span></div></article>
+      <article class="calibration-card"><p class="label">GEOMETRY</p><div class="shapes"><span class="circle"></span><span class="square-shape"></span><span class="diamond"></span></div></article>
+      <article class="calibration-card"><p class="label">PIXEL RULER</p><div class="ruler"><span>0</span><span>25</span><span>50</span><span>75</span><span>100%</span></div></article>
+    </section>
+
+    <section class="calibration-card device-readout">
+      <p class="label">LIVE RENDER READOUT</p>
+      <dl><div><dt>Width</dt><dd id="vw">–</dd></div><div><dt>Height</dt><dd id="vh">–</dd></div><div><dt>DPR</dt><dd id="dpr">–</dd></div><div><dt>Orientation</dt><dd id="orientation">–</dd></div></dl>
+    </section>
+  </main>
+  <footer>TEST SITE ONLY // NO PRODUCTION ROUTES</footer>
+  <script src="assets/test.js"></script>
+</body>
+</html>

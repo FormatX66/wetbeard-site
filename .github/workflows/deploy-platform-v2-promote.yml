@@ -119,16 +119,17 @@ jobs:
           assert marker['target_path']==m['production']['target_path']
           PY
 
-      - name: Deploy exact verified package to production
+      - name: Atomically promote exact verified package
         env:
           DEPLOY_HOST: ${{ secrets.BLUEHOST_HOST }}
           DEPLOY_USER: ${{ secrets.BLUEHOST_USERNAME }}
           DEPLOY_KEY: ${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}
           DEPLOY_TARGET: ${{ steps.release.outputs.target }}
           DEPLOY_SOURCE: /tmp/site-production
+          RELEASE_ID: ${{ steps.release.outputs.source_sha }}
           DEPLOY_PORT: '22'
         shell: bash
-        run: bash deploy-platform/scripts/deploy-ssh.sh
+        run: bash deploy-platform/scripts/promote-remote.sh
 
       - name: Verify production
         shell: bash
@@ -145,6 +146,21 @@ jobs:
           assert marker['site']==m['id'] and marker['environment']=='production'
           for needle in m.get('checks',[]): assert needle in html
           PY
+
+      - name: Remove temporary previous tree after verification
+        env:
+          DEPLOY_HOST: ${{ secrets.BLUEHOST_HOST }}
+          DEPLOY_USER: ${{ secrets.BLUEHOST_USERNAME }}
+          DEPLOY_KEY: ${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}
+          DEPLOY_TARGET: ${{ steps.release.outputs.target }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$DEPLOY_KEY" > "$HOME/.ssh/deploy_platform_key"
+          chmod 600 "$HOME/.ssh/deploy_platform_key"
+          ssh-keyscan -p 22 -H "$DEPLOY_HOST" >> "$HOME/.ssh/known_hosts"
+          ssh -i "$HOME/.ssh/deploy_platform_key" -p 22 "$DEPLOY_USER@$DEPLOY_HOST" "rm -rf '${DEPLOY_TARGET}.v2-prev'"
 
       - name: Record promotion and rollback point
         shell: bash

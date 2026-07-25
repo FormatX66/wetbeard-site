@@ -7,14 +7,47 @@ This directory defines a host-agnostic, multi-site deployment system.
 - Never modify the current production site while v2 is under development.
 - Support many websites from one repository.
 - Support many hosts through adapters/configuration.
-- Separate staging, production, backup, and rollback concerns.
+- Separate local review, staging, production, backup, and rollback concerns.
 - Keep host credentials in GitHub Actions secrets, never in repository files.
+
+## Workflow
+
+1. Edit the selected website locally.
+2. Run the local source checks.
+3. Preview the website locally in a browser and make corrections immediately.
+4. Deploy to an isolated staging directory.
+5. Run staging health checks.
+6. Promote the exact tested build to production.
+7. Keep a restore point for rollback.
+
+Production is never the first place a visual change is reviewed.
+
+## Local preview
+
+Windows PowerShell:
+
+`./deploy-platform/local/preview.ps1 -Site ubercorp -Port 8080`
+
+Then open:
+
+`http://127.0.0.1:8080/`
+
+If PHP is installed, the launcher uses PHP's built-in web server so PHP pages and local APIs can execute. If PHP is unavailable, it falls back to Python for a static-only preview.
+
+Run local source checks before staging:
+
+`python ./deploy-platform/local/check-site.py ubercorp`
+
+Unix/macOS:
+
+`./deploy-platform/local/preview.sh ubercorp 8080`
 
 ## Layout
 
 - `sites/` — per-website manifests.
 - `hosts/` — non-secret host capabilities and examples.
-- `scripts/` — reusable deployment and validation tools.
+- `scripts/` — reusable build/deployment tools.
+- `local/` — local preview and validation tools.
 
 ## First staging target
 

@@ -47,8 +47,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          grep -R "public_html/dev-platform" deploy-platform .github/workflows/deploy-platform-v2.yml
-          if grep -R "public_html/uber/" deploy-platform .github/workflows/deploy-platform-v2.yml; then
-            echo 'Production path detected in workflow v2.'
-            exit 1
-          fi
+          python3 - <<'PY'
+          import json, pathlib
+          manifest=json.load(open('deploy-platform/sites/ubercorp.json',encoding='utf-8'))
+          staging=manifest['staging']['target_path']
+          production=manifest['production']
+          assert staging.startswith('public_html/dev-platform/'), staging
+          assert production.get('locked') is True, 'Production must remain locked in workflow v2'
+          workflow=pathlib.Path('.github/workflows/deploy-platform-v2.yml').read_text(encoding='utf-8')
+          assert "public_html/dev-platform" in workflow
+          assert "DEPLOY_TARGET: public_html/uber" not in workflow
+          print('Guardrails OK: staging isolated; production locked.')
+          PY

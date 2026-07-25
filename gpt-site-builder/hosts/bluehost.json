@@ -1,0 +1,11 @@
+{
+  "id": "bluehost",
+  "transport": "ssh-tar",
+  "port": 22,
+  "secret_host": "BLUEHOST_HOST",
+  "secret_user": "BLUEHOST_USERNAME",
+  "secret_key": "BLUEHOST_SSH_PRIVATE_KEY",
+  "preview_root": "public_html/gpt-builder-preview",
+  "system_root": "public_html/gpt-builder-system",
+  "configured": true
+}

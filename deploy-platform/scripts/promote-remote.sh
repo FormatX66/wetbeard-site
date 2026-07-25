@@ -18,7 +18,15 @@ next="${DEPLOY_TARGET}.v2-next"
 install -m 700 -d "$HOME/.ssh"
 printf '%s\n' "$DEPLOY_KEY" > "$HOME/.ssh/deploy_platform_key"
 chmod 600 "$HOME/.ssh/deploy_platform_key"
-ssh-keyscan -p "$port" -H "$DEPLOY_HOST" >> "$HOME/.ssh/known_hosts"
+touch "$HOME/.ssh/known_hosts"
+if ! ssh-keygen -F "$DEPLOY_HOST" -f "$HOME/.ssh/known_hosts" >/dev/null 2>&1; then
+  ok=0
+  for attempt in 1 2 3; do
+    if ssh-keyscan -T 5 -p "$port" -H "$DEPLOY_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null; then ok=1; break; fi
+    sleep 2
+  done
+  test "$ok" -eq 1
+fi
 remote="$DEPLOY_USER@$DEPLOY_HOST"
 
 # Upload the release completely outside production first.

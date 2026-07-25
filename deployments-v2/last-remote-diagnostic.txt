@@ -1,0 +1,25 @@
+== identity ==
+uid=1624(madmorri) gid=1620(madmorri) groups=1620(madmorri)
+== paths ==
+drwx--x--x 27 madmorri madmorri 4096 Jul 21 10:14 /home1/madmorri
+drwxr-x--- 15 madmorri nobody   4096 Jul 25 00:57 public_html
+drwxr-xr-x  4 madmorri madmorri 4096 Jul 25 04:58 public_html/dev-platform
+drwxr-xr-x  6 madmorri madmorri 4096 Jul 24 17:38 public_html/uber
+== space ==
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sde        1.5T  1.4T   85G  95% /home1/madmorri
+Filesystem        Inodes    IUsed    IFree IUse% Mounted on
+/dev/sde       100728832 14513835 86214997   15% /home1/madmorri
+== sizes ==
+712K	public_html/uber
+1.3M	public_html/dev-platform
+== write test production ==
+WRITE_OK
+== write test dev-platform ==
+DEV_WRITE_OK
+== v2 siblings ==
+ls: cannot access 'public_html/uber.v2-*': No such file or directory
+== backups ==
+total 656K
+-rw-r--r-- 1 madmorri madmorri 326K Jul 25 04:58 prod-20260725T105826Z-cee735d76fb5df35cbb83f130ddd0eff6e69d939.tar.gz
+-rw-r--r-- 1 madmorri madmorri 326K Jul 25 05:03 prod-20260725T110335Z-346f76bae2c9dca5a35c7bda8b696b556046aa64.tar.gz

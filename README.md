@@ -4,6 +4,10 @@ Production site: <https://madmorrigan.com/wetbeard/>
 
 This repository contains the current compact pirate-map front end. A GitHub Actions workflow deploys it to Bluehost through SSH. The workflow overlays changed files and does not delete the live site folder.
 
+## Reusable website builder
+
+The repository also contains a reusable site factory under `site-builder/`. It creates isolated Vite sites under `sites/<slug>/`, supports Codespaces previews, and includes a guarded staging/production deployment workflow. See `site-builder/README.md`.
+
 ## Protected production files
 
 The initial deployment uploads only `index.html`, `assets/app.js`, `assets/style.css`, and `assets/img/`. It intentionally does not upload any of these:

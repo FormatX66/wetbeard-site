@@ -1,0 +1,13 @@
+{
+  "slug": "__SITE_SLUG__",
+  "title": "__SITE_TITLE__",
+  "deployProfile": "bluehost",
+  "production": {
+    "url": "https://example.com/__SITE_SLUG__/",
+    "remotePath": "public_html/__SITE_SLUG__/"
+  },
+  "staging": {
+    "url": "https://example.com/staging/__SITE_SLUG__/",
+    "remotePath": "public_html/staging/__SITE_SLUG__/"
+  }
+}

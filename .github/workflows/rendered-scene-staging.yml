@@ -3,7 +3,7 @@ name: Stage Rendered Scene Rebuild
 on:
   push:
     branches:
-      - agent/rendered-scene-rebuild
+      - main
     paths:
       - sites/arkmatx/**
       - sites/morri/**
@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: agent/rendered-scene-rebuild
+          ref: main
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -86,4 +86,4 @@ jobs:
           git add deployments/rendered-scene-review.json
           git diff --cached --quiet && exit 0
           git commit -m "Record rendered scene review staging [skip ci]"
-          git push origin HEAD:agent/rendered-scene-rebuild
+          git push origin HEAD:main

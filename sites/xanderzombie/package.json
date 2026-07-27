@@ -1,1 +1,1 @@
-{"name":"xanderzombie","private":true,"version":"0.1.0","type":"module","scripts":{"dev":"vite","build":"vite build","preview":"vite preview"},"devDependencies":{"vite":"^7.0.0"}}
+{"name":"xanderzombie","private":true,"version":"0.1.0","type":"module","scripts":{"dev":"vite","build":"vite build","postbuild":"node copy-runtime.mjs","preview":"vite preview"},"devDependencies":{"vite":"^7.0.0"}}

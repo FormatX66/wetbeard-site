@@ -1,0 +1,83 @@
+name: Promote Verified Realms to Production
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/promote-realms-production.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: realm-production-promotion
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    strategy:
+      fail-fast: false
+      matrix:
+        site: [arkmatx, xanderzombie]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build ${{ matrix.site }}
+        working-directory: sites/${{ matrix.site }}
+        run: |
+          set -euo pipefail
+          if [ -f package-lock.json ]; then npm ci; else npm install --no-audit --no-fund; fi
+          npm run build -- --base=/
+      - name: Validate PHP runtime files
+        if: matrix.site == 'xanderzombie'
+        run: |
+          php -l sites/xanderzombie/dist/comic-api.php
+          php -l sites/xanderzombie/dist/studio.php
+          php -l sites/xanderzombie/dist/reel.php
+      - name: Configure SSH
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "${{ secrets.BLUEHOST_HOST }}" >> ~/.ssh/known_hosts
+      - name: Deploy production
+        shell: bash
+        run: |
+          set -euo pipefail
+          SITE="${{ matrix.site }}"
+          REMOTE=$(jq -r '.production.remotePath' "sites/$SITE/site.config.json")
+          URL=$(jq -r '.production.url' "sites/$SITE/site.config.json")
+          [[ "$REMOTE" == public_html/* ]] || { echo "Unsafe path"; exit 1; }
+          [[ "$REMOTE" != *VERIFY* ]] || { echo "Unverified path"; exit 1; }
+          EXTRA=()
+          if [ "$SITE" = xanderzombie ]; then EXTRA+=(--exclude data/ --exclude generated/); fi
+          if [ "$SITE" = arkmatx ]; then EXTRA+=(--exclude world-state.json); fi
+          ssh "${{ secrets.BLUEHOST_USERNAME }}@${{ secrets.BLUEHOST_HOST }}" "mkdir -p '$REMOTE'"
+          rsync -az --delete "${EXTRA[@]}" "sites/$SITE/dist/" "${{ secrets.BLUEHOST_USERNAME }}@${{ secrets.BLUEHOST_HOST }}:$REMOTE/"
+          for n in 1 2 3 4 5; do
+            code=$(curl -L -sS -o /tmp/$SITE.html -w '%{http_code}' "$URL" || true)
+            if [[ "$code" =~ ^2|3 ]]; then exit 0; fi
+            sleep 3
+          done
+          echo "$URL did not verify"; exit 1
+      - name: Record verified production
+        shell: bash
+        run: |
+          set -euo pipefail
+          SITE="${{ matrix.site }}"
+          URL=$(jq -r '.production.url' "sites/$SITE/site.config.json")
+          mkdir -p deployments
+          printf '{"site":"%s","url":"%s","commit_sha":"%s","status":"verified-live"}\n' "$SITE" "$URL" "$GITHUB_SHA" > "deployments/$SITE-live.json"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "deployments/$SITE-live.json"
+          git diff --cached --quiet && exit 0
+          git commit -m "Record $SITE production [skip ci]"
+          for n in 1 2 3; do git pull --rebase origin main && git push origin HEAD:main && exit 0; sleep 2; done
+          exit 1

@@ -1,9 +1,16 @@
 {
-  "updated_at": "2026-07-27T10:09:46Z",
+  "updated_at": "2026-07-27T15:14:04Z",
   "repository": "FormatX66/wetbeard-site",
   "default_branch": "main",
   "status": "LIVE",
   "open_prs": [
+    {
+      "number": 64,
+      "title": "Fix verified-realm staging receipt rebase order",
+      "draft": true,
+      "updated_at": "2026-07-27T15:05:05Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/pull/64"
+    },
     {
       "number": 34,
       "title": "Ignore documentation in workflow-v2 path guardrail",
@@ -21,52 +28,52 @@
   ],
   "recent_commits": [
     {
-      "sha": "d8545685",
-      "message": "Record rendered scene review staging [skip ci]",
-      "date": "2026-07-27T08:28:32Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/d8545685bd5cf2bbf2daa1c13a80975ffacea733"
+      "sha": "71f55703",
+      "message": "Fix ArkmatX staging verification for rendered workshop (#63)",
+      "date": "2026-07-27T15:05:07Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/71f557038e36939cd58af8ea96315f28f4e2faa9"
     },
     {
-      "sha": "b0516fa4",
-      "message": "Add real-browser ArkmatX visual validation",
-      "date": "2026-07-27T08:28:01Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/b0516fa409f1722fa0f71380db60a994700f8ed6"
+      "sha": "232c358d",
+      "message": "ArkmatX section 1: swap in rendered workshop (#62)",
+      "date": "2026-07-27T14:57:37Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/232c358d7037eb2f627557b20e7939cb03b8b4c4"
     },
     {
-      "sha": "e3d4c780",
-      "message": "Record rendered scene review staging [skip ci]",
-      "date": "2026-07-27T02:42:32Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/e3d4c780ce3773912b20dc28bd3df4cc9e0dd732"
+      "sha": "540673e7",
+      "message": "Record ArkmatX staging diagnostic [skip ci]",
+      "date": "2026-07-27T12:16:01Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/540673e70fddf47499f0e4caafc534b6a08e0665"
     },
     {
-      "sha": "232841cc",
-      "message": "Merge pull request #55 from FormatX66/agent/rendered-scene-rebuild",
-      "date": "2026-07-27T02:42:02Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/232841ccdd2f2298a862cbb4691756006640db79"
+      "sha": "f29e62a1",
+      "message": "Add self-reporting ArkmatX staging repair",
+      "date": "2026-07-27T12:15:39Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/f29e62a1cf959d1dc0a7a386239955149dc5e5b6"
     },
     {
-      "sha": "486cc43b",
-      "message": "Run rendered-scene staging from main after merge",
-      "date": "2026-07-27T02:41:35Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/486cc43b44370f650d101bdf61fb41c8128c3f0f"
+      "sha": "84b975e0",
+      "message": "Keep ArkmatX staging synchronized with source changes",
+      "date": "2026-07-27T12:13:18Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/84b975e0ee80e0eba26b00ff85b2416231d8a270"
     },
     {
-      "sha": "b61d85aa",
-      "message": "Record rendered scene review staging [skip ci]",
-      "date": "2026-07-27T02:40:27Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/b61d85aa0beb25b7646207bb55ac55394ec591b4"
+      "sha": "86b96968",
+      "message": "Fix ArkmatX staging asset paths and verification",
+      "date": "2026-07-27T12:04:39Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/86b96968c39478adc98ab6192a35774034475c26"
     },
     {
-      "sha": "59f2f878",
-      "message": "Stage rendered-scene rebuild for visual review",
-      "date": "2026-07-27T02:39:51Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/59f2f8780c8c223379a0af138752eeb54c63fc98"
+      "sha": "09c7a846",
+      "message": "Add persistent workflow-memory bootstrap instructions",
+      "date": "2026-07-27T11:56:42Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/09c7a8466ccc4d362228df3955223f8da96253d7"
     },
     {
-      "sha": "111d2ace",
-      "message": "Remove unpackaged duplicate Xander woods scene",
-      "date": "2026-07-27T02:39:16Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/111d2ace7a9ebaa9854eca340a9e4a7d08cebefb"
+      "sha": "4d266c90",
+      "message": "Expand GPT workflow memory with website-building workflows (#58)",
+      "date": "2026-07-27T11:52:58Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/4d266c906633e7ba5df005d53b23b9a908bd7724"
     }
   ]
 }

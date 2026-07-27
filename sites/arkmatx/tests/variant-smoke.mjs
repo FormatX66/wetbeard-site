@@ -47,7 +47,41 @@ for(const variant of variants){
   }finally{await context.close()}
  }
 }
+
+{
+ const context=await browser.newContext({viewport:{width:1280,height:720}});
+ const page=await context.newPage();
+ const readState=()=>page.evaluate(()=>({
+  variant:document.body.dataset.variant,
+  stored:sessionStorage.getItem('arkmatx-active-variant'),
+  login:sessionStorage.getItem('arkmatx-active-login'),
+ }));
+ try{
+  const first=new URL(baseURL);first.searchParams.set('login','user-0');
+  await page.goto(first.toString(),{waitUntil:'networkidle',timeout:30000});
+  await page.waitForSelector('#sceneBg',{state:'visible'});
+  let state=await readState();
+  if(state.variant!=='core'||state.stored!=='core'||state.login!=='user-0')failures.push(`[login-isolation] first login assignment failed: ${JSON.stringify(state)}`);
+
+  const second=new URL(baseURL);second.searchParams.set('login','user-1');
+  await page.goto(second.toString(),{waitUntil:'networkidle',timeout:30000});
+  await page.waitForSelector('#sceneBg',{state:'visible'});
+  state=await readState();
+  if(state.variant!=='nerve'||state.stored!=='nerve'||state.login!=='user-1')failures.push(`[login-isolation] second login inherited stale variant: ${JSON.stringify(state)}`);
+
+  await page.goto(baseURL,{waitUntil:'networkidle',timeout:30000});
+  await page.waitForSelector('#sceneBg',{state:'visible'});
+  const persisted=await readState();
+  if(persisted.variant!=='nerve'||persisted.stored!=='nerve')failures.push(`[login-isolation] active login variant did not persist on query-free navigation: ${JSON.stringify(persisted)}`);
+  results.push({label:'login-isolation',state,persisted});
+  await page.screenshot({path:path.join(outDir,'login-isolation.png'),fullPage:true});
+ }catch(error){
+  failures.push(`[login-isolation] test crashed: ${error.stack||error.message}`);
+  await page.screenshot({path:path.join(outDir,'login-isolation-failure.png'),fullPage:true}).catch(()=>{});
+ }finally{await context.close()}
+}
+
 await browser.close();
 await fs.writeFile(path.join(outDir,'variant-report.json'),JSON.stringify({failures,results},null,2));
 if(failures.length){for(const failure of failures)console.error(`- ${failure}`);process.exit(1)}
-console.log(`ARKMATX VARIANT CHECK PASSED for ${variants.length} variants across ${profiles.length} profiles.`);
+console.log(`ARKMATX VARIANT CHECK PASSED for ${variants.length} variants across ${profiles.length} profiles plus login isolation.`);

@@ -1,12 +1,72 @@
 {
-  "updated_at": "2026-07-26T21:20:00-04:00",
+  "updated_at": "2026-07-27T10:09:46Z",
   "repository": "FormatX66/wetbeard-site",
   "default_branch": "main",
-  "status": "TRACKING",
-  "recent": [
-    {"type":"merge","label":"ArkmatX live GPT worklog","ref":"PR #39"},
-    {"type":"merge","label":"Heather private AI grimoire backend","ref":"PR #38"},
-    {"type":"merge","label":"ArkmatX/Morri cross-realm puzzle depth","ref":"PR #37"},
-    {"type":"review","label":"ArkmatX multi-zone playable review","ref":"PR #40"}
+  "status": "LIVE",
+  "open_prs": [
+    {
+      "number": 34,
+      "title": "Ignore documentation in workflow-v2 path guardrail",
+      "draft": true,
+      "updated_at": "2026-07-25T01:08:59Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/pull/34"
+    },
+    {
+      "number": 33,
+      "title": "Retry Übercorp deployment status push races",
+      "draft": true,
+      "updated_at": "2026-07-25T00:06:55Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/pull/33"
+    }
+  ],
+  "recent_commits": [
+    {
+      "sha": "d8545685",
+      "message": "Record rendered scene review staging [skip ci]",
+      "date": "2026-07-27T08:28:32Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/d8545685bd5cf2bbf2daa1c13a80975ffacea733"
+    },
+    {
+      "sha": "b0516fa4",
+      "message": "Add real-browser ArkmatX visual validation",
+      "date": "2026-07-27T08:28:01Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/b0516fa409f1722fa0f71380db60a994700f8ed6"
+    },
+    {
+      "sha": "e3d4c780",
+      "message": "Record rendered scene review staging [skip ci]",
+      "date": "2026-07-27T02:42:32Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/e3d4c780ce3773912b20dc28bd3df4cc9e0dd732"
+    },
+    {
+      "sha": "232841cc",
+      "message": "Merge pull request #55 from FormatX66/agent/rendered-scene-rebuild",
+      "date": "2026-07-27T02:42:02Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/232841ccdd2f2298a862cbb4691756006640db79"
+    },
+    {
+      "sha": "486cc43b",
+      "message": "Run rendered-scene staging from main after merge",
+      "date": "2026-07-27T02:41:35Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/486cc43b44370f650d101bdf61fb41c8128c3f0f"
+    },
+    {
+      "sha": "b61d85aa",
+      "message": "Record rendered scene review staging [skip ci]",
+      "date": "2026-07-27T02:40:27Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/b61d85aa0beb25b7646207bb55ac55394ec591b4"
+    },
+    {
+      "sha": "59f2f878",
+      "message": "Stage rendered-scene rebuild for visual review",
+      "date": "2026-07-27T02:39:51Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/59f2f8780c8c223379a0af138752eeb54c63fc98"
+    },
+    {
+      "sha": "111d2ace",
+      "message": "Remove unpackaged duplicate Xander woods scene",
+      "date": "2026-07-27T02:39:16Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/111d2ace7a9ebaa9854eca340a9e4a7d08cebefb"
+    }
   ]
 }

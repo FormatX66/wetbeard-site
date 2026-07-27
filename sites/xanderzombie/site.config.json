@@ -1,1 +1,1 @@
-{"name":"Xander Zombie","slug":"xanderzombie","deployProfile":"bluehost","production":{"url":"https://xanderzombie.com/","remotePath":"public_html/xanderzombie"},"staging":{"url":"https://madmorrigan.com/staging/xanderzombie/","remotePath":"public_html/staging/xanderzombie"}}
+{"name":"Xander Zombie","slug":"xanderzombie","deployProfile":"bluehost","production":{"url":"https://xanderzombie.com/","remotePath":"VERIFY_BEFORE_DEPLOY"},"staging":{"url":"https://xanderzombie.com/staging/","remotePath":"VERIFY_BEFORE_DEPLOY"}}

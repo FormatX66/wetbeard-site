@@ -20,7 +20,7 @@ function all_entries(){
 function append_entry($e){$path=store_path();$fh=fopen($path,'a');if(!$fh)throw new Exception('Could not open grimoire storage.');flock($fh,LOCK_EX);fwrite($fh,json_encode($e,JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE)."\n");fflush($fh);flock($fh,LOCK_UN);fclose($fh);}
 function ai_catalog($raw,$title,$hint){
   $key=getenv('OPENAI_API_KEY'); if(!$key)return null;
-  $model=getenv('WITCHDIX_AI_MODEL') ?: 'gpt-5-mini';
+  $model=getenv('WITCHDIX_AI_MODEL') ?: 'gpt-5.6-luna';
   $schema=['type'=>'object','properties'=>[
     'title'=>['type'=>'string'],'category'=>['type'=>'string','enum'=>['herbs-plants','spells-rituals','moon-seasons','dreams-divination','recipes-remedies','stones-tools-curiosities','field-notes','stories-lore','other']],
     'summary'=>['type'=>'string'],'tags'=>['type'=>'array','items'=>['type'=>'string'],'maxItems'=>12],
@@ -29,7 +29,7 @@ function ai_catalog($raw,$title,$hint){
     'safety_note'=>['type'=>'string']
   ],'required'=>['title','category','summary','tags','cross_references','search_terms','safety_note'],'additionalProperties'=>false];
   $payload=['model'=>$model,'instructions'=>'You are the cataloging spirit for Heather\'s private witchcraft field grimoire. Preserve her meaning. Do not invent factual claims. Categorize the note for retrieval, create concise tags and useful search synonyms. If the note discusses ingestion, medicine, poisonous plants, fire, or other practical hazards, put a brief factual caution in safety_note; otherwise use an empty string. Output only the requested schema.','input'=>"Optional title: {$title}\nOptional author hint: {$hint}\nRaw note:\n{$raw}",'text'=>['format'=>['type'=>'json_schema','name'=>'grimoire_catalog','strict'=>true,'schema'=>$schema]]];
-  $ch=curl_init('https://api.openai.com/v1/responses');curl_setopt_array($ch,[CURLOPT_POST=>true,CURLOPT_RETURNTRANSFER=>true,CURLOPT_HTTPHEADER=>['Authorization: Bearer '.$key,'Content-Type: application/json'],CURLOPT_POSTFIELDS=>json_encode($payload),CURLOPT_TIMEOUT=>30]);
+  $ch=curl_init('https://api.openai.com/v1/responses');curl_setopt_array($ch,[CURLOPT_POST=>true,CURLOPT_RETURNTRANSFER=>true,CURLOPT_HTTPHEADER=>['Authorization: Bearer '.$key,'Content-Type: application/json'],CURLOPT_POSTFIELDS=>json_encode($payload),CURLOPT_TIMEOUT=>45]);
   $resp=curl_exec($ch);$code=curl_getinfo($ch,CURLINFO_HTTP_CODE);curl_close($ch);if($resp===false||$code<200||$code>=300)return null;
   $j=json_decode($resp,true);$text='';foreach(($j['output']??[]) as $o){foreach(($o['content']??[]) as $c){if(($c['type']??'')==='output_text')$text.=$c['text']??'';}}
   $data=json_decode($text,true);return is_array($data)?$data:null;

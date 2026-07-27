@@ -1,0 +1,65 @@
+name: Deploy Witchdix Fallback Staging
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/deploy-witchdix-fallback-staging.yml
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build Witchdix for fallback path
+        working-directory: sites/witchdix
+        run: |
+          set -euo pipefail
+          if [ -f package-lock.json ]; then npm ci; else npm install --no-audit --no-fund; fi
+          npm run build -- --base=/witchdix/
+          php -l dist/api.php
+          php -l dist/admin.php
+      - name: Configure SSH
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "${{ secrets.BLUEHOST_HOST }}" >> ~/.ssh/known_hosts
+      - name: Deploy fallback
+        run: |
+          set -euo pipefail
+          REMOTE=public_html/witchdix
+          ssh "${{ secrets.BLUEHOST_USERNAME }}@${{ secrets.BLUEHOST_HOST }}" "mkdir -p '$REMOTE'"
+          rsync -az --delete --exclude data/ sites/witchdix/dist/ "${{ secrets.BLUEHOST_USERNAME }}@${{ secrets.BLUEHOST_HOST }}:$REMOTE/"
+      - name: Verify likely main-domain path
+        id: verify
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          URL=https://madmorrigan.com/witchdix/
+          code=$(curl -L -sS -o /tmp/witch.html -w '%{http_code}' "$URL" || true)
+          test "$code" -ge 200 -a "$code" -lt 400
+      - name: Record fallback deployment
+        run: |
+          set -euo pipefail
+          mkdir -p deployments
+          STATUS=deployed-host-path
+          URL=null
+          if [ "${{ steps.verify.outcome }}" = success ]; then STATUS=verified-staging; URL='"https://madmorrigan.com/witchdix/"'; fi
+          printf '{"site":"witchdix","remotePath":"public_html/witchdix","url":%s,"status":"%s"}\n' "$URL" "$STATUS" > deployments/witchdix-fallback-staging.json
+          git config user.name "github-actions[bot]"
+          git config user.email "4186759+github-actions[bot]@users.noreply.github.com"
+          git add deployments/witchdix-fallback-staging.json
+          git diff --cached --quiet && exit 0
+          git commit -m "Record Witchdix fallback staging [skip ci]"
+          git pull --rebase origin main
+          git push origin HEAD:main

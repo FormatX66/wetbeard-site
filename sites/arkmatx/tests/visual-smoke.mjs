@@ -132,6 +132,42 @@ for (const vp of viewports) {
       }
       if (serverVisual.hotspotCount < 6) fail(vp.name, `expected at least 6 server-room hotspots, found ${serverVisual.hotspotCount}`);
       await page.screenshot({ path: path.join(outDir, `${vp.name}-servers.png`), fullPage: true });
+
+      const paradox = page.locator('#hotspots polygon[aria-label="PARADOX"]');
+      if (await paradox.count() !== 1) {
+        fail(vp.name, 'server room is missing the PARADOX route');
+      } else {
+        await paradox.click({ force: true });
+        await page.waitForTimeout(500);
+        const paradoxVisual = await page.evaluate(() => {
+          const img = document.querySelector('#sceneBg');
+          const labels = [...document.querySelectorAll('#hotspots polygon')].map(p => p.getAttribute('aria-label'));
+          return {
+            location: document.querySelector('#location')?.textContent || '',
+            scene: img?.dataset.scene || '',
+            complete: Boolean(img?.complete),
+            naturalWidth: img?.naturalWidth || 0,
+            naturalHeight: img?.naturalHeight || 0,
+            labels,
+          };
+        });
+        if (!paradoxVisual.location.includes('PARADOX')) fail(vp.name, `paradox navigation failed; location='${paradoxVisual.location}'`);
+        if (paradoxVisual.scene !== 'paradox') fail(vp.name, `paradox scene provenance missing; data-scene='${paradoxVisual.scene}'`);
+        if (!paradoxVisual.complete || paradoxVisual.naturalWidth < 100 || paradoxVisual.naturalHeight < 50) {
+          fail(vp.name, `rendered paradox scene failed to load (${paradoxVisual.naturalWidth}x${paradoxVisual.naturalHeight})`);
+        }
+        for (const label of ['TERMINAL A', 'TERMINAL B', 'TERMINAL C', 'MAINTENANCE CHANNEL', 'WORKSHOP', 'SERVER CLOSET']) {
+          if (!paradoxVisual.labels.includes(label)) fail(vp.name, `paradox room missing hotspot '${label}'`);
+        }
+
+        await page.locator('#hotspots polygon[aria-label="TERMINAL A"]').click({ force: true });
+        await page.locator('#hotspots polygon[aria-label="TERMINAL C"]').click({ force: true });
+        await page.locator('#hotspots polygon[aria-label="MAINTENANCE CHANNEL"]').click({ force: true });
+        await page.waitForTimeout(80);
+        if (!(await page.locator('#modal.show').count())) fail(vp.name, 'paradox A-on / B-off / C-on sequence did not open the maintenance channel');
+        await closeModal(page);
+        await page.screenshot({ path: path.join(outDir, `${vp.name}-paradox.png`), fullPage: true });
+      }
     }
 
     if (consoleErrors.length) fail(vp.name, `browser errors: ${consoleErrors.join(' | ')}`);

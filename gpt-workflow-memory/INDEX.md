@@ -6,6 +6,7 @@ Search this file first, then open the matching incident/workflow.
 |---|---|---|
 | Website QA | build passes but page broken, blank, lines only, image missing, hotspot drift, mobile aspect ratio | `incidents/website-render-hotspot-validation.md` |
 | Website architecture | Myst, rendered scene, clickable image, hotspot map, CSS vector looks bad, scene-first | `patterns/render-first-interactive-sites.md` |
+| Render dependency | image generation failed, raster unavailable, do not fall back to vector/CSS scene, scene manifest | `incidents/render-asset-generation-unavailable.md` |
 | New site setup | scaffold, new website, isolated site, site.config, Vite generator | `workflows/reusable-site-scaffold.md` |
 | Staging | review build, staging path, asset base, mobile review, do not touch production | `workflows/staging-before-production.md` |
 | Production promotion | deploy live, verified URL, deployment receipt, promote staging | `workflows/production-promotion-and-receipt.md` |
@@ -27,4 +28,4 @@ Search this file first, then open the matching incident/workflow.
 
 ## Cross-project search keywords
 
-`blank page`, `broken preview`, `aspect ratio`, `hotspot`, `SVG coordinates`, `rendered background`, `Playwright`, `Vite`, `PHP dist`, `Bluehost`, `cPanel`, `document root`, `addon domain`, `rsync delete`, `OpenAI API key`, `staging`, `browser validation`, `screenshots`, `health endpoint`, `smoke test`, `deployment receipt`, `non-fast-forward`, `ref lock`, `path guardrail`, `README flagged`, `npm lockfile`, `private publish`, `background queue`, `cron`, `world bus`, `activity.json`, `GitHub telemetry`, `.htaccess`, `custom 404`, `managed block`, `host-wide config`
+`blank page`, `broken preview`, `aspect ratio`, `hotspot`, `SVG coordinates`, `rendered background`, `image generation failed`, `raster unavailable`, `scene manifest`, `Playwright`, `Vite`, `PHP dist`, `Bluehost`, `cPanel`, `document root`, `addon domain`, `rsync delete`, `OpenAI API key`, `staging`, `browser validation`, `screenshots`, `health endpoint`, `smoke test`, `deployment receipt`, `non-fast-forward`, `ref lock`, `path guardrail`, `README flagged`, `npm lockfile`, `private publish`, `background queue`, `cron`, `world bus`, `activity.json`, `GitHub telemetry`, `.htaccess`, `custom 404`, `managed block`, `host-wide config`

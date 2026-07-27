@@ -1,43 +1,32 @@
 import './style.css';
 
-document.querySelector('#app').innerHTML = `
-<main class="world">
-  <section class="threshold" id="threshold">
-    <div class="forest forest-left"></div><div class="forest forest-right"></div>
-    <div class="hut">
-      <div class="roof"><i></i><i></i><i></i></div>
-      <div class="moss moss-a"></div><div class="moss moss-b"></div>
-      <div class="window"><span>✦</span></div>
-      <button class="door" id="door" aria-label="Enter Morri's hut">
-        <span class="sigil">◉</span><span class="door-copy"><small>THE HUT OF</small><strong>MORRI</strong><em>enter quietly</em></span>
-      </button>
-      <div class="mushrooms m1">●</div><div class="mushrooms m2">●</div><div class="mushrooms m3">●</div>
-    </div>
-    <p class="invitation">Somewhere between the moss and moonlight,<br>the door was left unlocked for you.</p>
-  </section>
+const state={scene:'path',found:new Set(),board:['','♞','','','♚','','',''],chess:false};
+const scenes={
+path:{title:'The Moss Path',note:'The hut is watching the path.',hot:[['door','Enter the hut','42,28 61,29 64,79 39,79','parlor'],['mush','A pale mushroom','17,69 25,65 29,82 14,83','clue-mush']]},
+parlor:{title:'The Parlor',note:'Warm cedar. Rain on the glass. Something clicks behind the walls.',hot:[['window','Moon window','67,14 94,12 95,65 70,63','window'],['cabinet','Curio cabinet','4,26 31,24 30,75 5,77','cabinet'],['board','Chess table','39,56 68,54 76,89 31,90','chess'],['door','Back outside','0,53 10,50 10,91 0,94','path']]},
+window:{title:'The Moon Window',note:'The glass is etched with eight tiny leaves.',hot:[['leaf','Etched leaves','36,19 67,18 73,72 30,72','clue-leaf'],['back','Step back','0,0 17,0 17,100 0,100','parlor']]},
+cabinet:{title:'The Cabinet',note:'A cabinet for objects that should probably have stayed in the forest.',hot:[['scroll','Sealed scroll','11,19 34,17 35,44 10,46','clue-scroll'],['key','Brass key','62,61 82,59 84,79 61,80','clue-key'],['back','Step back','0,0 15,0 15,100 0,100','parlor']]},
+chess:{title:'The Chess Table',note:'Eight squares. A knight waits where no knight should.',hot:[['back','Step back','0,0 15,0 15,100 0,100','parlor']]},
+secret:{title:'The Hidden Room',note:'Not every room in the hut appears on the outside.',hot:[['sigil','Wall sigil','38,18 63,18 67,58 35,58','clue-sigil'],['back','Return','0,0 15,0 15,100 0,100','parlor']]}
+};
 
-  <section class="interior" id="interior" aria-hidden="true">
-    <nav><span class="brand">MORRI</span><div><a href="#nook">The Nook</a><a href="#cabinet">Cabinet</a><a href="#fieldnotes">Field Notes</a></div></nav>
-    <header class="room">
-      <div class="beam beam-one"></div><div class="beam beam-two"></div>
-      <div class="lantern">✧</div>
-      <div class="hero-copy"><p class="eyebrow">A PRIVATE LITTLE WORLD</p><h1>Come in.<br><i>The kettle's warm.</i></h1><p>A moss-soft hideaway for collected curiosities, strange little obsessions, beautiful things, and whatever followed Morri home from the woods.</p></div>
-      <div class="window-scene"><div class="moon"></div><div class="pine p1"></div><div class="pine p2"></div><div class="pine p3"></div><span class="anime-mark">木</span></div>
-      <div class="table"><div class="tea">♨</div><div class="scroll">巻</div><div class="herbs">☘</div></div>
-    </header>
+const sceneArt={
+path:`<div class="sky"><i></i></div><div class="tree t1"></div><div class="tree t2"></div><div class="tree t3"></div><div class="hut"><div class="roof"></div><div class="moss"></div><div class="glow"></div><div class="doorShape"><b>M</b></div></div><div class="fog f1"></div><div class="fog f2"></div><div class="fungi">● ● · ●</div>`,
+parlor:`<div class="beam"></div><div class="wall"></div><div class="cabinetShape"><i></i><i></i><i></i></div><div class="roundWindow"><div class="moon"></div><span>木</span></div><div class="fireGlow"></div><div class="chessTable"><span>♞</span></div><div class="rug"></div><div class="hangingHerbs">☘<br>☘</div>`,
+window:`<div class="closeWindow"><div class="moon big"></div><div class="branches"></div><div class="leafRing">❧ ❧ ❧ ❧<br>❧ ❧ ❧ ❧</div></div><div class="windowSill">tea &nbsp; ◌ &nbsp; moss</div>`,
+cabinet:`<div class="shelf s1"></div><div class="shelf s2"></div><div class="jar j1">✦</div><div class="jar j2">🍄</div><div class="scrollObj">巻</div><div class="keyObj">⌑</div><div class="mask">狐</div>`,
+chess:`<div class="boardWrap"><div id="board" class="board"></div><p class="boardHint">The knight remembers the leaves.</p></div>`,
+secret:`<div class="secretArch"></div><div class="sigilWall">♜<br><span>森</span></div><div class="cushions"></div><div class="tinyLantern">✧</div>`
+};
 
-    <section class="nook" id="nook"><div><p class="eyebrow">SETTLE IN</p><h2>The Nook</h2><p>Velvet cushions, linen throws, cedar smoke and the kind of lamplight that makes staying another hour seem perfectly reasonable.</p></div><div class="nook-card"><span>☾</span><strong>Tonight's forecast</strong><p>mossy with a chance of magic</p></div></section>
-
-    <section class="cabinet" id="cabinet"><p class="eyebrow">CURIOSITIES & CONTRABAND</p><h2>The Cabinet</h2><div class="shelves"><article><span>🍄</span><h3>Forest Finds</h3><p>Odd mushrooms, stones, pressed leaves and tiny treasures.</p></article><article><span class="ink">忍</span><h3>Hidden Canon</h3><p>Anime relics woven in quietly—more talisman than merch shelf.</p></article><article><span>✦</span><h3>Little Luxuries</h3><p>Tea, blankets, candlelight and things worth being particular about.</p></article></div></section>
-
-    <section class="fieldnotes" id="fieldnotes"><div class="paper"><p class="eyebrow">FROM MORRI'S DESK</p><h2>Field Notes</h2><p>“A hut should feel a little enchanted, a little overgrown, and considerably nicer inside than anyone expected.”</p><span class="seal">M</span></div></section>
-    <footer>Mind the mushrooms on your way out. <button id="leave">Return to the path</button></footer>
-  </section>
-</main>`;
-
-const door = document.querySelector('#door');
-const threshold = document.querySelector('#threshold');
-const interior = document.querySelector('#interior');
-function enter(){ threshold.classList.add('depart'); setTimeout(()=>{threshold.hidden=true;interior.classList.add('revealed');interior.setAttribute('aria-hidden','false');window.scrollTo(0,0)},650)}
-door.addEventListener('click', enter);
-document.querySelector('#leave').addEventListener('click',()=>{interior.classList.remove('revealed');interior.setAttribute('aria-hidden','true');threshold.hidden=false;threshold.classList.remove('depart');window.scrollTo(0,0)});
+document.querySelector('#app').innerHTML=`<main class="game"><div id="scene" class="scene"></div><svg id="hotspots" viewBox="0 0 100 100" preserveAspectRatio="none"></svg><div class="grain"></div><header><span>MORRI</span><small id="place"></small></header><aside id="note"></aside><div id="inventory"><b>FOUND</b><span id="items">nothing yet</span></div><div id="toast"></div><button id="hint" aria-label="show hotspots">?</button></main>`;
+const el=id=>document.getElementById(id), scene=el('scene'),svg=el('hotspots'),note=el('note'),place=el('place'),toast=el('toast');
+function say(t){toast.textContent=t;toast.classList.add('show');clearTimeout(say.t);say.t=setTimeout(()=>toast.classList.remove('show'),2600)}
+function add(item,label,msg){if(!state.found.has(item)){state.found.add(item);renderInv();say(msg)}else say('You already noticed that.');}
+function renderInv(){el('items').textContent=[...state.found].map(x=>({mush:'pale mushroom',leaf:'8 leaves',scroll:'sealed scroll',key:'brass key',sigil:'rook sigil'}[x])).join(' · ')||'nothing yet'}
+function action(id,target){if(target.startsWith('clue-')){const k=target.slice(5);const data={mush:['mush','pale mushroom','Its cap has a tiny carved ♞ beneath it.'],leaf:['leaf','8 leaves','Eight leaves. One is turned sideways like an L.'],scroll:['scroll','sealed scroll','The seal reads: “A knight enters where the forest bends.”'],key:['key','brass key','A tiny brass key. It has a rook cut into the bow.'],sigil:['sigil','rook sigil','The wall answers the key with a soft mechanical click.']}[k];add(...data);return}go(target)}
+function go(name){state.scene=name;render()}
+function render(){const s=scenes[state.scene];place.textContent=s.title;note.textContent=s.note;scene.innerHTML=sceneArt[state.scene];scene.dataset.scene=state.scene;svg.innerHTML=s.hot.map(h=>`<polygon tabindex="0" aria-label="${h[1]}" data-id="${h[0]}" data-target="${h[3]}" points="${h[2]}"/>`).join('');svg.querySelectorAll('polygon').forEach(p=>{p.onclick=()=>action(p.dataset.id,p.dataset.target);p.onkeydown=e=>{if(e.key==='Enter')p.click()}});if(state.scene==='chess')renderBoard();}
+function renderBoard(){const b=el('board');b.innerHTML=Array.from({length:8},(_,i)=>`<button class="sq ${i%2?'dark':''}" data-i="${i}">${state.board[i]}</button>`).join('');b.querySelectorAll('button').forEach(x=>x.onclick=()=>{const i=+x.dataset.i;if(state.board[i]==='♞'){state.board[i]='';state.board[(i+3)%8]='♞'}else if(!state.board[i]){const old=state.board.indexOf('♞');state.board[old]='';state.board[i]='♞'}renderBoard();checkChess()})}
+function checkChess(){const knight=state.board.indexOf('♞');if(knight===4&&state.found.has('leaf')&&state.found.has('scroll')){state.chess=true;say('A rook-shaped latch releases somewhere behind you.');setTimeout(()=>go('secret'),900)}}
+el('hint').onpointerdown=()=>document.body.classList.add('reveal-hotspots');el('hint').onpointerup=el('hint').onpointerleave=()=>document.body.classList.remove('reveal-hotspots');render();

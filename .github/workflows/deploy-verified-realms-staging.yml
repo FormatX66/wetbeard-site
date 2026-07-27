@@ -83,13 +83,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          git pull --rebase origin main
           mkdir -p deployments
           cat > "deployments/${{ matrix.site }}-staging.json" <<JSON
           {"site":"${{ matrix.site }}","url":"${{ steps.cfg.outputs.url }}","commit_sha":"${{ github.sha }}","status":"verified-staging"}
           JSON
           git config user.name "github-actions[bot]"
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git pull --rebase origin main
           git add "deployments/${{ matrix.site }}-staging.json"
           git diff --cached --quiet && exit 0
           git commit -m "Record ${{ matrix.site }} staging [skip ci]"

@@ -58,6 +58,7 @@ jobs:
           node tests/visual-smoke.mjs
           node tests/paradox-smoke.mjs
           node tests/variant-smoke.mjs
+          node tests/interaction-smoke.mjs
 
       - name: Upload browser screenshots and report
         if: always()

@@ -1,0 +1,22 @@
+{
+  "source": "bluehost-probe-v2",
+  "domains": {
+    "arkmatx.com": {
+      "status": "verified",
+      "remotePath": "public_html/arkmatx",
+      "method": "cpanel-uapi"
+    },
+    "witchdix.com": {
+      "status": "unresolved",
+      "remotePath": null,
+      "method": null,
+      "candidates": [],
+      "uapi_exit_code": 0
+    },
+    "xanderzombie.com": {
+      "status": "verified",
+      "remotePath": "public_html/xanderzombie",
+      "method": "cpanel-uapi"
+    }
+  }
+}

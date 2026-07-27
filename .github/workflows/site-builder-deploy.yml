@@ -28,7 +28,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -49,14 +48,21 @@ jobs:
           URL=$(jq -r ".${TARGET}.url" "$DIR/site.config.json")
           [[ "$REMOTE_PATH" == public_html/* ]] || { echo "Refusing remote path outside public_html"; exit 1; }
           [[ "$REMOTE_PATH" != *".."* ]] || { echo "Refusing unsafe remote path"; exit 1; }
+          [[ "$REMOTE_PATH" != *"VERIFY_BEFORE_DEPLOY"* ]] || { echo "Deployment root is not verified"; exit 1; }
           echo "remote_path=$REMOTE_PATH" >> "$GITHUB_OUTPUT"
           echo "url=$URL" >> "$GITHUB_OUTPUT"
 
       - name: Install and build
         working-directory: sites/${{ inputs.site }}
+        shell: bash
         run: |
+          set -euo pipefail
           if [ -f package-lock.json ]; then npm ci; else npm install --no-audit --no-fund; fi
-          npm run build
+          if [ "${{ inputs.environment }}" = "staging" ]; then
+            npm run build -- --base /staging/
+          else
+            npm run build
+          fi
 
       - name: Configure SSH
         shell: bash
@@ -66,18 +72,24 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H "${{ secrets.BLUEHOST_HOST }}" >> ~/.ssh/known_hosts
 
-      - name: Deploy built site
+      - name: Deploy built site without deleting runtime state
         shell: bash
         run: |
           set -euo pipefail
           REMOTE="${{ steps.config.outputs.remote_path }}"
+          SITE="${{ inputs.site }}"
           ssh "${{ secrets.BLUEHOST_USERNAME }}@${{ secrets.BLUEHOST_HOST }}" "mkdir -p '$REMOTE'"
-          rsync -az --delete \
-            "sites/${{ inputs.site }}/dist/" \
-            "${{ secrets.BLUEHOST_USERNAME }}@${{ secrets.BLUEHOST_HOST }}:$REMOTE"
+          FILTERS=()
+          case "$SITE" in
+            witchdix) FILTERS+=(--exclude 'data/') ;;
+            xanderzombie) FILTERS+=(--exclude 'data/' --exclude 'generated/') ;;
+            arkmatx) FILTERS+=(--exclude 'state/*.json') ;;
+          esac
+          rsync -az --delete "${FILTERS[@]}" \
+            "sites/$SITE/dist/" \
+            "${{ secrets.BLUEHOST_USERNAME }}@${{ secrets.BLUEHOST_HOST }}:$REMOTE/"
 
       - name: Verify deployment
-        id: verify
         shell: bash
         run: |
           set -euo pipefail
@@ -110,7 +122,8 @@ jobs:
           JSON
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin main
           git add "deployments/${{ inputs.site }}-live.json"
           git diff --cached --quiet && exit 0
           git commit -m "Record ${{ inputs.site }} live deployment [skip ci]"
-          git push
+          git push origin HEAD:main

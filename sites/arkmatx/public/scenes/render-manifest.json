@@ -1,7 +1,41 @@
 {
-  "workshop": {
-    "prefix": "workshop-render",
-    "parts": 3,
-    "mime": "image/jpeg"
+  "scenes": {
+    "workshop": {
+      "prefix": "workshop-render",
+      "parts": 3,
+      "mime": "image/jpeg"
+    }
+  },
+  "variants": {
+    "core": {
+      "label": "Core Workshop",
+      "scenes": {
+        "workshop": {
+          "prefix": "workshop-render",
+          "parts": 3,
+          "mime": "image/jpeg"
+        }
+      }
+    },
+    "nerve": {
+      "label": "Nerve Center",
+      "scenes": {
+        "workshop": {
+          "prefix": "workshop-render",
+          "parts": 3,
+          "mime": "image/jpeg"
+        }
+      }
+    },
+    "ghost": {
+      "label": "Ghost Grid",
+      "scenes": {
+        "workshop": {
+          "prefix": "workshop-render",
+          "parts": 3,
+          "mime": "image/jpeg"
+        }
+      }
+    }
   }
 }

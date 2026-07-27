@@ -24,14 +24,20 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Build all four rendered realms
+      - name: Build all four rendered realms with staging asset bases
         shell: bash
         run: |
           set -euo pipefail
           for site in arkmatx morri witchdix xanderzombie; do
+            case "$site" in
+              arkmatx) base='/staging/' ;;
+              morri) base='/staging/morri/' ;;
+              witchdix) base='/witchdix/rendered-review/' ;;
+              xanderzombie) base='/staging/' ;;
+            esac
             pushd "sites/$site" >/dev/null
             if [ -f package-lock.json ]; then npm ci; else npm install --no-audit --no-fund; fi
-            npm run build
+            npm run build -- --base="$base"
             popd >/dev/null
           done
       - name: Configure SSH
@@ -52,7 +58,7 @@ jobs:
           rsync -az --delete sites/morri/dist/ "$DEST:public_html/staging/morri/"
           rsync -az --delete --exclude 'data/' sites/witchdix/dist/ "$DEST:public_html/witchdix/rendered-review/"
           rsync -az --delete --exclude 'data/' sites/xanderzombie/dist/ "$DEST:public_html/xanderzombie/staging/"
-      - name: Verify review URLs
+      - name: Verify review URLs and critical ArkmatX assets
         shell: bash
         run: |
           set -euo pipefail
@@ -63,9 +69,20 @@ jobs:
             'https://xanderzombie.com/staging/'
           )
           for url in "${urls[@]}"; do
-            code=$(curl -L -sS -o /tmp/review.html -w '%{http_code}' "$url" || true)
+            code=$(curl -L -sS -o /tmp/review.html -w '%{http_code}' -H 'Cache-Control: no-cache' "$url" || true)
             [[ "$code" =~ ^2|3 ]] || { echo "$url returned $code"; exit 1; }
           done
+
+          curl -LfsS -H 'Cache-Control: no-cache' https://arkmatx.com/staging/ -o /tmp/ark-index.html
+          grep -Eq 'src="/staging/assets/[^\"]+\.js"' /tmp/ark-index.html
+          js_path=$(grep -Eo '/staging/assets/[^\"]+\.js' /tmp/ark-index.html | head -n1)
+          test -n "$js_path"
+          curl -LfsS -H 'Cache-Control: no-cache' "https://arkmatx.com${js_path}" -o /tmp/ark-app.js
+          curl -LfsS -H 'Cache-Control: no-cache' https://arkmatx.com/staging/scenes/workshop.svg -o /tmp/ark-workshop.svg
+          grep -Fq '<svg' /tmp/ark-workshop.svg
+          curl -LfsS -H 'Cache-Control: no-cache' https://arkmatx.com/staging/activity.json -o /tmp/ark-activity.json
+          python -m json.tool /tmp/ark-activity.json >/dev/null
+          echo 'ArkmatX staging index, JS, scene artwork, and activity feed verified.'
       - name: Record rendered review deployment
         shell: bash
         run: |
@@ -83,7 +100,17 @@ jobs:
           JSON
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git checkout main
+          git reset --hard origin/main
           git add deployments/rendered-scene-review.json
           git diff --cached --quiet && exit 0
           git commit -m "Record rendered scene review staging [skip ci]"
-          git push origin HEAD:main
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then exit 0; fi
+            echo "Receipt push raced with main; retry $attempt"
+            git fetch origin main
+            git rebase origin/main
+            sleep $((attempt * 2))
+          done
+          exit 1

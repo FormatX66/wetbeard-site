@@ -1,0 +1,8 @@
+{
+  "source_sha": "f29e62a1cf959d1dc0a7a386239955149dc5e5b6",
+  "build": "success",
+  "ssh": "success",
+  "deploy": "success",
+  "verify": "success",
+  "staging_url": "https://arkmatx.com/staging/"
+}

@@ -1,1 +1,1 @@
-{"name":"ArkmatX Workshop","slug":"arkmatx","deployProfile":"bluehost","production":{"url":"https://arkmatx.com/","remotePath":"public_html/arkmatx"},"staging":{"url":"https://arkmatx.com/staging/","remotePath":"public_html/arkmatx/staging"}}
+{"name":"ArkmatX Workshop","slug":"arkmatx","deployProfile":"bluehost","production":{"url":"https://arkmatx.com/","remotePath":"VERIFY_BEFORE_DEPLOY"},"staging":{"url":"https://arkmatx.com/staging/","remotePath":"VERIFY_BEFORE_DEPLOY"}}

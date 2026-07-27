@@ -18,15 +18,15 @@ async function pushWorld(flag){passport.add(flag);save();try{const r=await fetch
 
 const scenes={
  workshop:{bg:asset('scenes/workshop-render.jpg'),hot:[
-  ['terminal','BRAIN CONNECT CRT','110,220 525,220 530,525 105,525','project-terminal'],
-  ['bench','HARDWARE BENCH','590,500 1210,500 1215,850 565,850','project-bench'],
-  ['bike','WET BEARD BIKE','555,565 1090,540 1100,810 525,815','project-bike'],
-  ['rack','ÜBERCORP RACK','1230,165 1515,165 1525,665 1220,665','project-rack'],
-  ['map','WORLD MAP','865,80 1185,80 1195,285 850,285','map'],
-  ['radio','RADIO','1015,640 1210,620 1210,815 995,820','radio'],
-  ['red','DO NOT PUSH','1435,700 1570,700 1580,835 1425,835','red'],
-  ['servers','SERVER CLOSET','1510,250 1595,220 1595,690 1515,670','scene-servers'],
-  ['paradox','PARADOX TERMINAL','20,400 115,390 120,700 15,720','scene-paradox']
+  ['terminal','BRAIN CONNECT CRT','165,315 610,315 610,520 165,520','project-terminal'],
+  ['bench','HARDWARE BENCH','0,415 625,415 625,735 0,735','project-bench'],
+  ['bike','WET BEARD BIKE','650,350 1285,350 1285,685 650,685','project-bike'],
+  ['rack','ÜBERCORP RACK','1010,20 1215,20 1215,390 1010,390','project-rack'],
+  ['map','WORLD MAP','625,70 1025,70 1025,370 625,370','map'],
+  ['radio','RADIO','1215,545 1595,545 1595,895 1215,895','radio'],
+  ['red','DO NOT PUSH','575,635 790,635 790,845 575,845','red'],
+  ['servers','SERVER CLOSET','1370,145 1595,145 1595,535 1370,535','scene-servers'],
+  ['paradox','PARADOX TERMINAL','1230,85 1435,85 1435,315 1230,315','scene-paradox']
  ]},
  servers:{bg:asset('scenes/servers.svg'),hot:[
   ['morri','MOSS NODE','140,145 440,145 445,700 140,700','server-morri'],
@@ -64,7 +64,7 @@ function act(target){
  if(target.startsWith('scene-'))return renderScene(target.slice(6));
  if(target==='project-terminal')return show('BRAIN CONNECT',`AI orchestration / machines / experiments\n\n${diagnostics()}\n\n${worklog()}`,'REAL PROJECT TERMINAL',`<button id="gitBtn">GIT TELEMETRY</button>`),queueMicrotask(()=>document.querySelector('#gitBtn').onclick=()=>show('GIT TELEMETRY',gitlog(),'SOURCE OF TRUTH'));
  if(target==='project-bench')return show('WORKBENCH','Raspberry Pi · hardware · network experiments\n\nPhysical systems, remote-control experiments, security appliance ideas, and anything that required a cable before it required a website.');
- if(target==='project-bike')return show('WET BEARD','Quest engine escaped into the real world. Rider game logic, quests, admin tools, deployments, and an actual bicycle.');
+ if(target==='project-bike')return show('WET BEARD','Quest engine escaped into the real world. Rider game logic, quests, admin tools, deployments, and an actual bicycle.','PROJECT LINK',`<button id="wetBtn">OPEN WET BEARD</button>`),queueMicrotask(()=>document.querySelector('#wetBtn').onclick=()=>jump('https://wetbeard.madmorrigan.com/'));
  if(target==='project-rack')return show('ÜBERCORP','Space Pirates infrastructure and corporate interference. The rack claims all services are mission critical. The rack is a liar.');
  if(target==='map'){show('WORLD MAP','Three unstable destinations are pinned to the wall.','TRANSPORT BUS',`<button data-world="morri">MORRI</button><button data-world="witch">WITCHDIX</button><button data-world="xander">XANDER</button>`);queueMicrotask(()=>document.querySelectorAll('[data-world]').forEach(b=>b.onclick=()=>travel(worlds[b.dataset.world].url,`ROUTING TO ${worlds[b.dataset.world].label}…`)));return}
  if(target==='radio'){show('WORLD BUS RADIO','Tune three frequencies in sequence.','ANALOG INTERFACE',`<button data-f="1">1 / MOSS</button><button data-f="2">2 / PAPER</button><button data-f="3">3 / INK</button>`);queueMicrotask(()=>document.querySelectorAll('[data-f]').forEach(b=>b.onclick=async()=>{radio.push(+b.dataset.f);if(radio.length>3)radio.shift();readout.textContent=`RADIO SEQUENCE: ${radio.join(' → ')}`;if(radio.join('')==='123'){await pushWorld('ark-radio');readout.textContent='WORLD BUS LOCKED // MOSS PAPER INK';modal.classList.remove('show')}}));return}

@@ -1,1 +1,1 @@
-{"name":"Witchdix","slug":"witchdix","deployProfile":"bluehost","production":{"url":"https://witchdix.com/","remotePath":"public_html/witchdix"},"staging":{"url":"https://madmorrigan.com/staging/witchdix/","remotePath":"public_html/staging/witchdix"}}
+{"name":"Witchdix","slug":"witchdix","deployProfile":"bluehost","production":{"url":"https://witchdix.com/","remotePath":"VERIFY_BEFORE_DEPLOY"},"staging":{"url":"https://witchdix.com/staging/","remotePath":"VERIFY_BEFORE_DEPLOY"}}

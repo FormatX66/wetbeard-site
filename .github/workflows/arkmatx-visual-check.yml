@@ -66,6 +66,6 @@ jobs:
           name: arkmatx-visual-check
           path: |
             sites/arkmatx/test-results/arkmatx/*.png
-            sites/arkmatx/test-results/arkmatx/report.json
+            sites/arkmatx/test-results/arkmatx/*.json
             /tmp/arkmatx-preview.log
           if-no-files-found: warn

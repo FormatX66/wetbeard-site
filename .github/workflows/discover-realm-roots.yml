@@ -1,0 +1,78 @@
+name: Discover Realm Document Roots
+
+on:
+  push:
+    branches:
+      - agent/realm-completion
+    paths:
+      - .github/workflows/discover-realm-roots.yml
+
+permissions:
+  contents: write
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/realm-completion
+
+      - name: Configure SSH
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "${{ secrets.BLUEHOST_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Ask cPanel for target document roots
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p deployments
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          Path('/tmp/realm-roots.json').write_text('{}')
+          PY
+          for domain in arkmatx.com witchdix.com xanderzombie.com; do
+            ssh "${{ secrets.BLUEHOST_USERNAME }}@${{ secrets.BLUEHOST_HOST }}" \
+              "/usr/local/cpanel/bin/uapi --output=json DomainInfo single_domain_data domain='$domain'" \
+              > "/tmp/${domain}.json"
+          done
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          targets = ['arkmatx.com','witchdix.com','xanderzombie.com']
+          out = {'source':'cpanel-uapi','domains':{}}
+          for domain in targets:
+              data=json.loads(Path('/tmp/'+domain+'.json').read_text())
+              result=data.get('result',{})
+              if result.get('status') != 1:
+                  raise SystemExit(f'cPanel did not return hosting data for {domain}')
+              info=result.get('data') or {}
+              root=info.get('documentroot') or info.get('document_root')
+              if not root:
+                  raise SystemExit(f'No document root returned for {domain}')
+              # Store only a home-relative path; never commit the account home prefix.
+              marker='/public_html'
+              if marker in root:
+                  safe='public_html'+root.split(marker,1)[1]
+              else:
+                  home=os.path.dirname(os.path.dirname(root)) if '/home' in root else ''
+                  safe=os.path.basename(root.rstrip('/'))
+              if '..' in safe or safe.startswith('/'):
+                  raise SystemExit(f'Unsafe root shape for {domain}')
+              out['domains'][domain]={'remotePath':safe}
+          Path('deployments/realm-document-roots.json').write_text(json.dumps(out,indent=2)+'\n')
+          PY
+
+      - name: Commit discovery result
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add deployments/realm-document-roots.json
+          git diff --cached --quiet && exit 0
+          git commit -m "Record realm document roots [skip ci]"
+          git push origin HEAD:agent/realm-completion

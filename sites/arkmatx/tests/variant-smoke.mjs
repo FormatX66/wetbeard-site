@@ -23,12 +23,12 @@ for(const variant of variants){
    await page.goto(url.toString(),{waitUntil:'networkidle',timeout:30000});
    await page.waitForSelector('#sceneBg',{state:'visible'});
    await page.waitForTimeout(350);
-   let state=await page.evaluate(()=>({dataset:document.body.dataset.variant,stored:localStorage.getItem('arkmatx-visual-variant'),location:document.querySelector('#location')?.textContent||''}));
+   let state=await page.evaluate(()=>({dataset:document.body.dataset.variant,stored:sessionStorage.getItem('arkmatx-visual-variant'),location:document.querySelector('#location')?.textContent||''}));
    if(state.dataset!==variant||state.stored!==variant)failures.push(`[${label}] forced variant failed: ${JSON.stringify(state)}`);
    await page.goto(baseURL,{waitUntil:'networkidle',timeout:30000});
    await page.waitForTimeout(350);
-   state=await page.evaluate(()=>({dataset:document.body.dataset.variant,stored:localStorage.getItem('arkmatx-visual-variant')}));
-   if(state.dataset!==variant||state.stored!==variant)failures.push(`[${label}] variant did not persist: ${JSON.stringify(state)}`);
+   state=await page.evaluate(()=>({dataset:document.body.dataset.variant,stored:sessionStorage.getItem('arkmatx-visual-variant')}));
+   if(state.dataset!==variant||state.stored!==variant)failures.push(`[${label}] session variant did not persist: ${JSON.stringify(state)}`);
    await page.locator('#hotspots polygon[aria-label="SERVER CLOSET"]').click({force:true});
    await page.waitForTimeout(450);
    let room=(await page.locator('#location').textContent())||'';

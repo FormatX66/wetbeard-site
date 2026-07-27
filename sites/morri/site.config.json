@@ -1,0 +1,7 @@
+{
+  "name":"Morri's Hut",
+  "slug":"morri",
+  "deployProfile":"bluehost",
+  "production":{"url":"https://madmorrigan.com/morri/","remotePath":"public_html/morri"},
+  "staging":{"url":"https://madmorrigan.com/staging/morri/","remotePath":"public_html/staging/morri"}
+}

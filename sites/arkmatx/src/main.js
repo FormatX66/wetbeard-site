@@ -1,12 +1,14 @@
 import './style.css';
 
+const base=import.meta.env.BASE_URL || '/';
+const asset=path=>`${base}${String(path).replace(/^\/+/, '')}`;
 const worlds={morri:{label:'MORRI',url:'https://madmorrigan.com/morri/'},witch:{label:'WITCHDIX',url:'https://madmorrigan.com/witchdix/'},xander:{label:'XANDER ZOMBIE',url:'https://xanderzombie.com/'}};
 const key='realm-passport';
 const incoming=(new URLSearchParams(location.search).get('rp')||'').split(',').filter(Boolean);
 const passport=new Set([...(localStorage.getItem(key)||'').split(',').filter(Boolean),...incoming]);
 const save=()=>localStorage.setItem(key,[...passport].join(','));
 const jump=url=>{const u=new URL(url);u.searchParams.set('rp',[...passport].join(','));location.href=u.toString()};
-const stateUrl='./world-state.php';
+const stateUrl=asset('world-state.php');
 let worldState=null,activity=null,githubStatus=null,sceneName='workshop';
 const logic={a:false,b:false,c:false};
 const radio=[];
@@ -15,7 +17,7 @@ async function loadWorld(){try{const r=await fetch(stateUrl,{cache:'no-store'});
 async function pushWorld(flag){passport.add(flag);save();try{const r=await fetch(stateUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({flag,source:'arkmatx'})});if(r.ok){const j=await r.json();worldState=j.state||worldState}}catch{}}
 
 const scenes={
- workshop:{bg:'./scenes/workshop.svg',hot:[
+ workshop:{bg:asset('scenes/workshop.svg'),hot:[
   ['terminal','BRAIN CONNECT CRT','110,220 525,220 530,525 105,525','project-terminal'],
   ['bench','HARDWARE BENCH','590,500 1210,500 1215,850 565,850','project-bench'],
   ['bike','WET BEARD BIKE','555,565 1090,540 1100,810 525,815','project-bike'],
@@ -26,7 +28,7 @@ const scenes={
   ['servers','SERVER CLOSET','1510,250 1595,220 1595,690 1515,670','scene-servers'],
   ['paradox','PARADOX TERMINAL','20,400 115,390 120,700 15,720','scene-paradox']
  ]},
- servers:{bg:'./scenes/servers.svg',hot:[
+ servers:{bg:asset('scenes/servers.svg'),hot:[
   ['morri','MOSS NODE','140,145 440,145 445,700 140,700','server-morri'],
   ['witch','PAPER NODE','485,145 785,145 790,700 485,700','server-witch'],
   ['xander','INK NODE','830,145 1130,145 1135,700 830,700','server-xander'],
@@ -34,7 +36,7 @@ const scenes={
   ['back','WORKSHOP','20,745 270,745 270,890 20,890','scene-workshop'],
   ['next','PARADOX','1330,745 1580,745 1580,890 1330,890','scene-paradox']
  ]},
- paradox:{bg:'./scenes/paradox.svg',hot:[
+ paradox:{bg:asset('scenes/paradox.svg'),hot:[
   ['a','TERMINAL A','120,160 545,160 545,625 120,625','logic-a'],
   ['b','TERMINAL B','585,160 1015,160 1015,625 585,625','logic-b'],
   ['c','TERMINAL C','1055,160 1485,160 1485,625 1055,625','logic-c'],
@@ -51,7 +53,7 @@ const show=(t,c,k='WORKSHOP OBJECT',buttons='')=>{title.textContent=t;copy.textC
 document.querySelector('#close').onclick=()=>modal.classList.remove('show');
 
 actionLoad();
-async function actionLoad(){await Promise.allSettled([loadWorld(),fetch('./activity.json',{cache:'no-store'}).then(r=>r.json()).then(j=>activity=j),fetch('./github-status.json',{cache:'no-store'}).then(r=>r.json()).then(j=>githubStatus=j)]);readout.textContent=worldState?'WORLD BUS ONLINE // persistent state acquired':'WORLD BUS DEGRADED // local passport';renderScene('workshop')}
+async function actionLoad(){await Promise.allSettled([loadWorld(),fetch(asset('activity.json'),{cache:'no-store'}).then(r=>r.json()).then(j=>activity=j),fetch(asset('github-status.json'),{cache:'no-store'}).then(r=>r.json()).then(j=>githubStatus=j)]);readout.textContent=worldState?'WORLD BUS ONLINE // persistent state acquired':'WORLD BUS DEGRADED // local passport';renderScene('workshop')}
 
 function renderScene(name){sceneName=name;const s=scenes[name];transition.classList.add('flash');setTimeout(()=>transition.classList.remove('flash'),380);bg.src=s.bg;bg.alt=`ArkmatX ${name}`;document.querySelector('#location').textContent=name.toUpperCase();svg.innerHTML=s.hot.map(h=>`<polygon tabindex="0" aria-label="${h[1]}" data-target="${h[3]}" points="${h[2]}"/>`).join('');svg.querySelectorAll('polygon').forEach(p=>{p.onclick=()=>act(p.dataset.target);p.onkeydown=e=>{if(e.key==='Enter')p.click()}})}
 function travel(url,label){transition.textContent=label;transition.classList.add('traveling');setTimeout(()=>jump(url),800)}

@@ -98,12 +98,8 @@ function openJournal({ modal, tag, title, copy, actions, locationNode }) {
   modal.classList.add('show');
 }
 
-function restoreScene(locationNode, hotspots) {
-  const params = new URLSearchParams(location.search);
-  if (params.get('noresume') === '1') return;
-  const requested = params.get('scene');
-  const desired = SCENES.includes(requested) ? requested : state.lastScene;
-  if (desired === 'workshop') return;
+function restoreScene(locationNode, hotspots, desired) {
+  if (!SCENES.includes(desired) || desired === 'workshop') return;
 
   const label = SCENE_LABELS[desired];
   let attempts = 0;
@@ -152,8 +148,15 @@ function initExpeditionMemory() {
     if (scene) writeState(scene);
   };
   new MutationObserver(record).observe(locationNode, { childList: true, characterData: true, subtree: true });
-  record();
-  restoreScene(locationNode, hotspots);
+
+  const params = new URLSearchParams(location.search);
+  const requested = params.get('scene');
+  const resumeEnabled = params.get('noresume') !== '1';
+  const desired = SCENES.includes(requested)
+    ? requested
+    : (resumeEnabled ? state.lastScene : 'workshop');
+  if (desired === 'workshop') record();
+  else restoreScene(locationNode, hotspots, desired);
 }
 
 if (document.readyState === 'complete') queueMicrotask(initExpeditionMemory);

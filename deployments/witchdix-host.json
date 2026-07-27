@@ -1,0 +1,9 @@
+{
+  "domain": "witchdix.com",
+  "status": "unresolved",
+  "remotePath": null,
+  "method": "cpanel-addon-domain",
+  "created_now": true,
+  "create_exit_code": 13,
+  "reason": "cPanel did not verify the domain after the create attempt"
+}

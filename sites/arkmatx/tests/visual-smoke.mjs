@@ -86,7 +86,6 @@ for (const vp of viewports) {
       }
     }
 
-    // Capture the actual starting workshop before tests alter the scene.
     await page.screenshot({ path: path.join(outDir, `${vp.name}-workshop.png`), fullPage: true });
 
     const modalCases = ['BRAIN CONNECT CRT', 'HARDWARE BENCH', 'WET BEARD BIKE', 'ÜBERCORP RACK', 'WORLD MAP', 'RADIO'];
@@ -114,11 +113,24 @@ for (const vp of viewports) {
     const servers = page.locator('#hotspots polygon[aria-label="SERVER CLOSET"]');
     if (await servers.count() === 1) {
       await servers.click({ force: true });
-      await page.waitForTimeout(450);
-      const location = await page.locator('#location').textContent();
-      const src = await page.locator('#sceneBg').getAttribute('src');
-      if (!location?.includes('SERVERS')) fail(vp.name, `server-closet navigation failed; location='${location}'`);
-      if (!src?.includes('servers')) fail(vp.name, `server-closet scene image did not change; src='${src}'`);
+      await page.waitForTimeout(500);
+      const serverVisual = await page.evaluate(() => {
+        const img = document.querySelector('#sceneBg');
+        return {
+          location: document.querySelector('#location')?.textContent || '',
+          scene: img?.dataset.scene || '',
+          complete: Boolean(img?.complete),
+          naturalWidth: img?.naturalWidth || 0,
+          naturalHeight: img?.naturalHeight || 0,
+          hotspotCount: document.querySelectorAll('#hotspots polygon').length,
+        };
+      });
+      if (!serverVisual.location.includes('SERVERS')) fail(vp.name, `server-closet navigation failed; location='${serverVisual.location}'`);
+      if (serverVisual.scene !== 'servers') fail(vp.name, `server scene provenance missing; data-scene='${serverVisual.scene}'`);
+      if (!serverVisual.complete || serverVisual.naturalWidth < 200 || serverVisual.naturalHeight < 100) {
+        fail(vp.name, `rendered server scene failed to load (${serverVisual.naturalWidth}x${serverVisual.naturalHeight})`);
+      }
+      if (serverVisual.hotspotCount < 6) fail(vp.name, `expected at least 6 server-room hotspots, found ${serverVisual.hotspotCount}`);
       await page.screenshot({ path: path.join(outDir, `${vp.name}-servers.png`), fullPage: true });
     }
 

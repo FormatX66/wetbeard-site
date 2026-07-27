@@ -26,11 +26,11 @@ for(const vp of viewports){
   await page.locator('#hotspots polygon[aria-label="SERVER CLOSET"]').click({force:true});
   await page.waitForTimeout(450);
   await page.locator('#hotspots polygon[aria-label="PARADOX"]').click({force:true});
-  await page.waitForTimeout(550);
+  await page.waitForTimeout(650);
   const location=(await page.locator('#location').textContent())||'';
-  const src=(await page.locator('#sceneBg').getAttribute('src'))||'';
+  const raster=await page.locator('#sceneBg').evaluate(img=>({src:img.getAttribute('src')||'',complete:img.complete,naturalWidth:img.naturalWidth,naturalHeight:img.naturalHeight}));
   if(!location.startsWith('PARADOX'))failures.push(`[${vp.name}] paradox navigation failed: ${location}`);
-  if(!src.includes('paradox-render.jpg'))failures.push(`[${vp.name}] paradox raster not active: ${src.slice(0,120)}`);
+  if(!raster.src.startsWith('data:image/jpeg;base64,')||!raster.complete||raster.naturalWidth<100||raster.naturalHeight<50)failures.push(`[${vp.name}] paradox chunked raster not active: ${JSON.stringify(raster)}`);
   for(const label of ['TERMINAL A','TERMINAL B','TERMINAL C','MAINTENANCE CHANNEL']){
    if(await page.locator(`#hotspots polygon[aria-label="${label}"]`).count()!==1)failures.push(`[${vp.name}] missing ${label}`);
   }

@@ -1,0 +1,12 @@
+{
+  "updated_at": "2026-07-26T21:20:00-04:00",
+  "repository": "FormatX66/wetbeard-site",
+  "default_branch": "main",
+  "status": "TRACKING",
+  "recent": [
+    {"type":"merge","label":"ArkmatX live GPT worklog","ref":"PR #39"},
+    {"type":"merge","label":"Heather private AI grimoire backend","ref":"PR #38"},
+    {"type":"merge","label":"ArkmatX/Morri cross-realm puzzle depth","ref":"PR #37"},
+    {"type":"review","label":"ArkmatX multi-zone playable review","ref":"PR #40"}
+  ]
+}

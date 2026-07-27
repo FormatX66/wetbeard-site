@@ -1,0 +1,51 @@
+name: ArkmatX GitHub Status
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 */6 * * *'
+
+permissions:
+  contents: write
+  pull-requests: read
+
+env:
+  GH_TOKEN: ${{ github.token }}
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Build status snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p sites/arkmatx/public
+          repo="$GITHUB_REPOSITORY"
+          branch="${GITHUB_REF_NAME:-main}"
+          open_prs=$(gh api "repos/$repo/pulls?state=open&per_page=10")
+          commits=$(gh api "repos/$repo/commits?sha=main&per_page=8")
+          jq -n \
+            --arg updated_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg repository "$repo" \
+            --arg default_branch "main" \
+            --argjson prs "$open_prs" \
+            --argjson commits "$commits" \
+            '{updated_at:$updated_at,repository:$repository,default_branch:$default_branch,status:"LIVE",open_prs:($prs|map({number,title,draft,updated_at,html_url})),recent_commits:($commits|map({sha:(.sha[0:8]),message:(.commit.message|split("\n")[0]),date:.commit.author.date,html_url}))}' \
+            > sites/arkmatx/public/github-status.json
+      - name: Commit snapshot when changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- sites/arkmatx/public/github-status.json; then
+            echo "No ArkmatX status change"
+            exit 0
+          fi
+          git config user.name "arkmatx-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add sites/arkmatx/public/github-status.json
+          git commit -m "Refresh ArkmatX GitHub status"
+          git push

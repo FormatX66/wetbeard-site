@@ -19,3 +19,5 @@ This can later be replaced by a shared server-side world-state API if persistent
 ArkmatX, Witchdix, and XanderZombie use `VERIFY_BEFORE_DEPLOY` as their remote path until the actual Bluehost addon-domain document roots are confirmed. The site-builder deployment workflow rejects those values because they are outside `public_html/`, preventing an accidental production upload to a guessed folder.
 
 Morri remains configured under the known madmorrigan.com site-builder path. No standalone realm should be deployed until its Bluehost document root has been positively identified.
+
+The connected-realm source tree is additive and can be merged independently of deployment.

@@ -3,7 +3,7 @@ name: Discover Realm Document Roots
 on:
   push:
     branches:
-      - agent/realm-completion
+      - main
     paths:
       - .github/workflows/discover-realm-roots.yml
 
@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: agent/realm-completion
+          ref: main
 
       - name: Configure SSH
         run: |
@@ -30,18 +30,13 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p deployments
-          python3 - <<'PY'
-          import json
-          from pathlib import Path
-          Path('/tmp/realm-roots.json').write_text('{}')
-          PY
           for domain in arkmatx.com witchdix.com xanderzombie.com; do
             ssh "${{ secrets.BLUEHOST_USERNAME }}@${{ secrets.BLUEHOST_HOST }}" \
               "/usr/local/cpanel/bin/uapi --output=json DomainInfo single_domain_data domain='$domain'" \
               > "/tmp/${domain}.json"
           done
           python3 - <<'PY'
-          import json, os
+          import json
           from pathlib import Path
           targets = ['arkmatx.com','witchdix.com','xanderzombie.com']
           out = {'source':'cpanel-uapi','domains':{}}
@@ -54,13 +49,8 @@ jobs:
               root=info.get('documentroot') or info.get('document_root')
               if not root:
                   raise SystemExit(f'No document root returned for {domain}')
-              # Store only a home-relative path; never commit the account home prefix.
               marker='/public_html'
-              if marker in root:
-                  safe='public_html'+root.split(marker,1)[1]
-              else:
-                  home=os.path.dirname(os.path.dirname(root)) if '/home' in root else ''
-                  safe=os.path.basename(root.rstrip('/'))
+              safe='public_html'+root.split(marker,1)[1] if marker in root else root.rstrip('/').split('/')[-1]
               if '..' in safe or safe.startswith('/'):
                   raise SystemExit(f'Unsafe root shape for {domain}')
               out['domains'][domain]={'remotePath':safe}
@@ -75,4 +65,4 @@ jobs:
           git add deployments/realm-document-roots.json
           git diff --cached --quiet && exit 0
           git commit -m "Record realm document roots [skip ci]"
-          git push origin HEAD:agent/realm-completion
+          git push origin HEAD:main

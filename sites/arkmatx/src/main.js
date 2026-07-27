@@ -17,7 +17,7 @@ async function loadWorld(){try{const r=await fetch(stateUrl,{cache:'no-store'});
 async function pushWorld(flag){passport.add(flag);save();try{const r=await fetch(stateUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({flag,source:'arkmatx'})});if(r.ok){const j=await r.json();worldState=j.state||worldState}}catch{}}
 
 const scenes={
- workshop:{bg:asset('scenes/workshop.svg'),hot:[
+ workshop:{bg:asset('scenes/workshop-render.jpg'),hot:[
   ['terminal','BRAIN CONNECT CRT','110,220 525,220 530,525 105,525','project-terminal'],
   ['bench','HARDWARE BENCH','590,500 1210,500 1215,850 565,850','project-bench'],
   ['bike','WET BEARD BIKE','555,565 1090,540 1100,810 525,815','project-bike'],

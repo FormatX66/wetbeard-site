@@ -3,11 +3,15 @@ import './style.css';
 const base=import.meta.env.BASE_URL || '/';
 const asset=path=>`${base}${String(path).replace(/^\/+/, '')}`;
 const worlds={morri:{label:'MORRI',url:'https://madmorrigan.com/morri/'},witch:{label:'WITCHDIX',url:'https://madmorrigan.com/witchdix/'},xander:{label:'XANDER ZOMBIE',url:'https://xanderzombie.com/'}};
+const repoUrl='https://github.com/FormatX66/wetbeard-site';
+const memoryUrl=`${repoUrl}/tree/main/gpt-workflow-memory`;
+const stagingUrl='https://arkmatx.com/staging/';
 const key='realm-passport';
 const incoming=(new URLSearchParams(location.search).get('rp')||'').split(',').filter(Boolean);
 const passport=new Set([...(localStorage.getItem(key)||'').split(',').filter(Boolean),...incoming]);
 const save=()=>localStorage.setItem(key,[...passport].join(','));
 const jump=url=>{const u=new URL(url);u.searchParams.set('rp',[...passport].join(','));location.href=u.toString()};
+const openExternal=url=>location.href=url;
 const stateUrl=asset('world-state.php');
 let worldState=null,activity=null,githubStatus=null,sceneName='workshop',workshopRender=null;
 const logic={a:false,b:false,c:false};
@@ -57,6 +61,12 @@ const bg=document.querySelector('#sceneBg'),svg=document.querySelector('#hotspot
 const show=(t,c,k='WORKSHOP OBJECT',buttons='')=>{title.textContent=t;copy.textContent=c;tag.textContent=k;actions.innerHTML=buttons;modal.classList.add('show')};
 document.querySelector('#close').onclick=()=>modal.classList.remove('show');
 
+function bindProjectLinks(){
+ const source=document.querySelector('#sourceBtn'); if(source)source.onclick=()=>openExternal(`${repoUrl}/tree/main/sites/arkmatx`);
+ const memory=document.querySelector('#memoryBtn'); if(memory)memory.onclick=()=>openExternal(memoryUrl);
+ const review=document.querySelector('#reviewBtn'); if(review)review.onclick=()=>openExternal(stagingUrl);
+}
+
 actionLoad();
 async function actionLoad(){
  await Promise.allSettled([loadWorld(),loadWorkshopRender(),fetch(asset('activity.json'),{cache:'no-store'}).then(r=>r.json()).then(j=>activity=j),fetch(asset('github-status.json'),{cache:'no-store'}).then(r=>r.json()).then(j=>githubStatus=j)]);
@@ -71,10 +81,20 @@ function gitlog(){return `${githubStatus?.repository||'GITHUB'} // ${githubStatu
 function diagnostics(){return `MORRI ......... ${has('morri-chess')?'ROOK HANDSHAKE':'UNRESOLVED'}\nWITCHDIX ...... ${has('witch-moon')?'MOON SIGIL':'LISTENING'}\nXANDER ........ ${has('xander-woods')?'INK PATH OPEN':'CANON STABLE'}\nARK RADIO ..... ${has('ark-radio')?'LOCKED':'UNTUNED'}\nWORLD BUS ..... ${worldState?'PERSISTENT':'LOCAL FALLBACK'}`}
 function act(target){
  if(target.startsWith('scene-'))return renderScene(target.slice(6));
- if(target==='project-terminal')return show('BRAIN CONNECT',`AI orchestration / machines / experiments\n\n${diagnostics()}\n\n${worklog()}`,'REAL PROJECT TERMINAL',`<button id="gitBtn">GIT TELEMETRY</button>`),queueMicrotask(()=>document.querySelector('#gitBtn').onclick=()=>show('GIT TELEMETRY',gitlog(),'SOURCE OF TRUTH'));
- if(target==='project-bench')return show('WORKBENCH','Raspberry Pi · hardware · network experiments\n\nPhysical systems, remote-control experiments, security appliance ideas, and anything that required a cable before it required a website.');
+ if(target==='project-terminal'){
+  show('BRAIN CONNECT',`AI orchestration / machines / experiments\n\n${diagnostics()}\n\n${worklog()}`,'REAL PROJECT TERMINAL',`<button id="gitBtn">GIT TELEMETRY</button><button id="sourceBtn">ARKMATX SOURCE</button><button id="memoryBtn">WORKFLOW MEMORY</button>`);
+  queueMicrotask(()=>{document.querySelector('#gitBtn').onclick=()=>show('GIT TELEMETRY',gitlog(),'SOURCE OF TRUTH',`<button id="sourceBtn">ARKMATX SOURCE</button><button id="memoryBtn">WORKFLOW MEMORY</button>`);bindProjectLinks()});
+  return;
+ }
+ if(target==='project-bench'){
+  show('WORKBENCH','Raspberry Pi · hardware · network experiments\n\nPhysical systems, remote-control experiments, security appliance ideas, and anything that required a cable before it required a website.','HARDWARE PROJECTS',`<button id="sourceBtn">ARKMATX SOURCE</button><button id="memoryBtn">WORKFLOW MEMORY</button>`);
+  queueMicrotask(bindProjectLinks); return;
+ }
  if(target==='project-bike')return show('WET BEARD','Quest engine escaped into the real world. Rider game logic, quests, admin tools, deployments, and an actual bicycle.','PROJECT LINK',`<button id="wetBtn">OPEN WET BEARD</button>`),queueMicrotask(()=>document.querySelector('#wetBtn').onclick=()=>jump('https://wetbeard.madmorrigan.com/'));
- if(target==='project-rack')return show('ÜBERCORP','Space Pirates infrastructure and corporate interference. The rack claims all services are mission critical. The rack is a liar.');
+ if(target==='project-rack'){
+  show('ÜBERCORP','Space Pirates infrastructure and corporate interference. The rack claims all services are mission critical. The rack is a liar.\n\nThe useful part of this rack is the real engineering memory behind the worlds.','INFRASTRUCTURE',`<button id="memoryBtn">WORKFLOW MEMORY</button><button id="sourceBtn">ARKMATX SOURCE</button><button id="reviewBtn">STAGING REVIEW</button>`);
+  queueMicrotask(bindProjectLinks); return;
+ }
  if(target==='map'){show('WORLD MAP','Three unstable destinations are pinned to the wall.','TRANSPORT BUS',`<button data-world="morri">MORRI</button><button data-world="witch">WITCHDIX</button><button data-world="xander">XANDER</button>`);queueMicrotask(()=>document.querySelectorAll('[data-world]').forEach(b=>b.onclick=()=>travel(worlds[b.dataset.world].url,`ROUTING TO ${worlds[b.dataset.world].label}…`)));return}
  if(target==='radio'){show('WORLD BUS RADIO','Tune three frequencies in sequence.','ANALOG INTERFACE',`<button data-f="1">1 / MOSS</button><button data-f="2">2 / PAPER</button><button data-f="3">3 / INK</button>`);queueMicrotask(()=>document.querySelectorAll('[data-f]').forEach(b=>b.onclick=async()=>{radio.push(+b.dataset.f);if(radio.length>3)radio.shift();readout.textContent=`RADIO SEQUENCE: ${radio.join(' → ')}`;if(radio.join('')==='123'){await pushWorld('ark-radio');readout.textContent='WORLD BUS LOCKED // MOSS PAPER INK';modal.classList.remove('show')}}));return}
  if(target==='red'){document.body.classList.toggle('alarm');pushWorld('ark-red');readout.textContent='BAD IDEA BROADCAST TO ALL REALMS.';return}

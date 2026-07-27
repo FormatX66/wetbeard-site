@@ -19,47 +19,106 @@ jobs:
           ref: main
 
       - name: Configure SSH
-        run: |
-          install -m 700 -d ~/.ssh
-          printf '%s\n' "${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H "${{ secrets.BLUEHOST_HOST }}" >> ~/.ssh/known_hosts
-
-      - name: Ask cPanel for target document roots
+        id: ssh
+        continue-on-error: true
         shell: bash
         run: |
-          set -euo pipefail
-          mkdir -p deployments
+          set -u
+          install -m 700 -d ~/.ssh
+          if [ -z "${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}" ] || [ -z "${{ secrets.BLUEHOST_HOST }}" ] || [ -z "${{ secrets.BLUEHOST_USERNAME }}" ]; then
+            echo "status=missing-secrets" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+          printf '%s\n' "${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          if ! ssh-keyscan -H "${{ secrets.BLUEHOST_HOST }}" >> ~/.ssh/known_hosts 2>/tmp/keyscan.err; then
+            echo "status=keyscan-failed" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+          echo "status=ready" >> "$GITHUB_OUTPUT"
+
+      - name: Probe cPanel and safe candidate directories
+        id: probe
+        continue-on-error: true
+        shell: bash
+        run: |
+          set +e
+          mkdir -p deployments /tmp/realm-probe
+          SSH_READY="${{ steps.ssh.outputs.status }}"
           for domain in arkmatx.com witchdix.com xanderzombie.com; do
-            ssh "${{ secrets.BLUEHOST_USERNAME }}@${{ secrets.BLUEHOST_HOST }}" \
-              "/usr/local/cpanel/bin/uapi --output=json DomainInfo single_domain_data domain='$domain'" \
-              > "/tmp/${domain}.json"
+            slug="${domain%%.*}"
+            if [ "$SSH_READY" = "ready" ]; then
+              ssh -o BatchMode=yes -o ConnectTimeout=12 "${{ secrets.BLUEHOST_USERNAME }}@${{ secrets.BLUEHOST_HOST }}" \
+                "/usr/local/cpanel/bin/uapi --output=json DomainInfo single_domain_data domain='$domain'" \
+                > "/tmp/realm-probe/${domain}.uapi.json" 2> "/tmp/realm-probe/${domain}.uapi.err"
+              echo $? > "/tmp/realm-probe/${domain}.uapi.code"
+              ssh -o BatchMode=yes -o ConnectTimeout=12 "${{ secrets.BLUEHOST_USERNAME }}@${{ secrets.BLUEHOST_HOST }}" \
+                "for p in \"\$HOME/public_html/$slug\" \"\$HOME/public_html/$domain\" \"\$HOME/$domain\"; do [ -d \"\$p\" ] && printf '%s\\n' \"\$p\"; done" \
+                > "/tmp/realm-probe/${domain}.candidates" 2> "/tmp/realm-probe/${domain}.candidates.err"
+            else
+              echo 255 > "/tmp/realm-probe/${domain}.uapi.code"
+              : > "/tmp/realm-probe/${domain}.uapi.json"
+              : > "/tmp/realm-probe/${domain}.candidates"
+            fi
           done
+
           python3 - <<'PY'
           import json
           from pathlib import Path
-          targets = ['arkmatx.com','witchdix.com','xanderzombie.com']
-          out = {'source':'cpanel-uapi','domains':{}}
-          for domain in targets:
-              data=json.loads(Path('/tmp/'+domain+'.json').read_text())
-              result=data.get('result',{})
-              if result.get('status') != 1:
-                  raise SystemExit(f'cPanel did not return hosting data for {domain}')
-              info=result.get('data') or {}
-              root=info.get('documentroot') or info.get('document_root')
-              if not root:
-                  raise SystemExit(f'No document root returned for {domain}')
-              marker='/public_html'
-              safe='public_html'+root.split(marker,1)[1] if marker in root else root.rstrip('/').split('/')[-1]
-              if '..' in safe or safe.startswith('/'):
-                  raise SystemExit(f'Unsafe root shape for {domain}')
-              out['domains'][domain]={'remotePath':safe}
-          Path('deployments/realm-document-roots.json').write_text(json.dumps(out,indent=2)+'\n')
-          PY
 
-      - name: Commit discovery result
+          targets = ['arkmatx.com','witchdix.com','xanderzombie.com']
+          result = {'source':'bluehost-probe-v2','domains':{}}
+          for domain in targets:
+              rec = {'status':'unresolved','remotePath':None,'method':None}
+              code_file=Path(f'/tmp/realm-probe/{domain}.uapi.code')
+              code=int(code_file.read_text().strip() or '255') if code_file.exists() else 255
+              raw=Path(f'/tmp/realm-probe/{domain}.uapi.json').read_text(errors='ignore') if Path(f'/tmp/realm-probe/{domain}.uapi.json').exists() else ''
+              root=None
+              if code == 0 and raw.strip():
+                  try:
+                      data=json.loads(raw)
+                      api=data.get('result',{})
+                      info=api.get('data') or {}
+                      if api.get('status') == 1:
+                          root=info.get('documentroot') or info.get('document_root')
+                  except Exception:
+                      pass
+              if root:
+                  marker='/public_html'
+                  if marker in root:
+                      safe='public_html'+root.split(marker,1)[1]
+                  else:
+                      safe=root.rstrip('/').split('/')[-1]
+                  if safe and '..' not in safe and not safe.startswith('/'):
+                      rec.update(status='verified',remotePath=safe,method='cpanel-uapi')
+              if rec['status'] != 'verified':
+                  candidates=[]
+                  f=Path(f'/tmp/realm-probe/{domain}.candidates')
+                  for line in f.read_text(errors='ignore').splitlines() if f.exists() else []:
+                      line=line.strip()
+                      if not line: continue
+                      if '/public_html/' in line:
+                          candidates.append('public_html/'+line.split('/public_html/',1)[1])
+                      elif line.endswith('/public_html'):
+                          candidates.append('public_html')
+                      else:
+                          candidates.append(line.rstrip('/').split('/')[-1])
+                  candidates=sorted(set(x for x in candidates if x and '..' not in x and not x.startswith('/')))
+                  rec['candidates']=candidates
+                  if len(candidates)==1:
+                      rec.update(status='candidate-only',remotePath=candidates[0],method='directory-probe')
+                  rec['uapi_exit_code']=code
+              result['domains'][domain]=rec
+          Path('deployments/realm-document-roots.json').write_text(json.dumps(result,indent=2)+'\n')
+          PY
+          exit 0
+
+      - name: Commit sanitized discovery result
+        if: always()
+        shell: bash
         run: |
           set -euo pipefail
+          test -f deployments/realm-document-roots.json || printf '%s\n' '{"source":"bluehost-probe-v2","domains":{},"status":"probe-did-not-produce-output"}' > deployments/realm-document-roots.json
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add deployments/realm-document-roots.json

@@ -1,0 +1,85 @@
+name: Deploy Verified Realms to Staging
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/deploy-verified-realms-staging.yml
+      - sites/arkmatx/site.config.json
+      - sites/xanderzombie/site.config.json
+
+permissions:
+  contents: write
+
+jobs:
+  staging:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        site: [arkmatx, xanderzombie]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate verified staging config
+        id: cfg
+        shell: bash
+        run: |
+          set -euo pipefail
+          DIR="sites/${{ matrix.site }}"
+          ROOT=$(jq -r '.staging.remotePath' "$DIR/site.config.json")
+          URL=$(jq -r '.staging.url' "$DIR/site.config.json")
+          [[ "$ROOT" == public_html/*/staging ]] || { echo "Unexpected staging root: $ROOT"; exit 1; }
+          [[ "$ROOT" != *".."* ]] || exit 1
+          echo "root=$ROOT" >> "$GITHUB_OUTPUT"
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+      - name: Build for /staging/
+        working-directory: sites/${{ matrix.site }}
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install --no-audit --no-fund; fi
+          npm run build -- --base /staging/
+      - name: Configure SSH
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "${{ secrets.BLUEHOST_HOST }}" >> ~/.ssh/known_hosts
+      - name: Deploy staging without deleting runtime state
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="${{ steps.cfg.outputs.root }}"
+          ssh "${{ secrets.BLUEHOST_USERNAME }}@${{ secrets.BLUEHOST_HOST }}" "mkdir -p '$ROOT'"
+          FILTERS=(--exclude 'data/' --exclude 'generated/' --exclude 'state/*.json')
+          rsync -az --delete "${FILTERS[@]}" "sites/${{ matrix.site }}/dist/" "${{ secrets.BLUEHOST_USERNAME }}@${{ secrets.BLUEHOST_HOST }}:$ROOT/"
+      - name: Verify staging
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL="${{ steps.cfg.outputs.url }}"
+          for n in 1 2 3 4 5; do
+            code=$(curl -L -sS -o /tmp/page -w '%{http_code}' "$URL" || true)
+            if [[ "$code" =~ ^2|3 ]]; then exit 0; fi
+            sleep 3
+          done
+          exit 1
+      - name: Record staging result
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p deployments
+          cat > "deployments/${{ matrix.site }}-staging.json" <<JSON
+          {"site":"${{ matrix.site }}","url":"${{ steps.cfg.outputs.url }}","commit_sha":"${{ github.sha }}","status":"verified-staging"}
+          JSON
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin main
+          git add "deployments/${{ matrix.site }}-staging.json"
+          git diff --cached --quiet && exit 0
+          git commit -m "Record ${{ matrix.site }} staging [skip ci]"
+          for n in 1 2 3; do git push origin HEAD:main && exit 0; git pull --rebase origin main; done
+          exit 1

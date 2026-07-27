@@ -1,0 +1,86 @@
+name: Probe Witchdix Domain Classification
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/witchdix-domain-diagnostic.yml
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Configure SSH
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "${{ secrets.BLUEHOST_HOST }}" >> ~/.ssh/known_hosts
+      - name: Query cPanel domain records
+        shell: bash
+        run: |
+          set +e
+          mkdir -p deployments /tmp/witchprobe
+          for call in "DomainInfo domains_data format=list" "DomainInfo list_domains" "WebVhosts list_domains"; do
+            set -- $call
+            module="$1"; func="$2"; shift 2
+            name="${module}-${func}"
+            ssh -o BatchMode=yes "${{ secrets.BLUEHOST_USERNAME }}@${{ secrets.BLUEHOST_HOST }}" "/usr/local/cpanel/bin/uapi --output=json $module $func $*" > "/tmp/witchprobe/$name.json" 2>/dev/null
+          done
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          target='witchdix.com'
+          result={'domain':target,'status':'unresolved','classification':None,'remotePath':None,'evidence':[]}
+          def safe_root(root):
+              if not isinstance(root,str) or not root:return None
+              if '/public_html' in root:return 'public_html'+root.split('/public_html',1)[1]
+              return root.rstrip('/').split('/')[-1]
+          def walk(x,path='root'):
+              if isinstance(x,dict):
+                  text=' '.join(str(v) for v in x.values() if isinstance(v,(str,int,float,bool)))
+                  if target.lower() in text.lower():
+                      small={}
+                      for k,v in x.items():
+                          kl=k.lower()
+                          if isinstance(v,str) and any(t in kl for t in ['domain','alias','serveralias','documentroot','document_root','rootdomain']):
+                              small[k]=safe_root(v) if 'root' in kl and '/' in v else v
+                      if small: result['evidence'].append({'path':path,'fields':small})
+                  for k,v in x.items():walk(v,path+'.'+str(k))
+              elif isinstance(x,list):
+                  for i,v in enumerate(x):walk(v,f'{path}[{i}]')
+          for f in Path('/tmp/witchprobe').glob('*.json'):
+              try: walk(json.loads(f.read_text()),f.stem)
+              except Exception: pass
+          for e in result['evidence']:
+              fields=e['fields']
+              for k,v in fields.items():
+                  kl=k.lower()
+                  if 'documentroot' in kl or 'document_root' in kl:
+                      if v and '..' not in v and not str(v).startswith('/'):
+                          result.update(status='verified',remotePath=v,classification='hosted-domain')
+              if result['classification'] is None:
+                  vals=' '.join(str(v).lower() for v in fields.values())
+                  if target in vals and ('parked' in e['path'].lower() or 'alias' in vals):result['classification']='parked-or-alias'
+                  elif target in vals and 'addon' in e['path'].lower():result['classification']='addon-domain'
+          Path('deployments/witchdix-domain-diagnostic.json').write_text(json.dumps(result,indent=2)+'\n')
+          PY
+      - name: Commit sanitized diagnostic
+        if: always()
+        run: |
+          set -euo pipefail
+          test -f deployments/witchdix-domain-diagnostic.json || echo '{"domain":"witchdix.com","status":"probe-failed"}' > deployments/witchdix-domain-diagnostic.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add deployments/witchdix-domain-diagnostic.json
+          git diff --cached --quiet && exit 0
+          git commit -m "Record Witchdix domain diagnostic [skip ci]"
+          git push origin HEAD:main

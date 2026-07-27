@@ -1,0 +1,68 @@
+name: ArkmatX Visual Check
+
+on:
+  pull_request:
+    paths:
+      - 'sites/arkmatx/**'
+      - '.github/workflows/arkmatx-visual-check.yml'
+  push:
+    branches: [ main ]
+    paths:
+      - 'sites/arkmatx/**'
+      - '.github/workflows/arkmatx-visual-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  visual-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build ArkmatX
+        working-directory: sites/arkmatx
+        run: |
+          set -euo pipefail
+          if [ -f package-lock.json ]; then npm ci; else npm install --no-audit --no-fund; fi
+          npm run build
+
+      - name: Install browser test runtime
+        working-directory: sites/arkmatx
+        run: |
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Start production preview
+        working-directory: sites/arkmatx
+        run: |
+          nohup npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/arkmatx-preview.log 2>&1 &
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/arkmatx-preview.log
+          exit 1
+
+      - name: Run real-browser visual and interaction checks
+        working-directory: sites/arkmatx
+        env:
+          ARKMATX_TEST_URL: http://127.0.0.1:4173/
+          ARKMATX_SCREENSHOT_DIR: test-results/arkmatx
+        run: node tests/visual-smoke.mjs
+
+      - name: Upload browser screenshots and report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arkmatx-visual-check
+          path: |
+            sites/arkmatx/test-results/arkmatx/*.png
+            sites/arkmatx/test-results/arkmatx/report.json
+            /tmp/arkmatx-preview.log
+          if-no-files-found: warn

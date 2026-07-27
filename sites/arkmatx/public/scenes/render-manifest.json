@@ -4,6 +4,11 @@
       "prefix": "workshop-render",
       "parts": 3,
       "mime": "image/jpeg"
+    },
+    "servers": {
+      "prefix": "servers-render",
+      "parts": 4,
+      "mime": "image/jpeg;name=servers"
     }
   },
   "variants": {

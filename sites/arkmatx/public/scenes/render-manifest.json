@@ -5,6 +5,10 @@
       "parts": 3,
       "mime": "image/jpeg"
     },
+    "servers": {
+      "file": "server-room.part2.txt",
+      "mime": "image/jpeg"
+    },
     "paradox": {
       "prefix": "paradox-single",
       "parts": 1,

@@ -7,6 +7,13 @@ on:
     paths:
       - .github/workflows/arkmatx-staging-repair.yml
       - sites/arkmatx/**
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/arkmatx-staging-repair.yml
+      - sites/arkmatx/**
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -87,7 +94,7 @@ jobs:
           python -m json.tool /tmp/activity.json >/dev/null
 
       - name: Record ArkmatX staging diagnostic
-        if: always()
+        if: always() && github.event_name != 'pull_request'
         shell: bash
         run: |
           set -euo pipefail

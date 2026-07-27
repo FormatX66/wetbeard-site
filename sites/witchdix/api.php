@@ -30,7 +30,7 @@ function ai_catalog($raw,$title,$hint){
   ],'required'=>['title','category','summary','tags','cross_references','search_terms','safety_note'],'additionalProperties'=>false];
   $payload=['model'=>$model,'instructions'=>'You are the cataloging spirit for Heather\'s private witchcraft field grimoire. Preserve her meaning. Do not invent factual claims. Categorize the note for retrieval, create concise tags and useful search synonyms. If the note discusses ingestion, medicine, poisonous plants, fire, or other practical hazards, put a brief factual caution in safety_note; otherwise use an empty string. Output only the requested schema.','input'=>"Optional title: {$title}\nOptional author hint: {$hint}\nRaw note:\n{$raw}",'text'=>['format'=>['type'=>'json_schema','name'=>'grimoire_catalog','strict'=>true,'schema'=>$schema]]];
   $ch=curl_init('https://api.openai.com/v1/responses');curl_setopt_array($ch,[CURLOPT_POST=>true,CURLOPT_RETURNTRANSFER=>true,CURLOPT_HTTPHEADER=>['Authorization: Bearer '.$key,'Content-Type: application/json'],CURLOPT_POSTFIELDS=>json_encode($payload),CURLOPT_TIMEOUT=>30]);
-  $resp=curl_exec($ch);$code=curl_getinfo($ch,CURLINFO_HTTP_CODE);$err=curl_error($ch);curl_close($ch);if($resp===false||$code<200||$code>=300)return null;
+  $resp=curl_exec($ch);$code=curl_getinfo($ch,CURLINFO_HTTP_CODE);curl_close($ch);if($resp===false||$code<200||$code>=300)return null;
   $j=json_decode($resp,true);$text='';foreach(($j['output']??[]) as $o){foreach(($o['content']??[]) as $c){if(($c['type']??'')==='output_text')$text.=$c['text']??'';}}
   $data=json_decode($text,true);return is_array($data)?$data:null;
 }
@@ -39,16 +39,24 @@ function fallback_catalog($raw,$title,$hint){
   $clean=preg_replace('/\s+/',' ',trim($raw));$words=preg_split('/[^a-z0-9\-]+/i',strtolower($title.' '.$hint.' '.$raw));$stop=['the','and','for','with','that','this','from','have','into','about','then','when','where','what','your','her','she'];$freq=[];foreach($words as $w){if(strlen($w)>3&&!in_array($w,$stop,true))$freq[$w]=($freq[$w]??0)+1;}arsort($freq);$tags=array_slice(array_keys($freq),0,8);
   return ['title'=>$title?:mb_substr($clean,0,60),'category'=>$cat,'summary'=>mb_substr($clean,0,260),'tags'=>$tags,'cross_references'=>[],'search_terms'=>$tags,'safety_note'=>''];
 }
+function search_entries($items,$q,$publicOnly=false){
+  if($publicOnly)$items=array_values(array_filter($items,fn($e)=>!empty($e['published'])));
+  $q=mb_strtolower(trim((string)$q));if($q==='')return $items;$terms=preg_split('/\s+/', $q);
+  return array_values(array_filter($items,function($e)use($terms){$hay=mb_strtolower(implode(' ',[$e['title']??'',$e['category']??'',$e['summary']??'',implode(' ',$e['tags']??[]),implode(' ',$e['search_terms']??[]),implode(' ',$e['cross_references']??[]),$e['raw']??'']));foreach($terms as $t){if($t!==''&&mb_strpos($hay,$t)===false)return false;}return true;}));
+}
+function public_view($e){return ['id'=>$e['id']??'','created_at'=>$e['created_at']??'','title'=>$e['title']??'Untitled page','category'=>$e['category']??'other','summary'=>$e['summary']??'','tags'=>$e['tags']??[],'cross_references'=>$e['cross_references']??[],'safety_note'=>$e['safety_note']??''];}
 $d=body();$action=$d['action']??'';
 if($action==='login'){$configured=getenv('WITCHDIX_ADMIN_PASSWORD');if(!$configured)out(['ok'=>false,'error'=>'Admin password is not configured on the server.'],503);$given=(string)($d['password']??'');if(!hash_equals($configured,$given))out(['ok'=>false,'error'=>'That does not open the book.'],403);$_SESSION['witchdix_auth']=true;session_regenerate_id(true);out(['ok'=>true]);}
 if($action==='logout'){$_SESSION=[];session_destroy();out(['ok'=>true]);}
 if($action==='session')out(['ok'=>true,'authenticated'=>authed()]);
+if($action==='public_search'){$items=search_entries(all_entries(),$d['q']??'',true);out(['ok'=>true,'items'=>array_map('public_view',array_slice($items,0,100))]);}
+if($action==='public_recent'){$items=search_entries(all_entries(),'',true);out(['ok'=>true,'items'=>array_map('public_view',array_slice($items,0,30))]);}
 require_auth();
 if($action==='add'){
-  $raw=trim((string)($d['raw']??''));$title=trim((string)($d['title']??''));$hint=trim((string)($d['hint']??''));if($raw==='')out(['ok'=>false,'error'=>'The page is blank.'],422);if(strlen($raw)>20000)out(['ok'=>false,'error'=>'That page is too long; split it into smaller entries.'],422);
-  $cat=ai_catalog($raw,$title,$hint) ?: fallback_catalog($raw,$title,$hint);$entry=['id'=>bin2hex(random_bytes(8)),'created_at'=>gmdate('c'),'raw'=>$raw,'author_title'=>$title,'author_hint'=>$hint,'title'=>$cat['title']?:($title?:'Untitled page'),'category'=>$cat['category'],'summary'=>$cat['summary'],'tags'=>array_values(array_unique($cat['tags']??[])),'cross_references'=>$cat['cross_references']??[],'search_terms'=>$cat['search_terms']??[],'safety_note'=>$cat['safety_note']??'','ai_catalogued'=>(bool)getenv('OPENAI_API_KEY')];
+  $raw=trim((string)($d['raw']??''));$title=trim((string)($d['title']??''));$hint=trim((string)($d['hint']??''));$published=!empty($d['published']);if($raw==='')out(['ok'=>false,'error'=>'The page is blank.'],422);if(strlen($raw)>20000)out(['ok'=>false,'error'=>'That page is too long; split it into smaller entries.'],422);
+  $ai=ai_catalog($raw,$title,$hint);$cat=$ai ?: fallback_catalog($raw,$title,$hint);$entry=['id'=>bin2hex(random_bytes(8)),'created_at'=>gmdate('c'),'raw'=>$raw,'author_title'=>$title,'author_hint'=>$hint,'title'=>$cat['title']?:($title?:'Untitled page'),'category'=>$cat['category'],'summary'=>$cat['summary'],'tags'=>array_values(array_unique($cat['tags']??[])),'cross_references'=>$cat['cross_references']??[],'search_terms'=>$cat['search_terms']??[],'safety_note'=>$cat['safety_note']??'','ai_catalogued'=>(bool)$ai,'published'=>$published];
   append_entry($entry);out(['ok'=>true,'entry'=>$entry]);
 }
 if($action==='list'){out(['ok'=>true,'items'=>array_slice(all_entries(),0,50)]);}
-if($action==='search'){$q=mb_strtolower(trim((string)($d['q']??'')));$items=all_entries();if($q!==''){$terms=preg_split('/\s+/', $q);$items=array_values(array_filter($items,function($e)use($terms){$hay=mb_strtolower(implode(' ',[$e['title']??'',$e['category']??'',$e['summary']??'',$e['raw']??'',implode(' ',$e['tags']??[]),implode(' ',$e['search_terms']??[]),implode(' ',$e['cross_references']??[])]));foreach($terms as $t){if($t!==''&&mb_strpos($hay,$t)===false)return false;}return true;}));}out(['ok'=>true,'items'=>array_slice($items,0,100)]);}
+if($action==='search'){out(['ok'=>true,'items'=>array_slice(search_entries(all_entries(),$d['q']??'',false),0,100)]);}
 out(['ok'=>false,'error'=>'Unknown action.'],400);

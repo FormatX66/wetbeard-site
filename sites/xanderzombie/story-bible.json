@@ -1,0 +1,39 @@
+{
+  "series": "Xander Zombie",
+  "premise": "Xander is a teenage boy who is also a zombie. Becoming undead did not cancel school, family, chores, friends, embarrassment, or teenage problems.",
+  "tone": ["dark comedy", "teenage slice-of-life", "supernatural adventure", "weird but warm", "non-gory by default"],
+  "rules": [
+    "Xander is a person first and a zombie second.",
+    "Being undead creates complications but does not automatically solve ordinary teenage problems.",
+    "Family and friends can be funny without becoming disposable joke machines.",
+    "Do not contradict approved episodes unless the contradiction is deliberately explained in-story.",
+    "Cross-realm events may appear, but Xander does not initially understand the larger connected-world system."
+  ],
+  "established": [
+    "Xander woke up dead on a Tuesday.",
+    "Tuesday is associated with pizza day.",
+    "Xander still worries about being grounded and doing chores.",
+    "An impossible wooded path exists near town.",
+    "The strange path can connect to the moss/Morri realm.",
+    "A chess-knight artifact can appear when the Morri chess event has been discovered."
+  ],
+  "recurring_jokes": [
+    "Being dead does not excuse chores.",
+    "Adults remain concerned with normal rules during supernatural emergencies.",
+    "Xander is often more worried about ordinary teenage consequences than impossible events."
+  ],
+  "characters": {
+    "xander": {
+      "role": "protagonist",
+      "age_band": "teenager",
+      "traits": ["dry humor", "curious", "occasionally embarrassed", "adaptable"],
+      "visual_notes": ["teen zombie", "recognizable silhouette", "expressive eyes", "non-gory default design"]
+    }
+  },
+  "open_threads": [
+    "Why Xander became a zombie.",
+    "Where the impossible wooded path leads.",
+    "Why objects from other realms can enter Xander's comic.",
+    "How normal life reacts to Xander being undead."
+  ]
+}

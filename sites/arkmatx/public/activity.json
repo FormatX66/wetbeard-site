@@ -1,0 +1,22 @@
+{
+  "updated_at": "2026-07-26T00:00:00-04:00",
+  "headline": "THE LAB HAS BEEN BUSY",
+  "summary": "A running record of real GPT-assisted builds, experiments, and systems work.",
+  "projects": [
+    {"name":"MORRI","status":"ACTIVE","detail":"Myst-style cottage exploration, chess puzzle, hidden rooms, cross-realm world-bus hooks."},
+    {"name":"WITCHDIX","status":"ACTIVE","detail":"Living grimoire plus private AI-assisted authoring backend with searchable cataloging."},
+    {"name":"XANDER ZOMBIE","status":"BUILDING","detail":"Teen-zombie comic engine with canon tracking, multimodal prompt intake design, and reel/page outputs."},
+    {"name":"ARKMATX","status":"SELF-MODIFYING","detail":"Cyberpunk workshop interface, logic puzzles, world-bus controls, and live GPT/GitHub worklog."},
+    {"name":"WET BEARD","status":"LIVE SYSTEM","detail":"Quest cards, rider game systems, admin tools, deployments, and database-backed ride logic."},
+    {"name":"BRAIN CONNECT","status":"EXPERIMENTAL","detail":"AI operating-system/orchestration concepts, Raspberry Pi control, sandboxing, remote machine workflows."}
+  ],
+  "weekly_log": [
+    "Built reusable multi-site website factory and guarded deployment workflow.",
+    "Connected Morri, Witchdix, XanderZombie, and ArkmatX with a shared realm passport.",
+    "Added ArkmatX radio/world-bus puzzle and cross-site state reactions.",
+    "Built Heather's private AI grimoire authoring backend.",
+    "Defined Xander Zombie canon and AI comic-production pipeline.",
+    "Turned ArkmatX from a fictional shell into a view of the actual GPT work being done."
+  ],
+  "easter_egg_seed": "A system that documents itself has already changed the thing it is documenting."
+}

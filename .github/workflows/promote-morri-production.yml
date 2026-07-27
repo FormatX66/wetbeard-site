@@ -1,0 +1,59 @@
+name: Promote Morri to Production
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/promote-morri-production.yml
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build Morri
+        working-directory: sites/morri
+        run: |
+          set -euo pipefail
+          if [ -f package-lock.json ]; then npm ci; else npm install --no-audit --no-fund; fi
+          npm run build -- --base=/morri/
+      - name: Configure SSH
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "${{ secrets.BLUEHOST_HOST }}" >> ~/.ssh/known_hosts
+      - name: Deploy and verify
+        run: |
+          set -euo pipefail
+          REMOTE=public_html/morri
+          URL=https://madmorrigan.com/morri/
+          ssh "${{ secrets.BLUEHOST_USERNAME }}@${{ secrets.BLUEHOST_HOST }}" "mkdir -p '$REMOTE'"
+          rsync -az --delete sites/morri/dist/ "${{ secrets.BLUEHOST_USERNAME }}@${{ secrets.BLUEHOST_HOST }}:$REMOTE/"
+          for n in 1 2 3 4 5; do
+            code=$(curl -L -sS -o /tmp/morri.html -w '%{http_code}' "$URL" || true)
+            if [[ "$code" =~ ^2|3 ]]; then exit 0; fi
+            sleep 3
+          done
+          echo "$URL did not verify"; exit 1
+      - name: Record verified production
+        run: |
+          set -euo pipefail
+          mkdir -p deployments
+          printf '{"site":"morri","url":"https://madmorrigan.com/morri/","commit_sha":"%s","status":"verified-live"}\n' "$GITHUB_SHA" > deployments/morri-live.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add deployments/morri-live.json
+          git diff --cached --quiet && exit 0
+          git commit -m "Record morri production [skip ci]"
+          git pull --rebase origin main
+          git push origin HEAD:main

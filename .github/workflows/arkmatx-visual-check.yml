@@ -54,7 +54,9 @@ jobs:
         env:
           ARKMATX_TEST_URL: http://127.0.0.1:4173/
           ARKMATX_SCREENSHOT_DIR: test-results/arkmatx
-        run: node tests/visual-smoke.mjs
+        run: |
+          node tests/visual-smoke.mjs
+          node tests/paradox-smoke.mjs
 
       - name: Upload browser screenshots and report
         if: always()

@@ -4,6 +4,11 @@
       "prefix": "workshop-render",
       "parts": 3,
       "mime": "image/jpeg"
+    },
+    "paradox": {
+      "prefix": "paradox-single",
+      "parts": 1,
+      "mime": "image/jpeg"
     }
   },
   "variants": {

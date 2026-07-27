@@ -6,8 +6,8 @@
       "mime": "image/jpeg"
     },
     "paradox": {
-      "prefix": "paradox-render",
-      "parts": 8,
+      "prefix": "paradox-single",
+      "parts": 1,
       "mime": "image/jpeg"
     }
   },

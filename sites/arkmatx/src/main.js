@@ -13,20 +13,29 @@ const save=()=>localStorage.setItem(key,[...passport].join(','));
 const jump=url=>{const u=new URL(url);u.searchParams.set('rp',[...passport].join(','));location.href=u.toString()};
 const openExternal=url=>location.href=url;
 const stateUrl=asset('world-state.php');
-let worldState=null,activity=null,githubStatus=null,sceneName='workshop',workshopRender=null;
+let worldState=null,activity=null,githubStatus=null,sceneName='workshop',renderManifest={},sceneRenders={};
 const logic={a:false,b:false,c:false};
 const radio=[];
 const has=f=>passport.has(f)||Boolean(worldState?.flags?.[f]);
 async function loadWorld(){try{const r=await fetch(stateUrl,{cache:'no-store'});if(r.ok){worldState=await r.json();for(const [f,on] of Object.entries(worldState.flags||{}))if(on)passport.add(f);save()}}catch{}}
 async function pushWorld(flag){passport.add(flag);save();try{const r=await fetch(stateUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({flag,source:'arkmatx'})});if(r.ok){const j=await r.json();worldState=j.state||worldState}}catch{}}
-async function loadWorkshopRender(){
-  const parts=await Promise.all([0,1,2].map(i=>fetch(asset(`scenes/workshop-render.part${i}.txt`),{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(`render chunk ${i}: ${r.status}`);return r.text()})));
-  workshopRender=`data:image/jpeg;base64,${parts.join('')}`;
-  return workshopRender;
+async function loadRenderManifest(){
+  const r=await fetch(asset('scenes/render-manifest.json'),{cache:'no-store'});
+  if(!r.ok)throw new Error(`render manifest: ${r.status}`);
+  renderManifest=await r.json();
+  return renderManifest;
+}
+async function loadChunkedRender(name){
+  if(sceneRenders[name])return sceneRenders[name];
+  const spec=renderManifest?.[name];
+  if(!spec)return null;
+  const parts=await Promise.all(Array.from({length:spec.parts},(_,i)=>fetch(asset(`scenes/${spec.prefix}.part${i}.txt`),{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(`${name} render chunk ${i}: ${r.status}`);return r.text()})));
+  sceneRenders[name]=`data:${spec.mime||'image/jpeg'};base64,${parts.join('')}`;
+  return sceneRenders[name];
 }
 
 const scenes={
- workshop:{bg:null,hot:[
+ workshop:{bg:asset('scenes/workshop.svg'),hot:[
   ['terminal','BRAIN CONNECT CRT','165,315 610,315 610,520 165,520','project-terminal'],
   ['bench','HARDWARE BENCH','0,415 625,415 625,735 0,735','project-bench'],
   ['bike','WET BEARD BIKE','650,350 1285,350 1285,685 650,685','project-bike'],
@@ -69,12 +78,20 @@ function bindProjectLinks(){
 
 actionLoad();
 async function actionLoad(){
- await Promise.allSettled([loadWorld(),loadWorkshopRender(),fetch(asset('activity.json'),{cache:'no-store'}).then(r=>r.json()).then(j=>activity=j),fetch(asset('github-status.json'),{cache:'no-store'}).then(r=>r.json()).then(j=>githubStatus=j)]);
+ await Promise.allSettled([loadWorld(),loadRenderManifest(),fetch(asset('activity.json'),{cache:'no-store'}).then(r=>r.json()).then(j=>activity=j),fetch(asset('github-status.json'),{cache:'no-store'}).then(r=>r.json()).then(j=>githubStatus=j)]);
+ try{await loadChunkedRender('workshop')}catch{}
  readout.textContent=worldState?'WORLD BUS ONLINE // persistent state acquired':'WORLD BUS DEGRADED // local passport';
- renderScene('workshop');
+ await renderScene('workshop');
 }
 
-function renderScene(name){sceneName=name;const s=scenes[name];transition.classList.add('flash');setTimeout(()=>transition.classList.remove('flash'),380);bg.src=name==='workshop'?(workshopRender||asset('scenes/workshop.svg')):s.bg;bg.alt=`ArkmatX ${name}`;document.querySelector('#location').textContent=name.toUpperCase();svg.innerHTML=s.hot.map(h=>`<polygon tabindex="0" aria-label="${h[1]}" data-target="${h[3]}" points="${h[2]}"/>`).join('');svg.querySelectorAll('polygon').forEach(p=>{p.onclick=()=>act(p.dataset.target);p.onkeydown=e=>{if(e.key==='Enter')p.click()}})}
+async function renderScene(name){
+ sceneName=name;const s=scenes[name];transition.classList.add('flash');setTimeout(()=>transition.classList.remove('flash'),380);
+ let src=sceneRenders[name]||s.bg;
+ if(renderManifest?.[name]&&!sceneRenders[name]){try{src=await loadChunkedRender(name)||s.bg}catch{src=s.bg}}
+ bg.src=src;bg.alt=`ArkmatX ${name}`;document.querySelector('#location').textContent=name.toUpperCase();
+ svg.innerHTML=s.hot.map(h=>`<polygon tabindex="0" aria-label="${h[1]}" data-target="${h[3]}" points="${h[2]}"/>`).join('');
+ svg.querySelectorAll('polygon').forEach(p=>{p.onclick=()=>act(p.dataset.target);p.onkeydown=e=>{if(e.key==='Enter')p.click()}})
+}
 function travel(url,label){transition.textContent=label;transition.classList.add('traveling');setTimeout(()=>jump(url),800)}
 function worklog(){const p=(activity?.projects||[]).map(x=>`${x.name.padEnd(14,'.')} ${x.status}\n${x.detail}`).join('\n\n');return `${activity?.headline||'ARKMATX WEEKLY LOG'}\n\n${activity?.summary||''}\n\n${p||'No feed loaded.'}`}
 function gitlog(){return `${githubStatus?.repository||'GITHUB'} // ${githubStatus?.status||'OFFLINE'}\nUPDATED: ${githubStatus?.updated_at||'unknown'}\n\n${(githubStatus?.recent_commits||[]).slice(0,7).map(x=>`${x.sha} ${x.message}`).join('\n')}`}

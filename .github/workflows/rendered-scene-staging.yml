@@ -1,0 +1,89 @@
+name: Stage Rendered Scene Rebuild
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - sites/arkmatx/**
+      - sites/morri/**
+      - sites/witchdix/**
+      - sites/xanderzombie/**
+      - .github/workflows/rendered-scene-staging.yml
+
+permissions:
+  contents: write
+
+jobs:
+  stage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build all four rendered realms
+        shell: bash
+        run: |
+          set -euo pipefail
+          for site in arkmatx morri witchdix xanderzombie; do
+            pushd "sites/$site" >/dev/null
+            if [ -f package-lock.json ]; then npm ci; else npm install --no-audit --no-fund; fi
+            npm run build
+            popd >/dev/null
+          done
+      - name: Configure SSH
+        shell: bash
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "${{ secrets.BLUEHOST_HOST }}" >> ~/.ssh/known_hosts
+      - name: Deploy review builds
+        shell: bash
+        run: |
+          set -euo pipefail
+          DEST="${{ secrets.BLUEHOST_USERNAME }}@${{ secrets.BLUEHOST_HOST }}"
+          ssh "$DEST" "mkdir -p public_html/arkmatx/staging public_html/staging/morri public_html/witchdix/rendered-review public_html/xanderzombie/staging"
+          rsync -az --delete sites/arkmatx/dist/ "$DEST:public_html/arkmatx/staging/"
+          rsync -az --delete sites/morri/dist/ "$DEST:public_html/staging/morri/"
+          rsync -az --delete --exclude 'data/' sites/witchdix/dist/ "$DEST:public_html/witchdix/rendered-review/"
+          rsync -az --delete --exclude 'data/' sites/xanderzombie/dist/ "$DEST:public_html/xanderzombie/staging/"
+      - name: Verify review URLs
+        shell: bash
+        run: |
+          set -euo pipefail
+          urls=(
+            'https://arkmatx.com/staging/'
+            'https://madmorrigan.com/staging/morri/'
+            'https://madmorrigan.com/witchdix/rendered-review/'
+            'https://xanderzombie.com/staging/'
+          )
+          for url in "${urls[@]}"; do
+            code=$(curl -L -sS -o /tmp/review.html -w '%{http_code}' "$url" || true)
+            [[ "$code" =~ ^2|3 ]] || { echo "$url returned $code"; exit 1; }
+          done
+      - name: Record rendered review deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p deployments
+          cat > deployments/rendered-scene-review.json <<JSON
+          {
+            "commit_sha": "${{ github.sha }}",
+            "status": "verified-staging",
+            "arkmatx": "https://arkmatx.com/staging/",
+            "morri": "https://madmorrigan.com/staging/morri/",
+            "witchdix": "https://madmorrigan.com/witchdix/rendered-review/",
+            "xander": "https://xanderzombie.com/staging/"
+          }
+          JSON
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add deployments/rendered-scene-review.json
+          git diff --cached --quiet && exit 0
+          git commit -m "Record rendered scene review staging [skip ci]"
+          git push origin HEAD:main

@@ -31,6 +31,7 @@ jobs:
           if [ -f package-lock.json ]; then npm ci; else npm install --no-audit --no-fund; fi
           npm run build -- --base /staging/
           grep -Eq 'src="/staging/assets/[^\"]+\.js"' dist/index.html
+          for i in 0 1 2; do test -s "dist/scenes/workshop-render.part${i}.txt"; done
 
       - name: Configure Bluehost SSH
         id: ssh
@@ -58,9 +59,9 @@ jobs:
           DEST='${{ secrets.BLUEHOST_USERNAME }}@${{ secrets.BLUEHOST_HOST }}'
           ssh "$DEST" 'mkdir -p public_html/arkmatx/staging'
           rsync -az --delete --exclude 'data/' --exclude 'generated/' --exclude 'state/*.json' sites/arkmatx/dist/ "$DEST:public_html/arkmatx/staging/"
-          ssh "$DEST" 'test -f public_html/arkmatx/staging/index.html && test -d public_html/arkmatx/staging/assets && test -f public_html/arkmatx/staging/scenes/workshop.svg'
+          ssh "$DEST" 'test -f public_html/arkmatx/staging/index.html && test -d public_html/arkmatx/staging/assets && test -s public_html/arkmatx/staging/scenes/workshop-render.part0.txt && test -s public_html/arkmatx/staging/scenes/workshop-render.part1.txt && test -s public_html/arkmatx/staging/scenes/workshop-render.part2.txt'
 
-      - name: Verify ArkmatX staging HTTP and assets
+      - name: Verify ArkmatX staging HTTP and rendered scene
         id: verify
         if: steps.deploy.outcome == 'success'
         continue-on-error: true
@@ -75,8 +76,13 @@ jobs:
           test -n "$js_path"
           curl -LfsS -H 'Cache-Control: no-cache' "https://arkmatx.com${js_path}" -o /tmp/app.js
           test -s /tmp/app.js
-          curl -LfsS -H 'Cache-Control: no-cache' https://arkmatx.com/staging/scenes/workshop.svg -o /tmp/workshop.svg
-          grep -Fq '<svg' /tmp/workshop.svg
+          : > /tmp/workshop.b64
+          for i in 0 1 2; do
+            curl -LfsS -H 'Cache-Control: no-cache' "https://arkmatx.com/staging/scenes/workshop-render.part${i}.txt" >> /tmp/workshop.b64
+          done
+          base64 -d /tmp/workshop.b64 > /tmp/workshop.jpg
+          test "$(xxd -p -l 2 /tmp/workshop.jpg)" = 'ffd8'
+          test -s /tmp/workshop.jpg
           curl -LfsS -H 'Cache-Control: no-cache' https://arkmatx.com/staging/activity.json -o /tmp/activity.json
           python -m json.tool /tmp/activity.json >/dev/null
 

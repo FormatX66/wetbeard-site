@@ -1,0 +1,7 @@
+{
+  "workshop": {
+    "prefix": "workshop-render",
+    "parts": 3,
+    "mime": "image/jpeg"
+  }
+}

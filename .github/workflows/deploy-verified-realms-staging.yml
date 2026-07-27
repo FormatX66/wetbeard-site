@@ -6,7 +6,7 @@ on:
       - main
     paths:
       - .github/workflows/deploy-verified-realms-staging.yml
-      - sites/arkmatx/site.config.json
+      - sites/arkmatx/**
       - sites/xanderzombie/site.config.json
 
 permissions:
@@ -61,11 +61,23 @@ jobs:
           set -euo pipefail
           URL="${{ steps.cfg.outputs.url }}"
           for n in 1 2 3 4 5; do
-            code=$(curl -L -sS -o /tmp/page -w '%{http_code}' "$URL" || true)
-            if [[ "$code" =~ ^2|3 ]]; then exit 0; fi
+            code=$(curl -L -sS -o /tmp/page -w '%{http_code}' -H 'Cache-Control: no-cache' "$URL" || true)
+            if [[ "$code" =~ ^[23] ]]; then break; fi
+            if [ "$n" = 5 ]; then echo "$URL returned $code"; exit 1; fi
             sleep 3
           done
-          exit 1
+
+          if [ "${{ matrix.site }}" = "arkmatx" ]; then
+            grep -Eq 'src="/staging/assets/[^\"]+\.js"' /tmp/page
+            js_path=$(grep -Eo '/staging/assets/[^\"]+\.js' /tmp/page | head -n1)
+            test -n "$js_path"
+            curl -LfsS -H 'Cache-Control: no-cache' "https://arkmatx.com${js_path}" -o /tmp/ark-app.js
+            curl -LfsS -H 'Cache-Control: no-cache' https://arkmatx.com/staging/scenes/workshop.svg -o /tmp/ark-workshop.svg
+            grep -Fq '<svg' /tmp/ark-workshop.svg
+            curl -LfsS -H 'Cache-Control: no-cache' https://arkmatx.com/staging/activity.json -o /tmp/ark-activity.json
+            python -m json.tool /tmp/ark-activity.json >/dev/null
+            echo 'ArkmatX staging index, JS, scene, and activity feed verified.'
+          fi
       - name: Record staging result
         if: success()
         shell: bash
@@ -76,7 +88,7 @@ jobs:
           {"site":"${{ matrix.site }}","url":"${{ steps.cfg.outputs.url }}","commit_sha":"${{ github.sha }}","status":"verified-staging"}
           JSON
           git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git pull --rebase origin main
           git add "deployments/${{ matrix.site }}-staging.json"
           git diff --cached --quiet && exit 0

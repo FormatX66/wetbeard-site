@@ -1,0 +1,66 @@
+name: Create Witchdix Addon Domain
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/create-witchdix-addon.yml
+
+permissions:
+  contents: write
+
+jobs:
+  create:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Configure SSH
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "${{ secrets.BLUEHOST_HOST }}" >> ~/.ssh/known_hosts
+      - name: Create or verify Witchdix addon domain
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p deployments
+          ssh "${{ secrets.BLUEHOST_USERNAME }}@${{ secrets.BLUEHOST_HOST }}" "mkdir -p '$HOME/public_html/witchdix'" || true
+          BEFORE=$(ssh "${{ secrets.BLUEHOST_USERNAME }}@${{ secrets.BLUEHOST_HOST }}" "/usr/local/cpanel/bin/uapi --output=json DomainInfo single_domain_data domain='witchdix.com'" || true)
+          HAS=$(printf '%s' "$BEFORE" | python3 -c "import sys,json; d=json.load(sys.stdin); r=d.get('result',{}); x=r.get('data') or {}; print(1 if r.get('status')==1 and (x.get('documentroot') or x.get('document_root')) else 0)" 2>/dev/null || echo 0)
+          CREATED=0
+          if [ "$HAS" != "1" ]; then
+            ssh "${{ secrets.BLUEHOST_USERNAME }}@${{ secrets.BLUEHOST_HOST }}" \
+              "/usr/local/cpanel/bin/cpapi2 --output=json AddonDomain addaddondomain dir=public_html%2Fwitchdix newdomain=witchdix.com subdomain=witchdix ftp_is_optional=1" \
+              > /tmp/witch-create.json
+            CREATED=1
+          fi
+          AFTER=$(ssh "${{ secrets.BLUEHOST_USERNAME }}@${{ secrets.BLUEHOST_HOST }}" "/usr/local/cpanel/bin/uapi --output=json DomainInfo single_domain_data domain='witchdix.com'")
+          printf '%s' "$AFTER" > /tmp/witch-after.json
+          CREATED="$CREATED" python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          d=json.loads(Path('/tmp/witch-after.json').read_text())
+          r=d.get('result',{}); info=r.get('data') or {}
+          root=info.get('documentroot') or info.get('document_root')
+          if r.get('status') != 1 or not root:
+              raise SystemExit('Witchdix addon domain was not verifiable after create attempt')
+          safe='public_html'+root.split('/public_html',1)[1] if '/public_html' in root else root.rstrip('/').split('/')[-1]
+          if safe != 'public_html/witchdix':
+              raise SystemExit('Unexpected Witchdix root: '+safe)
+          out={'domain':'witchdix.com','status':'verified','remotePath':safe,'method':'cpanel-addon-domain','created_now':os.environ.get('CREATED')=='1'}
+          Path('deployments/witchdix-host.json').write_text(json.dumps(out,indent=2)+'\n')
+          PY
+      - name: Commit verified host result
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add deployments/witchdix-host.json
+          git diff --cached --quiet && exit 0
+          git commit -m "Record Witchdix host [skip ci]"
+          git push origin HEAD:main

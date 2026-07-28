@@ -61,6 +61,7 @@ jobs:
           node tests/interaction-smoke.mjs
           node tests/expedition-memory-smoke.mjs
           node tests/discovery-ledger-smoke.mjs
+          node tests/signal-compass-smoke.mjs
 
       - name: Upload browser screenshots and report
         if: always()

@@ -68,6 +68,12 @@ function status() {
 }
 
 function navigate(scene) {
+  if (window.__arkmatxSceneNavigator) {
+    window.dispatchEvent(new CustomEvent('arkmatx:navigate', {
+      detail: { scene, history: 'push', source: 'signal-compass' },
+    }));
+    return;
+  }
   const url = new URL(location.href);
   url.searchParams.set('scene', scene);
   location.href = url.toString();

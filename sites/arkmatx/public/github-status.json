@@ -1,15 +1,15 @@
 {
-  "updated_at": "2026-07-27T19:55:03Z",
+  "updated_at": "2026-07-28T03:35:35Z",
   "repository": "FormatX66/wetbeard-site",
   "default_branch": "main",
   "status": "LIVE",
   "open_prs": [
     {
-      "number": 64,
-      "title": "Fix verified-realm staging receipt rebase order",
-      "draft": true,
-      "updated_at": "2026-07-27T15:05:05Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/pull/64"
+      "number": 84,
+      "title": "Restore clean ArkmatX server-room raster",
+      "draft": false,
+      "updated_at": "2026-07-28T03:32:38Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/pull/84"
     },
     {
       "number": 34,
@@ -28,52 +28,52 @@
   ],
   "recent_commits": [
     {
-      "sha": "75934ed0",
-      "message": "Prepare ArkmatX secondary raster scene loading (#69)",
-      "date": "2026-07-27T19:24:24Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/75934ed0c91a2cbe0b2c058e07e478e183e9e0fe"
+      "sha": "379e8219",
+      "message": "Enforce raster-only ArkmatX room transitions",
+      "date": "2026-07-28T03:23:09Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/379e8219dfd91e06d27e0366fe9903356724edde"
     },
     {
-      "sha": "9ef8948e",
-      "message": "Merge pull request #68 from FormatX66/agent/arkmatx-real-links-pass",
-      "date": "2026-07-27T16:13:25Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/9ef8948e3b4dd51bba43ff35eb536a756b1665a0"
+      "sha": "d55a7df8",
+      "message": "Add ArkmatX signal compass missions",
+      "date": "2026-07-28T02:47:47Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/d55a7df8344df3759bcefb31ecb9acda99589e46"
     },
     {
-      "sha": "06490385",
-      "message": "Flesh out ArkmatX real project links",
-      "date": "2026-07-27T16:11:04Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/06490385a7ef4f5722d0326ef19216b5199bcd07"
+      "sha": "e45a87bb",
+      "message": "Add per-login ArkmatX discovery ledger",
+      "date": "2026-07-28T01:50:44Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/e45a87bbd5c411197b231ae995e6539624977f28"
     },
     {
-      "sha": "f13bbb48",
-      "message": "Merge pull request #67 from FormatX66/agent/arkmatx-staging-review-trigger",
-      "date": "2026-07-27T16:07:18Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/f13bbb489fde7ae3f36493ec143a79cb3a5eed95"
+      "sha": "b125ddef",
+      "message": "Add keyboard-accessible ArkmatX hotspot navigation",
+      "date": "2026-07-28T01:09:33Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/b125ddef5daecc8ac9d7e50e9a366adc08c0a7cb"
     },
     {
-      "sha": "05bc1eee",
-      "message": "Trigger ArkmatX PR staging review",
-      "date": "2026-07-27T16:04:51Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/05bc1eee4cb94d5ea9c72c3ed66b668322132869"
+      "sha": "9a71071c",
+      "message": "Add per-login ArkmatX expedition memory",
+      "date": "2026-07-28T00:18:50Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/9a71071c2129dffe9b3e7c891c872af22413de7f"
     },
     {
-      "sha": "3c7af650",
-      "message": "Merge pull request #66 from FormatX66/agent/arkmatx-pr-staging-fallback",
-      "date": "2026-07-27T16:04:10Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/3c7af65019a15f789dddd2734b8193935885d861"
+      "sha": "ecc52360",
+      "message": "Record SVG hotspot restore failure mode",
+      "date": "2026-07-28T00:16:16Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/ecc52360bf2476a4f45406fee3c21a36a2922e46"
     },
     {
-      "sha": "17f6708b",
-      "message": "Add PR-based ArkmatX staging fallback",
-      "date": "2026-07-27T16:03:33Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/17f6708b36f267ffc5dbcc7fe5254a136dd4297f"
+      "sha": "b2df82f7",
+      "message": "Fix expedition scene restore through SVG hotspots",
+      "date": "2026-07-28T00:16:04Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/b2df82f7416ad635f94e931c17194d5298da8424"
     },
     {
-      "sha": "23322fae",
-      "message": "Trigger ArkmatX staging deploy",
-      "date": "2026-07-27T15:58:47Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/23322fae982d11eebf69f7deca93377ae378f29a"
+      "sha": "ff019782",
+      "message": "Index per-login expedition memory",
+      "date": "2026-07-27T23:15:22Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/ff0197823147ee48f97df6a53444f32b138199e9"
     }
   ]
 }

@@ -98,6 +98,14 @@ function openJournal({ modal, tag, title, copy, actions, locationNode }) {
   modal.classList.add('show');
 }
 
+function activateHotspot(target) {
+  target.dispatchEvent(new MouseEvent('click', {
+    bubbles: true,
+    cancelable: true,
+    view: window,
+  }));
+}
+
 function restoreScene(locationNode, hotspots, desired) {
   if (!SCENES.includes(desired) || desired === 'workshop') return;
 
@@ -106,12 +114,11 @@ function restoreScene(locationNode, hotspots, desired) {
   const tryOpen = () => {
     attempts += 1;
     if (currentScene(locationNode) === desired) return;
+
     const target = hotspots.querySelector(`polygon[aria-label="${label}"]`);
-    if (target) {
-      target.click();
-      return;
-    }
-    if (attempts < 80) setTimeout(tryOpen, 50);
+    if (target) activateHotspot(target);
+
+    if (attempts < 80) setTimeout(tryOpen, 100);
   };
   setTimeout(tryOpen, 80);
 }

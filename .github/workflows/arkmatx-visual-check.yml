@@ -60,6 +60,7 @@ jobs:
           node tests/variant-smoke.mjs
           node tests/interaction-smoke.mjs
           node tests/expedition-memory-smoke.mjs
+          node tests/scene-cache-smoke.mjs
 
       - name: Upload browser screenshots and report
         if: always()

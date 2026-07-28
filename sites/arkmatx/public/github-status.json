@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-07-28T09:04:36Z",
+  "updated_at": "2026-07-28T14:37:25Z",
   "repository": "FormatX66/wetbeard-site",
   "default_branch": "main",
   "status": "LIVE",
@@ -20,6 +20,12 @@
     }
   ],
   "recent_commits": [
+    {
+      "sha": "2794aab4",
+      "message": "Refresh ArkmatX GitHub status",
+      "date": "2026-07-28T09:04:36Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/2794aab4fb2833b7896ec2af76dff81bf645d282"
+    },
     {
       "sha": "7edcac33",
       "message": "Add seamless ArkmatX scene navigation (#85)",
@@ -61,12 +67,6 @@
       "message": "Add keyboard-accessible ArkmatX hotspot navigation",
       "date": "2026-07-28T01:09:33Z",
       "html_url": "https://github.com/FormatX66/wetbeard-site/commit/b125ddef5daecc8ac9d7e50e9a366adc08c0a7cb"
-    },
-    {
-      "sha": "9a71071c",
-      "message": "Add per-login ArkmatX expedition memory",
-      "date": "2026-07-28T00:18:50Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/9a71071c2129dffe9b3e7c891c872af22413de7f"
     }
   ]
 }

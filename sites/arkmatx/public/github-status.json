@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-07-28T14:37:25Z",
+  "updated_at": "2026-07-28T19:53:19Z",
   "repository": "FormatX66/wetbeard-site",
   "default_branch": "main",
   "status": "LIVE",
@@ -20,6 +20,12 @@
     }
   ],
   "recent_commits": [
+    {
+      "sha": "6f03a443",
+      "message": "Refresh ArkmatX GitHub status",
+      "date": "2026-07-28T14:37:26Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/6f03a443ffa8535d86743b8ac3da860aeb4a377e"
+    },
     {
       "sha": "2794aab4",
       "message": "Refresh ArkmatX GitHub status",
@@ -61,12 +67,6 @@
       "message": "Add per-login ArkmatX discovery ledger",
       "date": "2026-07-28T01:50:44Z",
       "html_url": "https://github.com/FormatX66/wetbeard-site/commit/e45a87bbd5c411197b231ae995e6539624977f28"
-    },
-    {
-      "sha": "b125ddef",
-      "message": "Add keyboard-accessible ArkmatX hotspot navigation",
-      "date": "2026-07-28T01:09:33Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/b125ddef5daecc8ac9d7e50e9a366adc08c0a7cb"
     }
   ]
 }

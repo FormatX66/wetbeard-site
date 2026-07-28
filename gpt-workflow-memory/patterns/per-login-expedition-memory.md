@@ -13,8 +13,9 @@ A rendered interactive site assigns visual variants per login and should also re
 7. Provide an in-world journal rather than exposing storage/debug controls as a normal settings page.
 8. Test login isolation, same-login resume, visited-room navigation, and mobile/desktop compatibility in a real browser.
 
-## Important failure mode
-Do not record the initial workshop before reading/restoring the saved last room. Doing so overwrites the very state being restored and makes resume appear unreliable.
+## Important failure modes
+- Do not record the initial workshop before reading/restoring the saved last room. Doing so overwrites the very state being restored and makes resume appear unreliable.
+- Do not assume an SVG hotspot supports the `HTMLElement.click()` helper. Programmatic room restoration should dispatch a bubbling `MouseEvent('click')` through the existing hotspot handler, then re-check the current room until navigation completes.
 
 ## Source history
-Introduced for ArkmatX after the rendered workshop, server closet, paradox room, and per-login visual variants were already validated.
+Introduced for ArkmatX after the rendered workshop, server closet, paradox room, and per-login visual variants were already validated. The SVG activation note was added after the first expedition-memory browser gate timed out while the visual scene itself remained healthy.

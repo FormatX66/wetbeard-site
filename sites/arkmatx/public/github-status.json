@@ -1,16 +1,9 @@
 {
-  "updated_at": "2026-07-28T03:35:35Z",
+  "updated_at": "2026-07-28T09:04:36Z",
   "repository": "FormatX66/wetbeard-site",
   "default_branch": "main",
   "status": "LIVE",
   "open_prs": [
-    {
-      "number": 84,
-      "title": "Restore clean ArkmatX server-room raster",
-      "draft": false,
-      "updated_at": "2026-07-28T03:32:38Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/pull/84"
-    },
     {
       "number": 34,
       "title": "Ignore documentation in workflow-v2 path guardrail",
@@ -27,6 +20,24 @@
     }
   ],
   "recent_commits": [
+    {
+      "sha": "7edcac33",
+      "message": "Add seamless ArkmatX scene navigation (#85)",
+      "date": "2026-07-28T03:50:04Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/7edcac33fb4ceef6a0819b0f9a6d5ffafd2676ea"
+    },
+    {
+      "sha": "b99eef14",
+      "message": "Restore clean ArkmatX server-room raster",
+      "date": "2026-07-28T03:36:39Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/b99eef14f62701c79fad42dc01b05dfaf9a34e95"
+    },
+    {
+      "sha": "5aee7a6c",
+      "message": "Refresh ArkmatX GitHub status",
+      "date": "2026-07-28T03:35:35Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/5aee7a6c7a7687c96310aa66cb1a1e35136015d0"
+    },
     {
       "sha": "379e8219",
       "message": "Enforce raster-only ArkmatX room transitions",
@@ -56,24 +67,6 @@
       "message": "Add per-login ArkmatX expedition memory",
       "date": "2026-07-28T00:18:50Z",
       "html_url": "https://github.com/FormatX66/wetbeard-site/commit/9a71071c2129dffe9b3e7c891c872af22413de7f"
-    },
-    {
-      "sha": "ecc52360",
-      "message": "Record SVG hotspot restore failure mode",
-      "date": "2026-07-28T00:16:16Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/ecc52360bf2476a4f45406fee3c21a36a2922e46"
-    },
-    {
-      "sha": "b2df82f7",
-      "message": "Fix expedition scene restore through SVG hotspots",
-      "date": "2026-07-28T00:16:04Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/b2df82f7416ad635f94e931c17194d5298da8424"
-    },
-    {
-      "sha": "ff019782",
-      "message": "Index per-login expedition memory",
-      "date": "2026-07-27T23:15:22Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/ff0197823147ee48f97df6a53444f32b138199e9"
     }
   ]
 }

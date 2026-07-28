@@ -62,6 +62,7 @@ jobs:
           node tests/expedition-memory-smoke.mjs
           node tests/discovery-ledger-smoke.mjs
           node tests/signal-compass-smoke.mjs
+          node tests/seamless-scene-navigation-smoke.mjs
           node tests/raster-integrity-smoke.mjs
 
       - name: Upload browser screenshots and report

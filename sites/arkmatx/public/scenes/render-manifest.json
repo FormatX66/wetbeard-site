@@ -6,8 +6,10 @@
       "mime": "image/jpeg"
     },
     "servers": {
-      "file": "server-room.part2.txt",
-      "mime": "image/jpeg"
+      "asset": "servers-render.jpg",
+      "mime": "image/jpeg",
+      "width": 256,
+      "height": 144
     },
     "paradox": {
       "prefix": "paradox-single",

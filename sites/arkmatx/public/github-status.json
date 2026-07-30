@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-07-30T03:28:36Z",
+  "updated_at": "2026-07-30T08:50:00Z",
   "repository": "FormatX66/wetbeard-site",
   "default_branch": "main",
   "status": "LIVE",
@@ -20,6 +20,12 @@
     }
   ],
   "recent_commits": [
+    {
+      "sha": "86d9e8bc",
+      "message": "Refresh ArkmatX GitHub status",
+      "date": "2026-07-30T03:28:36Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/86d9e8bc90b09ba0bb7aceaae100d665d0caf860"
+    },
     {
       "sha": "0b48f22e",
       "message": "Refresh ArkmatX GitHub status",
@@ -61,12 +67,6 @@
       "message": "Refresh ArkmatX GitHub status",
       "date": "2026-07-28T09:04:36Z",
       "html_url": "https://github.com/FormatX66/wetbeard-site/commit/2794aab4fb2833b7896ec2af76dff81bf645d282"
-    },
-    {
-      "sha": "7edcac33",
-      "message": "Add seamless ArkmatX scene navigation (#85)",
-      "date": "2026-07-28T03:50:04Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/7edcac33fb4ceef6a0819b0f9a6d5ffafd2676ea"
     }
   ]
 }

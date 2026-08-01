@@ -17,6 +17,10 @@ const questIdeas = [
   {id:'e06', difficulty:1, stars:5, title:'Share your favorite riding song with the crew', description:'A title is enough; no music playback required.'},
   {id:'e07', difficulty:1, stars:5, title:'Name one road you would happily ride again', description:'Share what makes that road memorable.'},
   {id:'e08', difficulty:1, stars:5, title:'Thank someone who helped make the ride happen', description:'Recognize an organizer, ride leader, sweep, helper, or riding partner.'},
+  {id:'e09', difficulty:1, stars:5, title:'Find a building that matches your helmet', description:'Match the main color while staying on the ride route.'},
+  {id:'e10', difficulty:1, stars:5, title:'Spot an animal word in a street name', description:'Look for any real or mythical animal without leaving the route.'},
+  {id:'e11', difficulty:1, stars:5, title:'Ride beneath a natural tree arch', description:'Count a canopy where branches meet above the route.'},
+  {id:'e12', difficulty:1, stars:5, title:'Hear a bicycle bell that is not your own', description:'Listen for a bell from another bicycle while the crew rolls.'},
   {id:'m01', difficulty:2, stars:10, title:'Introduce two riders who have not met', description:'Help two people in the crew make a new connection.'},
   {id:'m02', difficulty:2, stars:10, title:'Learn the story behind another rider’s bicycle', description:'Ask why they chose it or what makes it special.'},
   {id:'m03', difficulty:2, stars:10, title:'Find three different bicycle styles on the ride', description:'Identify three styles such as road, mountain, cruiser, cargo, BMX, or recumbent.'},
@@ -25,6 +29,10 @@ const questIdeas = [
   {id:'m06', difficulty:2, stars:10, title:'Help check another rider’s lights or signals', description:'Only while safely parked before or after riding.'},
   {id:'m07', difficulty:2, stars:10, title:'Find a rider with more years of experience than you', description:'Ask what lesson took them longest to learn.'},
   {id:'m08', difficulty:2, stars:10, title:'Find a rider with fewer years of experience than you', description:'Welcome them and ask what they enjoy most so far.'},
+  {id:'m09', difficulty:2, stars:10, title:'Spot three different riding surfaces', description:'Notice changes such as asphalt, concrete, brick, gravel, or boardwalk without leaving the route.'},
+  {id:'m10', difficulty:2, stars:10, title:'Find three addresses containing the same digit', description:'Use addresses visible from the route; no detour is needed.'},
+  {id:'m11', difficulty:2, stars:10, title:'Spot a bicycle carrying an unexpected cargo', description:'Find something unusual that is safely secured to a bicycle.'},
+  {id:'m12', difficulty:2, stars:10, title:'Learn another rider’s dream cycling destination', description:'Ask where they would most like to ride and why.'},
   {id:'h01', difficulty:3, stars:20, title:'Ride with someone you have never ridden beside before', description:'Make a new riding connection while following safe group-riding etiquette.'},
   {id:'h02', difficulty:3, stars:20, title:'Help a new rider feel included in the crew', description:'Introduce yourself, include them in conversation, and connect them with another rider.'},
   {id:'h03', difficulty:3, stars:20, title:'Learn three riders’ bicycle origin stories', description:'Ask what first inspired each person to ride.'},
@@ -32,7 +40,11 @@ const questIdeas = [
   {id:'h05', difficulty:3, stars:20, title:'Find five unique custom details across the bicycles', description:'Look for paint, handlebars, racks, bags, lights, wheels, or handmade touches.'},
   {id:'h06', difficulty:3, stars:20, title:'Make three positive introductions during the ride', description:'Connect riders using something they have in common.'},
   {id:'h07', difficulty:3, stars:20, title:'Collect three pieces of local road knowledge', description:'Ask riders about roads, hazards, views, or routes worth remembering.'},
-  {id:'h08', difficulty:3, stars:20, title:'Recognize three different people who supported the ride', description:'Thank riders or helpers for specific things they contributed.'}
+  {id:'h08', difficulty:3, stars:20, title:'Recognize three different people who supported the ride', description:'Thank riders or helpers for specific things they contributed.'},
+  {id:'h09', difficulty:3, stars:20, title:'Remember six street names in riding order', description:'Recite six consecutive street names in the order the route reached them.'},
+  {id:'h10', difficulty:3, stars:20, title:'Collect five one-word ride descriptions', description:'Ask five riders for one word that captures today’s bicycle ride.'},
+  {id:'h11', difficulty:3, stars:20, title:'Identify eight distinct sounds of the ride', description:'Use only your ears and memory; no recording or scheduled stop is needed.'},
+  {id:'h12', difficulty:3, stars:20, title:'Spot five bicycle-friendly route features', description:'Look for bike lanes, bicycle signals, repair stands, racks, traffic calming, or trail links.'}
 ];
 
 const cardIdeas = [
@@ -83,7 +95,23 @@ const cardIdeas = [
   {id:'wisdom-run', title:'Wisdom Run', quests:[
     {difficulty:1, stars:5, title:'Share one useful riding tip', description:'Keep it friendly, practical, and safety-minded.'},
     {difficulty:2, stars:10, title:'Ask an experienced rider for one lesson', description:'Find out what lesson took them longest to learn.'},
-    {difficulty:3, stars:20, title:'Trade riding wisdom with three different riders', description:'Give or receive one useful lesson in each conversation.'}]}
+    {difficulty:3, stars:20, title:'Trade riding wisdom with three different riders', description:'Give or receive one useful lesson in each conversation.'}]},
+  {id:'street-name-scramble', title:'Street Name Scramble', quests:[
+    {difficulty:1, stars:5, title:'Spot a street name with a double letter', description:'Find two identical letters together on a street sign along the route.'},
+    {difficulty:2, stars:10, title:'Find three street names sharing one first letter', description:'Keep watch as the bicycle route unfolds; no detour is required.'},
+    {difficulty:3, stars:20, title:'Build a five-letter word from street initials', description:'Use the first letters of five street names seen during the ride.'}]},
+  {id:'signal-fleet', title:'Signal Fleet', quests:[
+    {difficulty:1, stars:5, title:'Give one clear bicycle turn signal', description:'Signal early while keeping steady control and following the ride leader.'},
+    {difficulty:2, stars:10, title:'Signal three different route changes', description:'Correctly signal a left, right, or slowing movement as each naturally occurs.'},
+    {difficulty:3, stars:20, title:'Relay five bicycle signals through the crew', description:'Pass visible route signals smoothly while maintaining safe spacing and formation.'}]},
+  {id:'wildlife-watch', title:'Wildlife Watch', quests:[
+    {difficulty:1, stars:5, title:'Spot one wild bird from the bicycle route', description:'Identify it by sight or sound without approaching or disturbing it.'},
+    {difficulty:2, stars:10, title:'Spot three different wild animal species', description:'Observe wildlife from the route and give every animal plenty of space.'},
+    {difficulty:3, stars:20, title:'Spot five wildlife species without a detour', description:'Count distinct wild species seen or heard while following the planned bicycle route.'}]},
+  {id:'pirates-palette', title:'Pirate’s Palette', quests:[
+    {difficulty:1, stars:5, title:'Spot one gold-colored bicycle detail', description:'Look for a gold frame part, accessory, decal, or decoration.'},
+    {difficulty:2, stars:10, title:'Find red, blue, and green across three bicycles', description:'Each color must appear on a different bicycle in the crew.'},
+    {difficulty:3, stars:20, title:'Find all seven rainbow colors during the ride', description:'Collect red, orange, yellow, green, blue, indigo, and violet from bicycles or route-side sights.'}]}
 ];
 
 const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (character) => ({

@@ -1,57 +1,67 @@
 {
-  "updated_at": "2026-08-02T19:59:06-04:00",
-  "headline": "RENDERED REALMS, VERIFIED CONTROL",
-  "summary": "This week moved ArkmatX toward a validated rendered world, completed BrainConnect alpha evidence on the Pi/Windows lab, consolidated BoxBrain's control and memory stack, and refreshed the live Wet Beard quest system.",
+  "updated_at": "2026-08-09T19:09:04-04:00",
+  "headline": "SCRIPT-FIRST CONTROL, MEDIA NEXT",
+  "summary": "This week centered on BoxBrain execution efficiency and queue discipline: script-first routing was merged and verified, local/Git task queues were formalized, live rescue and WLAN gates were held safely at their dependency boundaries, and a GoPro Cloud virtual-drive/media-catalog experiment was added to the active queue. ArkmatX and the deployed realm builds remained stable rather than receiving new feature merges.",
   "projects": [
     {
       "name": "ARKMATX",
-      "status": "STAGING ACTIVE",
-      "detail": "Rendered workshop, server closet, and paradox room with separate hotspots, per-login visual variants, local journals and missions, seamless scene navigation, raster-integrity guards, and five-viewport browser QA."
+      "status": "STAGING STABLE",
+      "detail": "The rendered workshop/server/paradox build with independent hotspot layers, per-login state, scene navigation, raster-integrity guards, and five-viewport QA remains the current staging baseline. No new ArkmatX feature PR merged during Aug 3-9; GitHub status telemetry continued refreshing."
     },
     {
       "name": "BOXBRAIN",
-      "status": "ALPHA COMPLETE",
-      "detail": "Unified control plane, ten-agent workspace, ChatGPT organizer, repository-first memory stack, canonical project indexes, guarded lab recovery, and an opt-in Raspberry Pi console."
+      "status": "ACTIVE / BB-006 COMPLETE",
+      "detail": "PR #10 merged deterministic Script/GPT/Hybrid routing, a versioned read-only script registry, structured execution results, idempotency and Cue/Complete duplicate prevention, routing metrics, and authenticated API endpoints. BB-006 passed 6 focused tests and the 97-test controller suite."
+    },
+    {
+      "name": "AI WORKFLOWS",
+      "status": "ROUTING VERIFIED / IDEAS HELD",
+      "detail": "Script-first task offload is implemented and verified. The Multi-GPT Revolving Cycle and Microsoft Copilot Task Offload remain explicitly in Cue Hold as non-runnable design concepts pending routing, credential, usage-limit, and review rules."
+    },
+    {
+      "name": "MEDIA STORAGE",
+      "status": "QUEUED / BB-007",
+      "detail": "A GoPro Cloud virtual-drive and media-catalog integration is now an active high-priority BoxBrain task, targeting metadata-first browsing, on-demand materialization, bounded local caching, deliberate SSD/HDD mirroring, and exact-duplicate hashing across GoPro Cloud, OneDrive, Google Drive, SSD, and HDD without automatic deletion."
     },
     {
       "name": "BRAIN CONNECT",
       "status": "ALPHA VERIFIED",
-      "detail": "Authenticated controller and certificate helper deployed on Raspberry Pi 4; pinned RDP identity, bounded keyboard/pointer/scroll evidence, cleanup, and checkpoint recovery verified. Windows rescue enrollment remains disabled pending operator decisions."
+      "detail": "The previously verified Raspberry Pi 4 controller, certificate boundary, bounded RDP input, and recovery evidence remain current. No new BrainConnect merge landed during Aug 3-9."
     },
     {
       "name": "WEBSITE CLUSTER",
-      "status": "CONSOLIDATED",
-      "detail": "Family website sources and deployment logic were consolidated into ClusterSites, with an infrastructure control plane, corrected WitchDicks identity, and restored Ubercorp visual layers and Easter eggs."
+      "status": "DEPLOYED / STABLE",
+      "detail": "ClusterSites and the connected realm deployments remain in their prior verified state. No new ClusterSites deployment code merged during Aug 3-9."
     },
     {
       "name": "WET BEARD",
       "status": "LIVE SYSTEM",
-      "detail": "Quest-card and rider systems remain live; the August refresh added new bicycle quests and themed 5/10/20-star cards while preserving the existing review workflow."
+      "detail": "The quest-card and rider systems remain live on the existing August build. No new Wet Beard feature merge landed during Aug 3-9."
     },
     {
       "name": "MORRI",
       "status": "LIVE",
-      "detail": "The connected realm build was promoted to production with its exploration, puzzle, and shared-realm hooks preserved."
+      "detail": "The connected realm remains on its previously promoted production build; no new merge was recorded this week."
     },
     {
       "name": "WITCHDIX",
       "status": "FALLBACK LIVE",
-      "detail": "The complete site remains available from the verified Bluehost fallback path while standalone-domain creation stays blocked by hosting configuration."
+      "detail": "The verified fallback deployment remains the current served build; no new merge was recorded this week."
     },
     {
       "name": "XANDER ZOMBIE",
       "status": "LIVE BUILD",
-      "detail": "The verified connected build was promoted with runtime data preservation; comic-engine and canon workflows remain the active development direction."
+      "detail": "The previously promoted connected build remains current; no new merge was recorded this week."
     }
   ],
   "weekly_log": [
-    "Rebuilt ArkmatX around rendered scenes and independent hotspot layers, then added per-login variants, expedition memory, a discovery ledger, and a mission compass.",
-    "Added real-browser coverage across desktop, tablet, portrait phone, and landscape phone, plus keyboard/touch interaction checks and raster corruption detection.",
-    "Made ArkmatX room travel seamless across physical hotspots, the journal, the signal compass, deep links, and browser Back without resetting runtime state.",
-    "Created a persistent GPT workflow-memory library and recorded reusable staging, deployment, render, binary-asset, and login-isolation fixes.",
-    "Completed BrainConnect alpha verification with the Pi controller, pinned RDP identity, bounded input and scrolling evidence, cleanup, and exact VM checkpoint restoration.",
-    "Merged a fail-closed Windows rescue foundation, pinned WinRM transport, guarded provisioning, and readiness checks while leaving live enrollment disabled.",
-    "Consolidated BoxBrain and the family website cluster, then refreshed Wet Beard with new August bicycle quests and themed reward cards."
+    "Merged BoxBrain PR #10, completing BB-006 with deterministic Script/GPT/Hybrid routing, a versioned read-only script registry, structured results, idempotency, duplicate prevention, routing metrics, and authenticated processing endpoints.",
+    "Verified BB-006 with 6 focused script-first tests and 97 controller tests; three unrelated clean-main assertions remain outside the BB-006 change set.",
+    "Formalized the Codex queue workflow across Git and local Desktop copies with active Queue, Cue Hold, Cue Complete, bootstrap behavior, sync rules, and duplicate-work prevention.",
+    "Moved script-first offload from hold into active work and completed it, while keeping the Multi-GPT revolving cycle and Microsoft Copilot offload as intentionally non-runnable held concepts.",
+    "Advanced BB-001 Windows WLAN and BB-002 one-shot rescue work to verified checkpoints, then stopped safely: Morris PC was offline for live WLAN verification, and rescue deployment still requires legitimate media plus an authorized reboot window; BB-003 through BB-005 remain dependency-blocked.",
+    "Added BB-007 for a GoPro Cloud virtual-drive/media-catalog experiment using metadata-first inventory, on-demand downloads, cache controls, archive/mirror flows, and duplicate hashing without automatic deletion.",
+    "Kept ArkmatX and the deployed website cluster stable this week; wetbeard-site activity was limited to the prior weekly activity merge and repeated GitHub-status telemetry refreshes rather than new feature deployments."
   ],
-  "easter_egg_seed": "The room remembers the visitor; the visitor remembers a different room."
+  "easter_egg_seed": "The queue learned to wait; somehow that made the machine faster."
 }

@@ -48,7 +48,7 @@ jobs:
           chmod 600 "$HOME/.ssh/bluehost_deploy"
           ssh-keyscan -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts"
 
-      - name: Prepare isolated Aurum directory
+      - name: Prepare and diagnose isolated Aurum directory
         env:
           BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
           BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
@@ -56,20 +56,20 @@ jobs:
         run: |
           set -euo pipefail
           ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
-            'mkdir -p public_html/aurum/state/inbox public_html/aurum/state/outbox && chmod 700 public_html/aurum/state public_html/aurum/state/inbox public_html/aurum/state/outbox'
+            'set -e; mkdir -p public_html/aurum/state/inbox public_html/aurum/state/outbox; chmod 755 public_html/aurum; chmod 700 public_html/aurum/state public_html/aurum/state/inbox public_html/aurum/state/outbox; rm -f public_html/aurum/.htaccess; php -v | head -n 2 || true'
 
-      - name: Deploy Aurum web node
+      - name: Deploy Aurum web node without rewrite dependency
         env:
           BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
           BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
         shell: bash
         run: |
           set -euo pipefail
-          tar -C "$RUNNER_TEMP/BoxBrain/Web/Aurum-Arkmatx" -czf - index.php .htaccess | \
+          tar -C "$RUNNER_TEMP/BoxBrain/Web/Aurum-Arkmatx" -czf - index.php | \
           ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
-            'tar -xzf - -C public_html/aurum'
+            'set -e; tar -xzf - -C public_html/aurum; chmod 644 public_html/aurum/index.php; php -l public_html/aurum/index.php'
 
-      - name: Verify live Aurum node
+      - name: Verify live Aurum node directly
         shell: bash
         run: |
           set -euo pipefail
@@ -78,7 +78,7 @@ jobs:
             --retry 5 --retry-all-errors --retry-delay 3 \
             --header 'Cache-Control: no-cache' \
             --output "$body" \
-            'https://arkmatx.com/aurum/status'
+            'https://arkmatx.com/aurum/index.php'
           python3 - "$body" <<'PY'
           import json,sys
           data=json.load(open(sys.argv[1],encoding='utf-8'))

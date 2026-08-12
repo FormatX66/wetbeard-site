@@ -48,7 +48,7 @@ jobs:
           chmod 600 "$HOME/.ssh/bluehost_deploy"
           ssh-keyscan -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts"
 
-      - name: Prepare and diagnose isolated Aurum directory
+      - name: Prepare Aurum under ArkmatX document root
         env:
           BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
           BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
@@ -56,9 +56,9 @@ jobs:
         run: |
           set -euo pipefail
           ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
-            'set -e; mkdir -p public_html/aurum/state/inbox public_html/aurum/state/outbox; chmod 755 public_html/aurum; chmod 700 public_html/aurum/state public_html/aurum/state/inbox public_html/aurum/state/outbox; rm -f public_html/aurum/.htaccess; php -v | head -n 2 || true'
+            'set -e; mkdir -p public_html/arkmatx/aurum/state/inbox public_html/arkmatx/aurum/state/outbox; chmod 755 public_html/arkmatx/aurum; chmod 700 public_html/arkmatx/aurum/state public_html/arkmatx/aurum/state/inbox public_html/arkmatx/aurum/state/outbox; rm -f public_html/arkmatx/aurum/.htaccess; php -v | head -n 2 || true'
 
-      - name: Deploy Aurum web node without rewrite dependency
+      - name: Deploy Aurum web node
         env:
           BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
           BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
@@ -67,9 +67,9 @@ jobs:
           set -euo pipefail
           tar -C "$RUNNER_TEMP/BoxBrain/Web/Aurum-Arkmatx" -czf - index.php | \
           ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
-            'set -e; tar -xzf - -C public_html/aurum; chmod 644 public_html/aurum/index.php; php -l public_html/aurum/index.php'
+            'set -e; tar -xzf - -C public_html/arkmatx/aurum; chmod 644 public_html/arkmatx/aurum/index.php; php -l public_html/arkmatx/aurum/index.php'
 
-      - name: Verify live Aurum node directly
+      - name: Verify live Aurum node
         shell: bash
         run: |
           set -euo pipefail

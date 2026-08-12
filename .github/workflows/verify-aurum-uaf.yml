@@ -1,0 +1,46 @@
+name: Verify Aurum UAF
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/verify-aurum-uaf.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify UAF receive and receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          frame_id="gh-$(date +%s)-$RANDOM"
+          payload="$(mktemp)"
+          response="$(mktemp)"
+          python3 - "$frame_id" "$payload" <<'PY'
+          import json,sys,time
+          frame={
+            'schema':'aurum.uaf.v0','frame_id':sys.argv[1],
+            'origin':'Aurum-GitHub-Verify','target':'Aurum-Arkmatx',
+            'intent':'verification_ping','state_delta':{'verified':True},
+            'provenance':{'node':'Aurum-GitHub-Verify','created':int(time.time())},
+            'verification':{'content_addressed':True,'reversible':True}}
+          json.dump(frame,open(sys.argv[2],'w',encoding='utf-8'),separators=(',',':'))
+          PY
+          code="$(curl --silent --show-error --output "$response" --write-out '%{http_code}' \
+            --header 'Content-Type: application/json' --data-binary "@$payload" \
+            'https://arkmatx.com/aurum/index.php')"
+          test "$code" = '202'
+          python3 - "$response" "$frame_id" <<'PY'
+          import json,sys
+          data=json.load(open(sys.argv[1],encoding='utf-8')); expected=sys.argv[2]
+          assert data.get('status') == 'merged', data
+          receipt=data.get('receipt') or {}
+          assert receipt.get('origin') == 'Aurum-Arkmatx', receipt
+          assert (receipt.get('state_delta') or {}).get('received_frame') == expected, receipt
+          print(json.dumps(data,indent=2,sort_keys=True))
+          PY

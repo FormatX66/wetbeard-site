@@ -24,13 +24,16 @@ jobs:
       - name: Check out carrier repo
         uses: actions/checkout@v4
 
-      - name: Fetch Aurum web node from BoxBrain
+      - name: Fetch Aurum controller and portal from BoxBrain
         shell: bash
         run: |
           set -euo pipefail
           git clone --depth 1 --filter=blob:none --sparse https://github.com/FormatX66/BoxBrain.git "$RUNNER_TEMP/BoxBrain"
           git -C "$RUNNER_TEMP/BoxBrain" sparse-checkout set Web/Aurum-Arkmatx
           php -l "$RUNNER_TEMP/BoxBrain/Web/Aurum-Arkmatx/index.php"
+          test -s "$RUNNER_TEMP/BoxBrain/Web/Aurum-Arkmatx/portal.html"
+          test -s "$RUNNER_TEMP/BoxBrain/Web/Aurum-Arkmatx/bootstrap.sh"
+          test -s "$RUNNER_TEMP/BoxBrain/Web/Aurum-Arkmatx/bootstrap.ps1"
 
       - name: Configure existing Bluehost SSH carrier
         env:
@@ -48,80 +51,77 @@ jobs:
           chmod 600 "$HOME/.ssh/bluehost_deploy"
           ssh-keyscan -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts"
 
-      - name: Prepare Aurum under ArkmatX document root
+      - name: Ensure aurum.arkmatx.com exists in cPanel
         env:
           BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
           BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
         shell: bash
         run: |
           set -euo pipefail
-          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
-            'set -e; mkdir -p public_html/arkmatx/aurum/state/inbox public_html/arkmatx/aurum/state/outbox; chmod 755 public_html/arkmatx/aurum; chmod 700 public_html/arkmatx/aurum/state public_html/arkmatx/aurum/state/inbox public_html/arkmatx/aurum/state/outbox; rm -f public_html/arkmatx/aurum/.htaccess; php -v | head -n 2 || true'
+          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" 'set -e
+            mkdir -p public_html/arkmatx/aurum/state/inbox public_html/arkmatx/aurum/state/outbox public_html/arkmatx/aurum/state/nodes
+            current="$(/usr/local/cpanel/bin/uapi --output=json DomainInfo single_domain_data domain=aurum.arkmatx.com 2>/dev/null || true)"
+            if printf "%s" "$current" | grep -Eq "\"status\"[[:space:]]*:[[:space:]]*1"; then
+              echo "aurum.arkmatx.com already registered"
+            else
+              created="$(/usr/local/cpanel/bin/uapi --output=json SubDomain addsubdomain domain=aurum rootdomain=arkmatx.com dir=public_html/arkmatx/aurum)"
+              printf "%s\n" "$created"
+              printf "%s" "$created" | grep -Eq "\"status\"[[:space:]]*:[[:space:]]*1"
+            fi
+            chmod 755 public_html/arkmatx/aurum
+            chmod 700 public_html/arkmatx/aurum/state public_html/arkmatx/aurum/state/inbox public_html/arkmatx/aurum/state/outbox public_html/arkmatx/aurum/state/nodes
+            rm -f public_html/arkmatx/aurum/.htaccess
+            php -v | head -n 2 || true'
 
-      - name: Deploy Aurum web node
+      - name: Deploy Aurum controller portal and bootstraps
         env:
           BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
           BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
         shell: bash
         run: |
           set -euo pipefail
-          tar -C "$RUNNER_TEMP/BoxBrain/Web/Aurum-Arkmatx" -czf - index.php | \
+          tar -C "$RUNNER_TEMP/BoxBrain/Web/Aurum-Arkmatx" -czf - index.php portal.html bootstrap.sh bootstrap.ps1 | \
           ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
-            'set -e; tar -xzf - -C public_html/arkmatx/aurum; chmod 644 public_html/arkmatx/aurum/index.php; php -l public_html/arkmatx/aurum/index.php'
+            'set -e; tar -xzf - -C public_html/arkmatx/aurum; chmod 644 public_html/arkmatx/aurum/index.php public_html/arkmatx/aurum/portal.html public_html/arkmatx/aurum/bootstrap.sh public_html/arkmatx/aurum/bootstrap.ps1; php -l public_html/arkmatx/aurum/index.php'
 
-      - name: Verify live Aurum node
+      - name: Verify machine controller endpoint
         shell: bash
         run: |
           set -euo pipefail
           body="$(mktemp)"
-          curl --fail-with-body --silent --show-error \
-            --retry 5 --retry-all-errors --retry-delay 3 \
-            --header 'Cache-Control: no-cache' \
-            --output "$body" \
-            'https://arkmatx.com/aurum/index.php'
+          curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 \
+            --header 'Cache-Control: no-cache' --output "$body" 'https://arkmatx.com/aurum/index.php'
           python3 - "$body" <<'PY'
           import json,sys
           data=json.load(open(sys.argv[1],encoding='utf-8'))
           assert data.get('node') == 'Aurum-Arkmatx', data
           assert data.get('status') == 'active-edge-web-node', data
           assert data.get('schema') == 'aurum.uaf.v0', data
-          print(json.dumps(data,indent=2,sort_keys=True))
+          assert 'node_enroll' in data.get('capabilities',[]), data
           PY
 
-      - name: Verify UAF receive and receipt
+      - name: Verify aurum subdomain portal and node enrollment
         shell: bash
         run: |
           set -euo pipefail
-          frame_id="gh-$(date +%s)-$RANDOM"
-          payload="$(mktemp)"
-          response="$(mktemp)"
-          python3 - "$frame_id" "$payload" <<'PY'
-          import json,sys,time
-          frame={
-            'schema':'aurum.uaf.v0',
-            'frame_id':sys.argv[1],
-            'origin':'Aurum-GitHub-Verify',
-            'target':'Aurum-Arkmatx',
-            'intent':'verification_ping',
-            'state_delta':{'verified':True},
-            'provenance':{'node':'Aurum-GitHub-Verify','created':int(time.time())},
-            'verification':{'content_addressed':True,'reversible':True}
-          }
-          json.dump(frame,open(sys.argv[2],'w',encoding='utf-8'),separators=(',',':'))
-          PY
-          code="$(curl --silent --show-error --output "$response" --write-out '%{http_code}' \
-            --header 'Content-Type: application/json' \
-            --data-binary "@$payload" \
-            'https://arkmatx.com/aurum/uaf')"
-          test "$code" = '202'
-          python3 - "$response" "$frame_id" <<'PY'
-          import json,sys
-          data=json.load(open(sys.argv[1],encoding='utf-8'))
-          expected=sys.argv[2]
-          assert data.get('status') == 'merged', data
-          receipt=data.get('receipt') or {}
-          assert receipt.get('origin') == 'Aurum-Arkmatx', receipt
-          assert (receipt.get('state_delta') or {}).get('received_frame') == expected, receipt
-          assert (receipt.get('state_delta') or {}).get('status') == 'merged', receipt
-          print(json.dumps(data,indent=2,sort_keys=True))
+          for n in 1 2 3 4 5 6; do
+            code="$(curl --silent --show-error --location --output /tmp/aurum-portal.html --write-out '%{http_code}' --header 'Cache-Control: no-cache' 'https://aurum.arkmatx.com/' || true)"
+            if [ "$code" = '200' ] && grep -q 'ArkmatX hive portal' /tmp/aurum-portal.html; then break; fi
+            sleep 5
+          done
+          test "${code:-}" = '200'
+          grep -q 'ArkmatX hive portal' /tmp/aurum-portal.html
+          curl --fail-with-body --silent --show-error 'https://aurum.arkmatx.com/bootstrap.sh' | grep -q 'Aurum node enrolled'
+          curl --fail-with-body --silent --show-error 'https://aurum.arkmatx.com/bootstrap.ps1' | grep -q 'Aurum node enrolled'
+          frame_id="verify-enroll-$(date +%s)-$RANDOM"
+          cat > /tmp/enroll.json <<JSON
+          {"schema":"aurum.uaf.v0","frame_id":"$frame_id","origin":"Aurum-GitHub-Verify","target":"Aurum-Arkmatx","intent":"node_enroll","state_delta":{"node_id":"verify-web-node","name":"GitHub Verify","os":"linux","arch":"x64"},"provenance":{"node":"Aurum-GitHub-Verify","created":$(date +%s)},"verification":{"content_addressed":true,"reversible":true}}
+          JSON
+          http="$(curl --silent --show-error --output /tmp/enroll-response.json --write-out '%{http_code}' --header 'Content-Type: application/json' --data-binary @/tmp/enroll.json 'https://aurum.arkmatx.com/enroll')"
+          test "$http" = '202'
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/enroll-response.json'))
+          assert d.get('status')=='merged', d
+          assert (d.get('receipt') or {}).get('origin')=='Aurum-Arkmatx', d
           PY

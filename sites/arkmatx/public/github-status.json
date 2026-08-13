@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-08-12T19:20:20Z",
+  "updated_at": "2026-08-13T02:47:05Z",
   "repository": "FormatX66/wetbeard-site",
   "default_branch": "main",
   "status": "LIVE",
@@ -21,52 +21,52 @@
   ],
   "recent_commits": [
     {
-      "sha": "f142a9f0",
-      "message": "Refresh ArkmatX GitHub status",
-      "date": "2026-08-12T13:47:16Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/f142a9f0c1b1089794059e19408a309cd0a529bb"
+      "sha": "bf403c4f",
+      "message": "Deploy and seed BBPI4 swarm across enrolled nodes",
+      "date": "2026-08-12T23:38:00Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/bf403c4fa6697f8f8d3bed55990fd76f5a63132b"
     },
     {
-      "sha": "1598ecf1",
-      "message": "Refresh ArkmatX GitHub status",
-      "date": "2026-08-12T07:52:29Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/1598ecf1355d8f068f9763c9b61123031493ce50"
+      "sha": "e91d9d63",
+      "message": "Deploy Aurum work leasing and Windows worker",
+      "date": "2026-08-12T23:26:27Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/e91d9d639b72b9480698211e05dbbef530004c63"
     },
     {
-      "sha": "09d7aa20",
-      "message": "Refresh ArkmatX GitHub status",
-      "date": "2026-08-12T02:43:59Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/09d7aa208028b118d03a430e2f7741f1a575f71f"
+      "sha": "ab8088bf",
+      "message": "Verify Aurum outbound node heartbeat deployment",
+      "date": "2026-08-12T21:45:11Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/ab8088bf0aefd1349cf72701f7ed55e3ecbe45b1"
     },
     {
-      "sha": "6319b6fd",
-      "message": "Refresh ArkmatX GitHub status",
-      "date": "2026-08-11T19:20:08Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/6319b6fde07e9fa34a4234d5f1cce426f007a46b"
+      "sha": "46c7e302",
+      "message": "Create and deploy aurum.arkmatx.com portal",
+      "date": "2026-08-12T21:33:10Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/46c7e30240f6cbf48a0fb1afa3b3e3386a607463"
     },
     {
-      "sha": "f3e194ae",
-      "message": "Refresh ArkmatX GitHub status",
-      "date": "2026-08-11T13:42:32Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/f3e194aeceb95ea3d3af0a282b827464ef17d462"
+      "sha": "bb634836",
+      "message": "Add direct Aurum UAF verification",
+      "date": "2026-08-12T21:22:28Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/bb63483681c291b4ee334b18c95f8f6bd2d8375e"
     },
     {
-      "sha": "0130f5d5",
-      "message": "Refresh ArkmatX GitHub status",
-      "date": "2026-08-11T07:37:18Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/0130f5d53d70d0687d3490bcb33769f93c1e4daf"
+      "sha": "4441db16",
+      "message": "Verify Aurum Arkmatx UAF round trip",
+      "date": "2026-08-12T21:21:08Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/4441db1649346cfafc28df81b226777fe2be3fa6"
     },
     {
-      "sha": "49409028",
-      "message": "Refresh ArkmatX GitHub status",
-      "date": "2026-08-11T02:27:43Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/49409028309549fcf677aab3d11511b192fcc943"
+      "sha": "13850046",
+      "message": "Fix Aurum Arkmatx document root",
+      "date": "2026-08-12T21:18:04Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/13850046652a31c3551a7f51e37f032156348888"
     },
     {
-      "sha": "51045184",
-      "message": "Refresh ArkmatX GitHub status",
-      "date": "2026-08-10T19:16:44Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/5104518469347622f6a8e1cc1fcb619edf00b675"
+      "sha": "ab8122ac",
+      "message": "Remove rewrite dependency from Aurum Bluehost deployment",
+      "date": "2026-08-12T21:10:15Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/ab8122ac3e7341cf2ac054bd7dca7a58cc3cfb52"
     }
   ]
 }

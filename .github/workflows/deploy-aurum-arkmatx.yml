@@ -30,7 +30,8 @@ jobs:
           git -C "$RUNNER_TEMP/BoxBrain" sparse-checkout set Web/Aurum-Arkmatx
           php -l "$RUNNER_TEMP/BoxBrain/Web/Aurum-Arkmatx/index.php"
           php -l "$RUNNER_TEMP/BoxBrain/Web/Aurum-Arkmatx/seed-swarm.php"
-          for f in portal.html bootstrap.sh bootstrap.ps1 worker.ps1 seed-swarm.php; do test -s "$RUNNER_TEMP/BoxBrain/Web/Aurum-Arkmatx/$f"; done
+          php -l "$RUNNER_TEMP/BoxBrain/Web/Aurum-Arkmatx/helpaurum.php"
+          for f in portal.html bootstrap.sh bootstrap.ps1 worker.ps1 seed-swarm.php helpaurum.php; do test -s "$RUNNER_TEMP/BoxBrain/Web/Aurum-Arkmatx/$f"; done
       - name: Configure existing Bluehost SSH carrier
         env:
           BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
@@ -56,17 +57,17 @@ jobs:
             chmod 755 public_html/arkmatx/aurum
             chmod 700 public_html/arkmatx/aurum/state public_html/arkmatx/aurum/state/inbox public_html/arkmatx/aurum/state/outbox public_html/arkmatx/aurum/state/nodes public_html/arkmatx/aurum/state/conversations public_html/arkmatx/aurum/state/work
             rm -f public_html/arkmatx/aurum/.htaccess'
-      - name: Deploy Aurum controller portal bootstraps worker and swarm seed
+      - name: Deploy Aurum controller portal bootstraps worker swarm seed and helper
         env:
           BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
           BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
         shell: bash
         run: |
           set -euo pipefail
-          tar -C "$RUNNER_TEMP/BoxBrain/Web/Aurum-Arkmatx" -czf - index.php portal.html bootstrap.sh bootstrap.ps1 worker.ps1 seed-swarm.php | \
+          tar -C "$RUNNER_TEMP/BoxBrain/Web/Aurum-Arkmatx" -czf - index.php portal.html bootstrap.sh bootstrap.ps1 worker.ps1 seed-swarm.php helpaurum.php | \
           ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
-            'set -e; tar -xzf - -C public_html/arkmatx/aurum; chmod 644 public_html/arkmatx/aurum/index.php public_html/arkmatx/aurum/portal.html public_html/arkmatx/aurum/bootstrap.sh public_html/arkmatx/aurum/bootstrap.ps1 public_html/arkmatx/aurum/worker.ps1 public_html/arkmatx/aurum/seed-swarm.php; php -l public_html/arkmatx/aurum/index.php; php -l public_html/arkmatx/aurum/seed-swarm.php; php public_html/arkmatx/aurum/seed-swarm.php'
-      - name: Verify controller work leasing and swarm assets
+            'set -e; tar -xzf - -C public_html/arkmatx/aurum; chmod 644 public_html/arkmatx/aurum/index.php public_html/arkmatx/aurum/portal.html public_html/arkmatx/aurum/bootstrap.sh public_html/arkmatx/aurum/bootstrap.ps1 public_html/arkmatx/aurum/worker.ps1 public_html/arkmatx/aurum/seed-swarm.php public_html/arkmatx/aurum/helpaurum.php; php -l public_html/arkmatx/aurum/index.php; php -l public_html/arkmatx/aurum/seed-swarm.php; php -l public_html/arkmatx/aurum/helpaurum.php; php public_html/arkmatx/aurum/seed-swarm.php'
+      - name: Verify controller work leasing swarm assets and Help Aurum
         shell: bash
         run: |
           set -euo pipefail
@@ -74,5 +75,6 @@ jobs:
           body="$(curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 "$api")"
           printf '%s' "$body" | grep -F 'work_lease' >/dev/null
           curl --fail-with-body --silent --show-error 'https://aurum.arkmatx.com/worker.ps1' | grep -F 'safe_carriers_tried' >/dev/null
+          curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 'https://aurum.arkmatx.com/helpaurum.php' | grep -F 'Help Aurum' >/dev/null
           lease="$(curl --fail-with-body --silent --show-error "$api/work/lease?node_id=825e5a7b7d4a7aed&capabilities=bbpi4-bootstrap")"
           printf '%s' "$lease" | grep -F 'bbpi4-' >/dev/null

@@ -1,0 +1,108 @@
+name: Deploy Aurum Failover Carrier
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/deploy-aurum-failover.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aurum-failover-carrier
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Publish Aurum failover controller
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Check out carrier repo
+        uses: actions/checkout@v4
+
+      - name: Fetch Aurum controller from BoxBrain
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 --filter=blob:none --sparse https://github.com/FormatX66/BoxBrain.git "$RUNNER_TEMP/BoxBrain"
+          git -C "$RUNNER_TEMP/BoxBrain" sparse-checkout set Web/Aurum-Arkmatx
+          php -l "$RUNNER_TEMP/BoxBrain/Web/Aurum-Arkmatx/index.php"
+          php -l "$RUNNER_TEMP/BoxBrain/Web/Aurum-Arkmatx/seed-swarm.php"
+
+      - name: Configure existing Bluehost SSH carrier
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+          BLUEHOST_SSH_PRIVATE_KEY: ${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$BLUEHOST_HOST"; test -n "$BLUEHOST_USERNAME"; test -n "$BLUEHOST_SSH_PRIVATE_KEY"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$BLUEHOST_SSH_PRIVATE_KEY" > "$HOME/.ssh/bluehost_deploy"
+          chmod 600 "$HOME/.ssh/bluehost_deploy"
+          ssh-keyscan -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts"
+
+      - name: Create isolated failover path and mirror existing Aurum state
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          src='public_html/arkmatx/aurum/state'
+          dst='public_html/aurum-failover'
+          mkdir -p "$dst/state/inbox" "$dst/state/outbox" "$dst/state/nodes" "$dst/state/conversations" "$dst/state/work"
+          if [ -d "$src" ]; then
+            cp -a "$src"/. "$dst/state"/
+          fi
+          chmod 755 "$dst"
+          find "$dst/state" -type d -exec chmod 700 {} +
+          find "$dst/state" -type f -exec chmod 600 {} +
+          rm -f "$dst/.htaccess"
+          REMOTE
+
+      - name: Deploy current controller code to failover path
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tar -C "$RUNNER_TEMP/BoxBrain/Web/Aurum-Arkmatx" -czf - index.php portal.html bootstrap.sh bootstrap.ps1 worker.ps1 seed-swarm.php helpaurum.php | \
+          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            'set -e; tar -xzf - -C public_html/aurum-failover; chmod 644 public_html/aurum-failover/index.php public_html/aurum-failover/portal.html public_html/aurum-failover/bootstrap.sh public_html/aurum-failover/bootstrap.ps1 public_html/aurum-failover/worker.ps1 public_html/aurum-failover/seed-swarm.php public_html/aurum-failover/helpaurum.php; php -l public_html/aurum-failover/index.php; php -l public_html/aurum-failover/seed-swarm.php; php public_html/aurum-failover/seed-swarm.php'
+
+      - name: Verify failover controller
+        id: verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          api='https://madmorrigan.com/aurum-failover/index.php'
+          body="$(curl --fail-with-body --silent --show-error --retry 4 --retry-all-errors --retry-delay 3 "$api")"
+          printf '%s' "$body" | grep -F 'Aurum-Arkmatx' >/dev/null
+          printf '%s' "$body" | grep -F 'work_lease' >/dev/null
+          printf '%s' "$body" | grep -F 'node_heartbeat' >/dev/null
+          echo "url=$api" >> "$GITHUB_OUTPUT"
+
+      - name: Record verified failover deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git checkout main
+          git reset --hard origin/main
+          mkdir -p deployments
+          verified_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          printf '{\n  "node": "Aurum-Arkmatx",\n  "carrier": "https://madmorrigan.com/aurum-failover/index.php",\n  "state_source": "public_html/arkmatx/aurum/state",\n  "state_mode": "mirrored-nondestructive",\n  "verified_at_utc": "%s",\n  "status": "verified-live"\n}\n' "$verified_at" > deployments/aurum-failover-live.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add deployments/aurum-failover-live.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Record Aurum failover live deployment [skip ci]'
+          git push origin main

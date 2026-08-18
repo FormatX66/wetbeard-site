@@ -74,7 +74,7 @@ jobs:
           ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
             'set -e; tar -xzf - -C public_html/aurum-failover; chmod 644 public_html/aurum-failover/.htaccess public_html/aurum-failover/index.php public_html/aurum-failover/portal.html public_html/aurum-failover/bootstrap.sh public_html/aurum-failover/bootstrap.ps1 public_html/aurum-failover/worker.ps1 public_html/aurum-failover/seed-swarm.php public_html/aurum-failover/helpaurum.php; php -l public_html/aurum-failover/index.php; php -l public_html/aurum-failover/seed-swarm.php; php public_html/aurum-failover/seed-swarm.php'
 
-      - name: Probe failover controller and clean worker routes read-only
+      - name: Probe failover controller and worker routes without consuming real work
         id: verify
         continue-on-error: true
         shell: bash
@@ -82,16 +82,31 @@ jobs:
           set -u
           api='https://madmorrigan.com/aurum-failover'
           root_code="$(curl -sS -L -o /tmp/root.json -w '%{http_code}' "$api/index.php" || true)"
-          work_code="$(curl -sS -L -o /tmp/work.json -w '%{http_code}' "$api/work/status?id=bbpi4-bootstrap-v1" || true)"
           nodes_code="$(curl -sS -L -o /tmp/nodes.json -w '%{http_code}' "$api/nodes" || true)"
-          root_ok=false; work_ok=false; nodes_ok=false
+          lease_code="$(curl -sS -L -o /tmp/lease.json -w '%{http_code}' "$api/work/lease?node_id=aurum-route-probe-no-such-node&capabilities=bbpi4-bootstrap" || true)"
+          root_ok=false; nodes_ok=false; lease_ok=false
           if [ "$root_code" = '200' ] && grep -F 'Aurum-Arkmatx' /tmp/root.json >/dev/null 2>&1 && grep -F 'work_lease' /tmp/root.json >/dev/null 2>&1; then root_ok=true; fi
-          if [ "$work_code" = '200' ] && grep -F 'bbpi4-bootstrap-v1' /tmp/work.json >/dev/null 2>&1; then work_ok=true; fi
           if [ "$nodes_code" = '200' ] && grep -F 'controller' /tmp/nodes.json >/dev/null 2>&1; then nodes_ok=true; fi
-          printf 'root_http=%s\nwork_http=%s\nnodes_http=%s\nroot_ok=%s\nwork_ok=%s\nnodes_ok=%s\n' "$root_code" "$work_code" "$nodes_code" "$root_ok" "$work_ok" "$nodes_ok" >> "$GITHUB_OUTPUT"
+          if [ "$lease_code" = '200' ] && grep -F '"work": null' /tmp/lease.json >/dev/null 2>&1 && grep -F 'Aurum-Arkmatx' /tmp/lease.json >/dev/null 2>&1; then lease_ok=true; fi
+          printf 'root_http=%s\nnodes_http=%s\nlease_http=%s\nroot_ok=%s\nnodes_ok=%s\nlease_ok=%s\n' "$root_code" "$nodes_code" "$lease_code" "$root_ok" "$nodes_ok" "$lease_ok" >> "$GITHUB_OUTPUT"
           test "$root_ok" = true
-          test "$work_ok" = true
           test "$nodes_ok" = true
+          test "$lease_ok" = true
+
+      - name: Read BBPI4 work state directly without leasing
+        id: workstate
+        if: always()
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          raw="$(ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" 'cat public_html/aurum-failover/state/work/bbpi4-bootstrap-v1.json 2>/dev/null || true')"
+          status="$(printf '%s' "$raw" | jq -r '.status // "missing"' 2>/dev/null || printf 'unreadable')"
+          attempts="$(printf '%s' "$raw" | jq -r '.attempts // 0' 2>/dev/null || printf '0')"
+          target="$(printf '%s' "$raw" | jq -r '.target_node_id // ""' 2>/dev/null || true)"
+          printf 'status=%s\nattempts=%s\ntarget=%s\n' "$status" "$attempts" "$target" >> "$GITHUB_OUTPUT"
 
       - name: Record failover deployment and diagnostics
         if: always()
@@ -104,15 +119,9 @@ jobs:
           mkdir -p deployments
           verified_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
           outcome='${{ steps.verify.outcome }}'
-          root_http='${{ steps.verify.outputs.root_http }}'
-          work_http='${{ steps.verify.outputs.work_http }}'
-          nodes_http='${{ steps.verify.outputs.nodes_http }}'
-          root_ok='${{ steps.verify.outputs.root_ok }}'
-          work_ok='${{ steps.verify.outputs.work_ok }}'
-          nodes_ok='${{ steps.verify.outputs.nodes_ok }}'
-          status='route-verification-failed-controller-root-preserved'
-          if [ "$outcome" = 'success' ]; then status='verified-live'; fi
-          printf '{\n  "node": "Aurum-Arkmatx",\n  "carrier": "https://madmorrigan.com/aurum-failover/index.php",\n  "clean_route_base": "https://madmorrigan.com/aurum-failover",\n  "state_mode": "preserved-nondestructive",\n  "root_http": "%s",\n  "work_http": "%s",\n  "nodes_http": "%s",\n  "root_ok": "%s",\n  "work_ok": "%s",\n  "nodes_ok": "%s",\n  "verification": "%s",\n  "probe_mode": "read-only",\n  "verified_at_utc": "%s",\n  "status": "%s"\n}\n' "$root_http" "$work_http" "$nodes_http" "$root_ok" "$work_ok" "$nodes_ok" "$outcome" "$verified_at" "$status" > deployments/aurum-failover-live.json
+          status='worker-route-verification-failed-controller-root-preserved'
+          if [ "$outcome" = 'success' ]; then status='verified-live-worker-routes'; fi
+          printf '{\n  "node": "Aurum-Arkmatx",\n  "carrier": "https://madmorrigan.com/aurum-failover/index.php",\n  "clean_route_base": "https://madmorrigan.com/aurum-failover",\n  "state_mode": "preserved-nondestructive",\n  "root_http": "%s",\n  "nodes_http": "%s",\n  "lease_http": "%s",\n  "root_ok": "%s",\n  "nodes_ok": "%s",\n  "lease_ok": "%s",\n  "bbpi4_work_status": "%s",\n  "bbpi4_attempts": "%s",\n  "bbpi4_target_node": "%s",\n  "verification": "%s",\n  "probe_mode": "nonmatching-lease-plus-direct-read-no-real-work-consumed",\n  "verified_at_utc": "%s",\n  "status": "%s"\n}\n' '${{ steps.verify.outputs.root_http }}' '${{ steps.verify.outputs.nodes_http }}' '${{ steps.verify.outputs.lease_http }}' '${{ steps.verify.outputs.root_ok }}' '${{ steps.verify.outputs.nodes_ok }}' '${{ steps.verify.outputs.lease_ok }}' '${{ steps.workstate.outputs.status }}' '${{ steps.workstate.outputs.attempts }}' '${{ steps.workstate.outputs.target }}' "$outcome" "$verified_at" "$status" > deployments/aurum-failover-live.json
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-failover-live.json

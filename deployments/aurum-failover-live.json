@@ -1,0 +1,8 @@
+{
+  "node": "Aurum-Arkmatx",
+  "carrier": "https://madmorrigan.com/aurum-failover/index.php",
+  "state_source": "public_html/arkmatx/aurum/state",
+  "state_mode": "mirrored-nondestructive",
+  "verified_at_utc": "2026-08-18T22:23:53Z",
+  "status": "verified-live"
+}

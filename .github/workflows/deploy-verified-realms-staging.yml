@@ -10,7 +10,7 @@ on:
       - sites/xanderzombie/site.config.json
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   staging:
@@ -78,20 +78,22 @@ jobs:
             python -m json.tool /tmp/ark-activity.json >/dev/null
             echo 'ArkmatX staging index, JS, scene, and activity feed verified.'
           fi
-      - name: Record staging result
+      - name: Prepare staging receipt
         if: success()
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p deployments
-          cat > "deployments/${{ matrix.site }}-staging.json" <<JSON
-          {"site":"${{ matrix.site }}","url":"${{ steps.cfg.outputs.url }}","commit_sha":"${{ github.sha }}","status":"verified-staging"}
+          mkdir -p "$RUNNER_TEMP/deployment-receipt"
+          cat > "$RUNNER_TEMP/deployment-receipt/${{ matrix.site }}-staging.json" <<JSON
+          {"site":"${{ matrix.site }}","url":"${{ steps.cfg.outputs.url }}","commit_sha":"${{ github.sha }}","run_id":"${{ github.run_id }}","status":"verified-staging"}
           JSON
-          git config user.name "github-actions[bot]"
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git pull --rebase origin main
-          git add "deployments/${{ matrix.site }}-staging.json"
-          git diff --cached --quiet && exit 0
-          git commit -m "Record ${{ matrix.site }} staging [skip ci]"
-          for n in 1 2 3; do git push origin HEAD:main && exit 0; git pull --rebase origin main; done
-          exit 1
+          cat "$RUNNER_TEMP/deployment-receipt/${{ matrix.site }}-staging.json" >> "$GITHUB_STEP_SUMMARY"
+      - name: Publish staging receipt artifact
+        if: success()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.site }}-staging-receipt-${{ github.run_id }}
+          path: ${{ runner.temp }}/deployment-receipt/${{ matrix.site }}-staging.json
+          if-no-files-found: error
+          retention-days: 30

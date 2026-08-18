@@ -79,9 +79,68 @@ jobs:
           ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
             'set -e; tar -xzf - -C public_html/arkmatx/aurum; chmod 644 public_html/arkmatx/aurum/index.php public_html/arkmatx/aurum/portal.html public_html/arkmatx/aurum/bootstrap.sh public_html/arkmatx/aurum/bootstrap.ps1 public_html/arkmatx/aurum/worker.ps1 public_html/arkmatx/aurum/seed-swarm.php public_html/arkmatx/aurum/helpaurum.php; php -l public_html/arkmatx/aurum/index.php'
 
-      - name: Verify primary and preserve failover regardless
-        id: verify
+      - name: Test direct primary repair
+        id: direct
         continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          primary='https://arkmatx.com/aurum/index.php'
+          pcode="$(curl -sS -L -o /tmp/primary-direct.json -w '%{http_code}' "$primary" || true)"
+          echo "primary_code=$pcode" >> "$GITHUB_OUTPUT"
+          test "$pcode" = '200'
+          grep -F 'Aurum-Arkmatx' /tmp/primary-direct.json >/dev/null
+          grep -F 'work_lease' /tmp/primary-direct.json >/dev/null
+
+      - name: Install transparent relay only if direct repair failed
+        if: steps.direct.outcome != 'success'
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/aurum-relay.php" <<'PHP'
+          <?php
+          $base = 'https://madmorrigan.com/aurum-failover/index.php';
+          $uri = $_SERVER['REQUEST_URI'] ?? '/aurum/index.php';
+          $suffix = preg_replace('#^/aurum/index\.php#', '', $uri);
+          if ($suffix === null) $suffix = '';
+          $target = $base . $suffix;
+          $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+          $body = file_get_contents('php://input');
+          $ch = curl_init($target);
+          curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+          curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
+          curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+          curl_setopt($ch, CURLOPT_TIMEOUT, 20);
+          curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
+          curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json', 'Cache-Control: no-cache', 'User-Agent: Aurum-Primary-Relay/1'));
+          if ($method !== 'GET' && $method !== 'HEAD' && $body !== false && $body !== '') {
+              curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+          }
+          $out = curl_exec($ch);
+          if ($out === false) {
+              http_response_code(502);
+              header('Content-Type: application/json');
+              echo json_encode(array('ok'=>false,'error'=>'relay-upstream','detail'=>curl_error($ch)));
+              curl_close($ch);
+              exit;
+          }
+          $code = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+          $ctype = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
+          curl_close($ch);
+          http_response_code($code > 0 ? $code : 502);
+          header('Content-Type: ' . ($ctype ?: 'application/json; charset=utf-8'));
+          header('Cache-Control: no-store');
+          echo $out;
+          PHP
+          php -l "$RUNNER_TEMP/aurum-relay.php"
+          scp -i "$HOME/.ssh/bluehost_deploy" -P 22 "$RUNNER_TEMP/aurum-relay.php" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:public_html/arkmatx/aurum/index.php"
+          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" 'chmod 644 public_html/arkmatx/aurum/index.php; php -l public_html/arkmatx/aurum/index.php'
+
+      - name: Verify compatibility URL and failover
+        id: verify
         shell: bash
         run: |
           set -euo pipefail
@@ -97,6 +156,7 @@ jobs:
           grep -F 'work_lease' /tmp/primary.json >/dev/null
 
       - name: Record repair result
+        if: always()
         shell: bash
         run: |
           set -euo pipefail
@@ -105,11 +165,14 @@ jobs:
           git reset --hard origin/main
           mkdir -p deployments
           verified_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
-          outcome='${{ steps.verify.outcome }}'
+          direct='${{ steps.direct.outcome }}'
+          verify='${{ steps.verify.outcome }}'
           pcode='${{ steps.verify.outputs.primary_code }}'
-          status='primary-still-failing-failover-preserved'
-          if [ "$outcome" = 'success' ]; then status='primary-repaired-failover-preserved'; fi
-          printf '{\n  "primary": "https://arkmatx.com/aurum/index.php",\n  "failover": "https://madmorrigan.com/aurum-failover/index.php",\n  "primary_http": "%s",\n  "verification_outcome": "%s",\n  "status": "%s",\n  "verified_at_utc": "%s"\n}\n' "$pcode" "$outcome" "$status" "$verified_at" > deployments/aurum-primary-repair.json
+          status='primary-unavailable-failover-preserved'
+          mode='failover-only'
+          if [ "$verify" = 'success' ] && [ "$direct" = 'success' ]; then status='primary-repaired-failover-preserved'; mode='direct'; fi
+          if [ "$verify" = 'success' ] && [ "$direct" != 'success' ]; then status='primary-relayed-to-failover'; mode='transparent-relay'; fi
+          printf '{\n  "primary": "https://arkmatx.com/aurum/index.php",\n  "failover": "https://madmorrigan.com/aurum-failover/index.php",\n  "primary_http": "%s",\n  "direct_repair": "%s",\n  "final_verification": "%s",\n  "mode": "%s",\n  "status": "%s",\n  "verified_at_utc": "%s"\n}\n' "$pcode" "$direct" "$verify" "$mode" "$status" "$verified_at" > deployments/aurum-primary-repair.json
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-primary-repair.json

@@ -1,0 +1,10 @@
+{
+  "primary": "https://arkmatx.com/aurum/index.php",
+  "failover": "https://madmorrigan.com/aurum-failover/index.php",
+  "primary_http": "",
+  "direct_repair": "skipped",
+  "final_verification": "skipped",
+  "mode": "failover-only",
+  "status": "primary-unavailable-failover-preserved",
+  "verified_at_utc": "2026-08-18T22:28:00Z"
+}

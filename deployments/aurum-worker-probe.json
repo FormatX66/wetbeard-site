@@ -3,10 +3,12 @@
   "nodes": 0,
   "merged": 1,
   "work_count": 3,
-  "bbpi4_work_status": "active-edge-web-node",
-  "bbpi4_attempts": 0,
+  "bbpi4_work_status": "leased",
+  "bbpi4_attempts": 1,
   "bbpi4_last_result": "none",
   "morris_node_present": 0,
+  "morris_last_seen_epoch": 0,
+  "morris_heartbeat_age_seconds": -1,
   "probe_mode": "read-only",
-  "checked_at_utc": "2026-08-18T22:30:22Z"
+  "checked_at_utc": "2026-08-18T22:41:59Z"
 }

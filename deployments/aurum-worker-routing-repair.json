@@ -1,0 +1,14 @@
+{
+  "failover_status_http": "200",
+  "failover_lease_http": "200",
+  "primary_root_http": "",
+  "primary_status_http": "",
+  "primary_lease_http": "",
+  "bbpi4_work_status": "",
+  "bbpi4_attempts": "",
+  "morris_node_present": "",
+  "verification": "skipped",
+  "probe_mode": "read-only-status-plus-nonmatching-lease-no-real-work-consumed",
+  "status": "worker-routing-not-fully-verified-failover-preserved",
+  "verified_at_utc": "2026-08-18T22:39:59Z"
+}

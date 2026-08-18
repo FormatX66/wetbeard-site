@@ -1,0 +1,118 @@
+name: Repair Aurum Primary Controller
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/repair-aurum-primary.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aurum-primary-repair
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch known-good Aurum controller
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 --filter=blob:none --sparse https://github.com/FormatX66/BoxBrain.git "$RUNNER_TEMP/BoxBrain"
+          git -C "$RUNNER_TEMP/BoxBrain" sparse-checkout set Web/Aurum-Arkmatx
+          php -l "$RUNNER_TEMP/BoxBrain/Web/Aurum-Arkmatx/index.php"
+
+      - name: Configure existing Bluehost SSH carrier
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+          BLUEHOST_SSH_PRIVATE_KEY: ${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$BLUEHOST_HOST"; test -n "$BLUEHOST_USERNAME"; test -n "$BLUEHOST_SSH_PRIVATE_KEY"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$BLUEHOST_SSH_PRIVATE_KEY" > "$HOME/.ssh/bluehost_deploy"
+          chmod 600 "$HOME/.ssh/bluehost_deploy"
+          ssh-keyscan -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts"
+
+      - name: Back up and normalize primary controller path
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" "RUN_ID=$GITHUB_RUN_ID bash -s" <<'REMOTE'
+          set -euo pipefail
+          root='public_html/arkmatx/aurum'
+          backup="public_html/arkmatx/aurum.backup-${RUN_ID}"
+          test -d "$root"
+          rm -rf "$backup"
+          cp -a "$root" "$backup"
+          mkdir -p "$root/state/inbox" "$root/state/outbox" "$root/state/nodes" "$root/state/conversations" "$root/state/work"
+          rm -f "$root/.htaccess"
+          chmod 755 "$root"
+          find "$root/state" -type d -exec chmod 700 {} +
+          find "$root/state" -type f -exec chmod 600 {} +
+          echo "backup=$backup"
+          echo 'PRIMARY_STATE_COUNTS_BEFORE'
+          for d in inbox outbox nodes conversations work; do printf '%s=' "$d"; find "$root/state/$d" -type f 2>/dev/null | wc -l; done
+          php -l "$root/index.php"
+          REMOTE
+
+      - name: Refresh primary controller code without replacing state
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tar -C "$RUNNER_TEMP/BoxBrain/Web/Aurum-Arkmatx" -czf - index.php portal.html bootstrap.sh bootstrap.ps1 worker.ps1 seed-swarm.php helpaurum.php | \
+          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            'set -e; tar -xzf - -C public_html/arkmatx/aurum; chmod 644 public_html/arkmatx/aurum/index.php public_html/arkmatx/aurum/portal.html public_html/arkmatx/aurum/bootstrap.sh public_html/arkmatx/aurum/bootstrap.ps1 public_html/arkmatx/aurum/worker.ps1 public_html/arkmatx/aurum/seed-swarm.php public_html/arkmatx/aurum/helpaurum.php; php -l public_html/arkmatx/aurum/index.php'
+
+      - name: Verify primary and preserve failover regardless
+        id: verify
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          primary='https://arkmatx.com/aurum/index.php'
+          failover='https://madmorrigan.com/aurum-failover/index.php'
+          fcode="$(curl -sS -L -o /tmp/failover.json -w '%{http_code}' "$failover" || true)"
+          test "$fcode" = '200'
+          grep -F 'Aurum-Arkmatx' /tmp/failover.json >/dev/null
+          pcode="$(curl -sS -L -o /tmp/primary.json -w '%{http_code}' "$primary" || true)"
+          echo "primary_code=$pcode" >> "$GITHUB_OUTPUT"
+          test "$pcode" = '200'
+          grep -F 'Aurum-Arkmatx' /tmp/primary.json >/dev/null
+          grep -F 'work_lease' /tmp/primary.json >/dev/null
+
+      - name: Record repair result
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git checkout main
+          git reset --hard origin/main
+          mkdir -p deployments
+          verified_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          outcome='${{ steps.verify.outcome }}'
+          pcode='${{ steps.verify.outputs.primary_code }}'
+          status='primary-still-failing-failover-preserved'
+          if [ "$outcome" = 'success' ]; then status='primary-repaired-failover-preserved'; fi
+          printf '{\n  "primary": "https://arkmatx.com/aurum/index.php",\n  "failover": "https://madmorrigan.com/aurum-failover/index.php",\n  "primary_http": "%s",\n  "verification_outcome": "%s",\n  "status": "%s",\n  "verified_at_utc": "%s"\n}\n' "$pcode" "$outcome" "$status" "$verified_at" > deployments/aurum-primary-repair.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add deployments/aurum-primary-repair.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Record Aurum primary repair result [skip ci]'
+          git push origin main

@@ -1,8 +1,16 @@
 {
   "node": "Aurum-Arkmatx",
   "carrier": "https://madmorrigan.com/aurum-failover/index.php",
-  "state_source": "public_html/arkmatx/aurum/state",
-  "state_mode": "mirrored-nondestructive",
-  "verified_at_utc": "2026-08-18T22:23:53Z",
-  "status": "verified-live"
+  "clean_route_base": "https://madmorrigan.com/aurum-failover",
+  "state_mode": "preserved-nondestructive",
+  "root_http": "200",
+  "work_http": "200",
+  "nodes_http": "200",
+  "root_ok": "true",
+  "work_ok": "false",
+  "nodes_ok": "true",
+  "verification": "failure",
+  "probe_mode": "read-only",
+  "verified_at_utc": "2026-08-18T22:36:58Z",
+  "status": "route-verification-failed-controller-root-preserved"
 }

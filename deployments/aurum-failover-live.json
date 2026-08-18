@@ -4,13 +4,16 @@
   "clean_route_base": "https://madmorrigan.com/aurum-failover",
   "state_mode": "preserved-nondestructive",
   "root_http": "200",
-  "work_http": "200",
   "nodes_http": "200",
+  "lease_http": "200",
   "root_ok": "true",
-  "work_ok": "false",
   "nodes_ok": "true",
-  "verification": "failure",
-  "probe_mode": "read-only",
-  "verified_at_utc": "2026-08-18T22:36:58Z",
-  "status": "route-verification-failed-controller-root-preserved"
+  "lease_ok": "true",
+  "bbpi4_work_status": "leased",
+  "bbpi4_attempts": "1",
+  "bbpi4_target_node": "825e5a7b7d4a7aed",
+  "verification": "success",
+  "probe_mode": "nonmatching-lease-plus-direct-read-no-real-work-consumed",
+  "verified_at_utc": "2026-08-18T22:38:33Z",
+  "status": "verified-live-worker-routes"
 }

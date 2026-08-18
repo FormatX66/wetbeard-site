@@ -21,31 +21,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Verify failover is healthy before touching compatibility URL
+      - name: Verify failover worker routes before touching compatibility URL
         shell: bash
         run: |
           set -euo pipefail
-          url='https://madmorrigan.com/aurum-failover/index.php'
-          code="$(curl -sS -L -o /tmp/failover.json -w '%{http_code}' "$url")"
-          test "$code" = '200'
-          grep -F 'Aurum-Arkmatx' /tmp/failover.json >/dev/null
-          grep -F 'work_lease' /tmp/failover.json >/dev/null
+          base='https://madmorrigan.com/aurum-failover'
+          work="$(curl -sS -L --fail-with-body "$base/work/status?id=bbpi4-bootstrap-v1")"
+          printf '%s' "$work" | grep -F 'bbpi4-bootstrap-v1' >/dev/null
+          lease="$(curl -sS -L --fail-with-body "$base/work/lease?node_id=aurum-relay-probe-no-such-node&capabilities=bbpi4-bootstrap")"
+          printf '%s' "$lease" | grep -F '"work": null' >/dev/null
+          printf '%s' "$lease" | grep -F 'Aurum-Arkmatx' >/dev/null
 
-      - name: Build relay and route shim locally
+      - name: Build minimal compatibility relay locally
         shell: bash
         run: |
           set -euo pipefail
           cat > "$RUNNER_TEMP/aurum-relay.php" <<'PHP'
           <?php
-          $base = 'https://madmorrigan.com/aurum-failover/index.php';
+          $base = 'https://madmorrigan.com/aurum-failover';
           $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
           $pathInfo = isset($_GET['__aurum_path']) ? (string)$_GET['__aurum_path'] : '';
-          if ($pathInfo === '') $pathInfo = $_SERVER['PATH_INFO'] ?? ($_SERVER['ORIG_PATH_INFO'] ?? '');
           if ($pathInfo !== '' && $pathInfo[0] !== '/') $pathInfo = '/' . $pathInfo;
           $args = $_GET;
           unset($args['__aurum_path']);
           $query = http_build_query($args, '', '&', PHP_QUERY_RFC3986);
-          $target = $base . $pathInfo . ($query !== '' ? '?' . $query : '');
+          $target = $pathInfo === '' ? $base . '/index.php' : $base . $pathInfo;
+          if ($query !== '') $target .= '?' . $query;
           $body = file_get_contents('php://input');
           if (!function_exists('curl_init')) {
               http_response_code(500);
@@ -59,7 +60,7 @@ jobs:
           curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
           curl_setopt($ch, CURLOPT_TIMEOUT, 20);
           curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
-          curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json', 'Cache-Control: no-cache', 'User-Agent: Aurum-Primary-Relay/3'));
+          curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json', 'Cache-Control: no-cache', 'User-Agent: Aurum-Primary-Relay/5'));
           if ($method === 'HEAD') curl_setopt($ch, CURLOPT_NOBODY, true);
           if ($method !== 'GET' && $method !== 'HEAD' && $body !== false && $body !== '') curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
           $out = curl_exec($ch);
@@ -82,9 +83,6 @@ jobs:
           cat > "$RUNNER_TEMP/aurum-relay.htaccess" <<'HT'
           RewriteEngine On
           RewriteRule ^index\.php/(.*)$ index.php?__aurum_path=/$1 [QSA,L]
-          RewriteRule ^(status|nodes|events)$ index.php?__aurum_path=/$1 [QSA,L]
-          RewriteRule ^work/(.*)$ index.php?__aurum_path=/work/$1 [QSA,L]
-          RewriteRule ^uaf$ index.php?__aurum_path=/uaf [QSA,L]
           HT
           php -l "$RUNNER_TEMP/aurum-relay.php"
 
@@ -102,7 +100,7 @@ jobs:
           chmod 600 "$HOME/.ssh/bluehost_deploy"
           ssh-keyscan -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts"
 
-      - name: Back up old entrypoint and install relay
+      - name: Back up old entrypoint and install only directory-local compatibility layer
         env:
           BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
           BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
@@ -115,21 +113,24 @@ jobs:
           scp -i "$HOME/.ssh/bluehost_deploy" -P 22 "$RUNNER_TEMP/aurum-relay.htaccess" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/.htaccess"
           ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" "chmod 644 '$remote/index.php' '$remote/.htaccess'; php -l '$remote/index.php'"
 
-      - name: Verify old controller URL and worker routes read-only
+      - name: Verify old installed-worker URLs end to end without taking real work
         id: verify
+        continue-on-error: true
         shell: bash
         run: |
-          set -euo pipefail
-          url='https://arkmatx.com/aurum/index.php'
-          code="$(curl -sS -L -o /tmp/primary.json -w '%{http_code}' "$url" || true)"
-          echo "http=$code" >> "$GITHUB_OUTPUT"
-          test "$code" = '200'
-          grep -F 'Aurum-Arkmatx' /tmp/primary.json >/dev/null
-          grep -F 'work_lease' /tmp/primary.json >/dev/null
-          status="$(curl -sS -L "$url/work/status?id=bbpi4-bootstrap-v1")"
-          printf '%s' "$status" | grep -F 'bbpi4-bootstrap-v1' >/dev/null
-          nodes="$(curl -sS -L "$url/nodes")"
-          printf '%s' "$nodes" | grep -F 'controller' >/dev/null
+          set -u
+          root='https://arkmatx.com/aurum/index.php'
+          root_code="$(curl -sS -L -o /tmp/root.json -w '%{http_code}' "$root" || true)"
+          status_code="$(curl -sS -L -o /tmp/status.json -w '%{http_code}' "$root/work/status?id=bbpi4-bootstrap-v1" || true)"
+          lease_code="$(curl -sS -L -o /tmp/lease.json -w '%{http_code}' "$root/work/lease?node_id=aurum-relay-probe-no-such-node&capabilities=bbpi4-bootstrap" || true)"
+          root_ok=false; status_ok=false; lease_ok=false
+          if [ "$root_code" = '200' ] && grep -F 'Aurum-Arkmatx' /tmp/root.json >/dev/null 2>&1; then root_ok=true; fi
+          if [ "$status_code" = '200' ] && grep -F 'bbpi4-bootstrap-v1' /tmp/status.json >/dev/null 2>&1; then status_ok=true; fi
+          if [ "$lease_code" = '200' ] && grep -F '"work": null' /tmp/lease.json >/dev/null 2>&1 && grep -F 'Aurum-Arkmatx' /tmp/lease.json >/dev/null 2>&1; then lease_ok=true; fi
+          printf 'root_http=%s\nstatus_http=%s\nlease_http=%s\nroot_ok=%s\nstatus_ok=%s\nlease_ok=%s\n' "$root_code" "$status_code" "$lease_code" "$root_ok" "$status_ok" "$lease_ok" >> "$GITHUB_OUTPUT"
+          test "$root_ok" = true
+          test "$status_ok" = true
+          test "$lease_ok" = true
 
       - name: Record compatibility relay result
         if: always()
@@ -142,10 +143,9 @@ jobs:
           mkdir -p deployments
           verified_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
           outcome='${{ steps.verify.outcome }}'
-          code='${{ steps.verify.outputs.http }}'
-          status='relay-failed-failover-remains-live'
-          if [ "$outcome" = 'success' ]; then status='primary-url-and-worker-routes-relayed-and-verified'; fi
-          printf '{\n  "primary": "https://arkmatx.com/aurum/index.php",\n  "upstream": "https://madmorrigan.com/aurum-failover/index.php",\n  "http": "%s",\n  "verification": "%s",\n  "status": "%s",\n  "probe_mode": "read-only",\n  "verified_at_utc": "%s"\n}\n' "$code" "$outcome" "$status" "$verified_at" > deployments/aurum-primary-relay.json
+          status='relay-not-fully-verified-failover-remains-live'
+          if [ "$outcome" = 'success' ]; then status='installed-worker-urls-relayed-and-verified'; fi
+          printf '{\n  "primary": "https://arkmatx.com/aurum/index.php",\n  "upstream": "https://madmorrigan.com/aurum-failover",\n  "root_http": "%s",\n  "status_http": "%s",\n  "lease_http": "%s",\n  "root_ok": "%s",\n  "status_ok": "%s",\n  "lease_ok": "%s",\n  "verification": "%s",\n  "status": "%s",\n  "probe_mode": "read-only-status-plus-nonmatching-lease-no-real-work-consumed",\n  "verified_at_utc": "%s"\n}\n' '${{ steps.verify.outputs.root_http }}' '${{ steps.verify.outputs.status_http }}' '${{ steps.verify.outputs.lease_http }}' '${{ steps.verify.outputs.root_ok }}' '${{ steps.verify.outputs.status_ok }}' '${{ steps.verify.outputs.lease_ok }}' "$outcome" "$status" "$verified_at" > deployments/aurum-primary-relay.json
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-primary-relay.json

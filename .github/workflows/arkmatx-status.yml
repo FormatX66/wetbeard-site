@@ -19,24 +19,36 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Build status snapshot
+      - name: Build status snapshot only on semantic change
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p sites/arkmatx/public
           repo="$GITHUB_REPOSITORY"
-          branch="${GITHUB_REF_NAME:-main}"
           open_prs=$(gh api "repos/$repo/pulls?state=open&per_page=10")
           commits=$(gh api "repos/$repo/commits?sha=main&per_page=8")
+
+          candidate=$(mktemp)
           jq -n \
-            --arg updated_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             --arg repository "$repo" \
             --arg default_branch "main" \
             --argjson prs "$open_prs" \
             --argjson commits "$commits" \
-            '{updated_at:$updated_at,repository:$repository,default_branch:$default_branch,status:"LIVE",open_prs:($prs|map({number,title,draft,updated_at,html_url})),recent_commits:($commits|map({sha:(.sha[0:8]),message:(.commit.message|split("\n")[0]),date:.commit.author.date,html_url}))}' \
-            > sites/arkmatx/public/github-status.json
-      - name: Commit snapshot when changed
+            '{repository:$repository,default_branch:$default_branch,status:"LIVE",open_prs:($prs|map({number,title,draft,updated_at,html_url})),recent_commits:($commits|map({sha:(.sha[0:8]),message:(.commit.message|split("\n")[0]),date:.commit.author.date,html_url}))}' \
+            > "$candidate"
+
+          current=sites/arkmatx/public/github-status.json
+          if [ -f "$current" ] && jq -S 'del(.updated_at)' "$current" > /tmp/current-semantic.json 2>/dev/null; then
+            if diff -q /tmp/current-semantic.json <(jq -S . "$candidate") >/dev/null; then
+              echo "No semantic ArkmatX status change; timestamp alone will not create a commit."
+              rm -f "$candidate"
+              exit 0
+            fi
+          fi
+
+          jq --arg updated_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '. + {updated_at:$updated_at}' "$candidate" > "$current"
+          rm -f "$candidate"
+      - name: Commit snapshot when meaningfully changed
         shell: bash
         run: |
           set -euo pipefail
@@ -47,5 +59,9 @@ jobs:
           git config user.name "arkmatx-bot"
           git config user.email "actions@users.noreply.github.com"
           git add sites/arkmatx/public/github-status.json
-          git commit -m "Refresh ArkmatX GitHub status"
-          git push
+          git commit -m "Refresh ArkmatX GitHub status [skip ci]"
+          for n in 1 2 3; do
+            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            sleep $((n * 2))
+          done
+          exit 1

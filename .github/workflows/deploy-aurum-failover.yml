@@ -31,6 +31,7 @@ jobs:
           git -C "$RUNNER_TEMP/BoxBrain" sparse-checkout set Web/Aurum-Arkmatx
           php -l "$RUNNER_TEMP/BoxBrain/Web/Aurum-Arkmatx/index.php"
           php -l "$RUNNER_TEMP/BoxBrain/Web/Aurum-Arkmatx/seed-swarm.php"
+          test -s "$RUNNER_TEMP/BoxBrain/Web/Aurum-Arkmatx/.htaccess"
 
       - name: Configure existing Bluehost SSH carrier
         env:
@@ -46,7 +47,7 @@ jobs:
           chmod 600 "$HOME/.ssh/bluehost_deploy"
           ssh-keyscan -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts"
 
-      - name: Create isolated failover path and mirror existing Aurum state
+      - name: Create isolated failover path and preserve existing failover state
         env:
           BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
           BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
@@ -55,40 +56,38 @@ jobs:
           set -euo pipefail
           ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" 'bash -s' <<'REMOTE'
           set -euo pipefail
-          src='public_html/arkmatx/aurum/state'
           dst='public_html/aurum-failover'
           mkdir -p "$dst/state/inbox" "$dst/state/outbox" "$dst/state/nodes" "$dst/state/conversations" "$dst/state/work"
-          if [ -d "$src" ]; then
-            cp -a "$src"/. "$dst/state"/
-          fi
           chmod 755 "$dst"
           find "$dst/state" -type d -exec chmod 700 {} +
           find "$dst/state" -type f -exec chmod 600 {} +
-          rm -f "$dst/.htaccess"
           REMOTE
 
-      - name: Deploy current controller code to failover path
+      - name: Deploy current controller and shared-host route map
         env:
           BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
           BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
         shell: bash
         run: |
           set -euo pipefail
-          tar -C "$RUNNER_TEMP/BoxBrain/Web/Aurum-Arkmatx" -czf - index.php portal.html bootstrap.sh bootstrap.ps1 worker.ps1 seed-swarm.php helpaurum.php | \
+          tar -C "$RUNNER_TEMP/BoxBrain/Web/Aurum-Arkmatx" -czf - .htaccess index.php portal.html bootstrap.sh bootstrap.ps1 worker.ps1 seed-swarm.php helpaurum.php | \
           ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
-            'set -e; tar -xzf - -C public_html/aurum-failover; chmod 644 public_html/aurum-failover/index.php public_html/aurum-failover/portal.html public_html/aurum-failover/bootstrap.sh public_html/aurum-failover/bootstrap.ps1 public_html/aurum-failover/worker.ps1 public_html/aurum-failover/seed-swarm.php public_html/aurum-failover/helpaurum.php; php -l public_html/aurum-failover/index.php; php -l public_html/aurum-failover/seed-swarm.php; php public_html/aurum-failover/seed-swarm.php'
+            'set -e; tar -xzf - -C public_html/aurum-failover; chmod 644 public_html/aurum-failover/.htaccess public_html/aurum-failover/index.php public_html/aurum-failover/portal.html public_html/aurum-failover/bootstrap.sh public_html/aurum-failover/bootstrap.ps1 public_html/aurum-failover/worker.ps1 public_html/aurum-failover/seed-swarm.php public_html/aurum-failover/helpaurum.php; php -l public_html/aurum-failover/index.php; php -l public_html/aurum-failover/seed-swarm.php; php public_html/aurum-failover/seed-swarm.php'
 
-      - name: Verify failover controller
+      - name: Verify failover controller and clean worker routes read-only
         id: verify
         shell: bash
         run: |
           set -euo pipefail
-          api='https://madmorrigan.com/aurum-failover/index.php'
-          body="$(curl --fail-with-body --silent --show-error --retry 4 --retry-all-errors --retry-delay 3 "$api")"
+          api='https://madmorrigan.com/aurum-failover'
+          body="$(curl --fail-with-body --silent --show-error --retry 4 --retry-all-errors --retry-delay 3 "$api/index.php")"
           printf '%s' "$body" | grep -F 'Aurum-Arkmatx' >/dev/null
           printf '%s' "$body" | grep -F 'work_lease' >/dev/null
-          printf '%s' "$body" | grep -F 'node_heartbeat' >/dev/null
-          echo "url=$api" >> "$GITHUB_OUTPUT"
+          work="$(curl --fail-with-body --silent --show-error "$api/work/status?id=bbpi4-bootstrap-v1")"
+          printf '%s' "$work" | grep -F 'bbpi4-bootstrap-v1' >/dev/null
+          nodes="$(curl --fail-with-body --silent --show-error "$api/nodes")"
+          printf '%s' "$nodes" | grep -F 'controller' >/dev/null
+          echo "url=$api/index.php" >> "$GITHUB_OUTPUT"
 
       - name: Record verified failover deployment
         shell: bash
@@ -99,7 +98,7 @@ jobs:
           git reset --hard origin/main
           mkdir -p deployments
           verified_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
-          printf '{\n  "node": "Aurum-Arkmatx",\n  "carrier": "https://madmorrigan.com/aurum-failover/index.php",\n  "state_source": "public_html/arkmatx/aurum/state",\n  "state_mode": "mirrored-nondestructive",\n  "verified_at_utc": "%s",\n  "status": "verified-live"\n}\n' "$verified_at" > deployments/aurum-failover-live.json
+          printf '{\n  "node": "Aurum-Arkmatx",\n  "carrier": "https://madmorrigan.com/aurum-failover/index.php",\n  "clean_route_base": "https://madmorrigan.com/aurum-failover",\n  "state_mode": "preserved-nondestructive",\n  "worker_routes": "verified-read-only",\n  "verified_at_utc": "%s",\n  "status": "verified-live"\n}\n' "$verified_at" > deployments/aurum-failover-live.json
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-failover-live.json

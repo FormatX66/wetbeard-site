@@ -7,7 +7,7 @@ on:
       - .github/workflows/promote-realms-production.yml
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: realm-production-promotion
@@ -66,18 +66,22 @@ jobs:
             sleep 3
           done
           echo "$URL did not verify"; exit 1
-      - name: Record verified production
+      - name: Prepare production receipt
+        if: success()
         shell: bash
         run: |
           set -euo pipefail
           SITE="${{ matrix.site }}"
           URL=$(jq -r '.production.url' "sites/$SITE/site.config.json")
-          mkdir -p deployments
-          printf '{"site":"%s","url":"%s","commit_sha":"%s","status":"verified-live"}\n' "$SITE" "$URL" "$GITHUB_SHA" > "deployments/$SITE-live.json"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add "deployments/$SITE-live.json"
-          git diff --cached --quiet && exit 0
-          git commit -m "Record $SITE production [skip ci]"
-          for n in 1 2 3; do git pull --rebase origin main && git push origin HEAD:main && exit 0; sleep 2; done
-          exit 1
+          mkdir -p "$RUNNER_TEMP/deployment-receipt"
+          printf '{"site":"%s","url":"%s","commit_sha":"%s","run_id":"%s","status":"verified-live"}\n' "$SITE" "$URL" "$GITHUB_SHA" "$GITHUB_RUN_ID" > "$RUNNER_TEMP/deployment-receipt/$SITE-live.json"
+          cat "$RUNNER_TEMP/deployment-receipt/$SITE-live.json" >> "$GITHUB_STEP_SUMMARY"
+      - name: Publish production receipt artifact
+        if: success()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.site }}-production-receipt-${{ github.run_id }}
+          path: ${{ runner.temp }}/deployment-receipt/${{ matrix.site }}-live.json
+          if-no-files-found: error
+          retention-days: 90

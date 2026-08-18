@@ -1,5 +1,4 @@
 {
-  "updated_at": "2026-08-18T13:07:17Z",
   "repository": "FormatX66/wetbeard-site",
   "default_branch": "main",
   "status": "LIVE",
@@ -21,52 +20,53 @@
   ],
   "recent_commits": [
     {
+      "sha": "62dc8d56",
+      "message": "Make state-first reasoning part of GPT operating rules",
+      "date": "2026-08-18T17:07:48Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/62dc8d56bebcca9d2b950696d58bb718073aefd2"
+    },
+    {
+      "sha": "f946b0ed",
+      "message": "Apply state-first execution logic to site agents",
+      "date": "2026-08-18T17:06:01Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/f946b0edf6c9a6cb8fef13242f8bff58af7096e0"
+    },
+    {
+      "sha": "df372142",
+      "message": "Strengthen deployment receipt failure rule",
+      "date": "2026-08-18T16:35:08Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/df372142324edb82e52bb8fb9f117e233f4a9780"
+    },
+    {
+      "sha": "429a2a89",
+      "message": "Stop timestamp-only ArkmatX status commits",
+      "date": "2026-08-18T16:33:04Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/429a2a89eef2044bcc1c12a48fcd1815bba57636"
+    },
+    {
+      "sha": "bcb81b8d",
+      "message": "Keep production success independent of receipt writes",
+      "date": "2026-08-18T16:27:45Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/bcb81b8dac59240d384ac56c305d8d31db0e853f"
+    },
+    {
+      "sha": "3d96503e",
+      "message": "Decouple staging success from receipt publishing",
+      "date": "2026-08-18T16:27:26Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/3d96503e162bd2a9ad8ba698d5e365ecc8ea2c19"
+    },
+    {
+      "sha": "6b9c956f",
+      "message": "Refresh ArkmatX GitHub status",
+      "date": "2026-08-18T13:07:17Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/6b9c956f9a51215e04b4dea464145b1f4d299d4e"
+    },
+    {
       "sha": "9d5a6f9e",
       "message": "Refresh ArkmatX GitHub status",
       "date": "2026-08-18T07:04:06Z",
       "html_url": "https://github.com/FormatX66/wetbeard-site/commit/9d5a6f9e7448b7749738b6e64c811bfc2122d888"
-    },
-    {
-      "sha": "af0510f0",
-      "message": "Refresh ArkmatX GitHub status",
-      "date": "2026-08-18T01:50:54Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/af0510f02ce88a44194ae01300a155a6f4c18849"
-    },
-    {
-      "sha": "24b62fe9",
-      "message": "Refresh ArkmatX GitHub status",
-      "date": "2026-08-17T18:57:07Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/24b62fe941f89ac644ba3aac2f0b79d81f6c198d"
-    },
-    {
-      "sha": "d20fad9b",
-      "message": "Refresh ArkmatX GitHub status",
-      "date": "2026-08-17T13:05:42Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/d20fad9b7a4858653b2440bf646ad7dde56a8e7d"
-    },
-    {
-      "sha": "9c14e81b",
-      "message": "Refresh ArkmatX GitHub status",
-      "date": "2026-08-17T07:15:58Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/9c14e81b725ca9abe295d9287611f1536745f80c"
-    },
-    {
-      "sha": "72ad86bc",
-      "message": "Refresh ArkmatX GitHub status",
-      "date": "2026-08-17T01:55:14Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/72ad86bcb9e27949a298adf0dba6b139561aa45a"
-    },
-    {
-      "sha": "61a30f1f",
-      "message": "Refresh ArkmatX weekly activity for Aug 10-16",
-      "date": "2026-08-16T23:11:55Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/61a30f1f3c344cc312deb737e163ef373fa67cb9"
-    },
-    {
-      "sha": "9e50622c",
-      "message": "Refresh ArkmatX GitHub status",
-      "date": "2026-08-16T18:46:34Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/9e50622ce8292a89a57915c5bd8fe4af118493c1"
     }
-  ]
+  ],
+  "updated_at": "2026-08-18T18:56:41Z"
 }

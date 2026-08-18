@@ -15,16 +15,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Read controller and work state without leasing work
+      - name: Read controller, node, and work state without leasing work
         id: probe
         shell: bash
         run: |
           set -euo pipefail
           api='https://arkmatx.com/aurum/index.php'
-          curl -sS -L "$api" > /tmp/status.json
-          curl -sS -L "$api/nodes" > /tmp/nodes.json
-          curl -sS -L "$api/work/status?id=bbpi4-bootstrap-v1" > /tmp/work.json
+          curl -sS -L --fail-with-body "$api" > /tmp/status.json
+          curl -sS -L --fail-with-body "$api/nodes" > /tmp/nodes.json
+          curl -sS -L --fail-with-body "$api/work/status?id=bbpi4-bootstrap-v1" > /tmp/work.json
           jq -e '.node == "Aurum-Arkmatx"' /tmp/status.json >/dev/null
+          jq -e '.work_id == "bbpi4-bootstrap-v1"' /tmp/work.json >/dev/null
+          now="$(date +%s)"
           nodes="$(jq -r '.events.nodes // 0' /tmp/status.json)"
           merged="$(jq -r '.events.merged // 0' /tmp/status.json)"
           work_count="$(jq -r '.events.work // 0' /tmp/status.json)"
@@ -32,7 +34,9 @@ jobs:
           attempts="$(jq -r '.attempts // 0' /tmp/work.json)"
           last_result="$(jq -r '.last_result_status // "none"' /tmp/work.json)"
           morris_seen="$(jq -r '[.nodes[]? | select(.node_id == "825e5a7b7d4a7aed")] | length' /tmp/nodes.json)"
-          printf 'nodes=%s\nmerged=%s\nwork_count=%s\nwork_status=%s\nattempts=%s\nlast_result=%s\nmorris_seen=%s\n' "$nodes" "$merged" "$work_count" "$work_status" "$attempts" "$last_result" "$morris_seen" >> "$GITHUB_OUTPUT"
+          morris_last_seen="$(jq -r '[.nodes[]? | select(.node_id == "825e5a7b7d4a7aed")][0].last_seen // 0' /tmp/nodes.json)"
+          if [ "$morris_last_seen" -gt 0 ]; then morris_age=$((now - morris_last_seen)); else morris_age=-1; fi
+          printf 'nodes=%s\nmerged=%s\nwork_count=%s\nwork_status=%s\nattempts=%s\nlast_result=%s\nmorris_seen=%s\nmorris_last_seen=%s\nmorris_age=%s\n' "$nodes" "$merged" "$work_count" "$work_status" "$attempts" "$last_result" "$morris_seen" "$morris_last_seen" "$morris_age" >> "$GITHUB_OUTPUT"
       - name: Record read-only worker probe
         shell: bash
         run: |
@@ -42,7 +46,7 @@ jobs:
           git reset --hard origin/main
           mkdir -p deployments
           checked="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
-          printf '{\n  "controller": "https://arkmatx.com/aurum/index.php",\n  "nodes": %s,\n  "merged": %s,\n  "work_count": %s,\n  "bbpi4_work_status": "%s",\n  "bbpi4_attempts": %s,\n  "bbpi4_last_result": "%s",\n  "morris_node_present": %s,\n  "probe_mode": "read-only",\n  "checked_at_utc": "%s"\n}\n' '${{ steps.probe.outputs.nodes }}' '${{ steps.probe.outputs.merged }}' '${{ steps.probe.outputs.work_count }}' '${{ steps.probe.outputs.work_status }}' '${{ steps.probe.outputs.attempts }}' '${{ steps.probe.outputs.last_result }}' '${{ steps.probe.outputs.morris_seen }}' "$checked" > deployments/aurum-worker-probe.json
+          printf '{\n  "controller": "https://arkmatx.com/aurum/index.php",\n  "nodes": %s,\n  "merged": %s,\n  "work_count": %s,\n  "bbpi4_work_status": "%s",\n  "bbpi4_attempts": %s,\n  "bbpi4_last_result": "%s",\n  "morris_node_present": %s,\n  "morris_last_seen_epoch": %s,\n  "morris_heartbeat_age_seconds": %s,\n  "probe_mode": "read-only",\n  "checked_at_utc": "%s"\n}\n' '${{ steps.probe.outputs.nodes }}' '${{ steps.probe.outputs.merged }}' '${{ steps.probe.outputs.work_count }}' '${{ steps.probe.outputs.work_status }}' '${{ steps.probe.outputs.attempts }}' '${{ steps.probe.outputs.last_result }}' '${{ steps.probe.outputs.morris_seen }}' '${{ steps.probe.outputs.morris_last_seen }}' '${{ steps.probe.outputs.morris_age }}' "$checked" > deployments/aurum-worker-probe.json
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-worker-probe.json

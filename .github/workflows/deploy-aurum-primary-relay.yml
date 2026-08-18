@@ -1,0 +1,140 @@
+name: Deploy Aurum Primary Compatibility Relay
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/deploy-aurum-primary-relay.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aurum-primary-relay
+  cancel-in-progress: false
+
+jobs:
+  relay:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify failover is healthy before touching compatibility URL
+        shell: bash
+        run: |
+          set -euo pipefail
+          url='https://madmorrigan.com/aurum-failover/index.php'
+          code="$(curl -sS -L -o /tmp/failover.json -w '%{http_code}' "$url")"
+          test "$code" = '200'
+          grep -F 'Aurum-Arkmatx' /tmp/failover.json >/dev/null
+          grep -F 'work_lease' /tmp/failover.json >/dev/null
+
+      - name: Build relay locally
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/aurum-relay.php" <<'PHP'
+          <?php
+          $base = 'https://madmorrigan.com/aurum-failover/index.php';
+          $uri = $_SERVER['REQUEST_URI'] ?? '/aurum/index.php';
+          $suffix = preg_replace('#^/aurum/index\.php#', '', $uri);
+          if ($suffix === null) $suffix = '';
+          $target = $base . $suffix;
+          $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+          $body = file_get_contents('php://input');
+          if (!function_exists('curl_init')) {
+              http_response_code(500);
+              header('Content-Type: application/json');
+              echo json_encode(array('ok'=>false,'error'=>'relay-curl-unavailable'));
+              exit;
+          }
+          $ch = curl_init($target);
+          curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+          curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
+          curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+          curl_setopt($ch, CURLOPT_TIMEOUT, 20);
+          curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
+          curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json', 'Cache-Control: no-cache', 'User-Agent: Aurum-Primary-Relay/1'));
+          if ($method !== 'GET' && $method !== 'HEAD' && $body !== false && $body !== '') curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+          $out = curl_exec($ch);
+          if ($out === false) {
+              $detail = curl_error($ch);
+              curl_close($ch);
+              http_response_code(502);
+              header('Content-Type: application/json');
+              echo json_encode(array('ok'=>false,'error'=>'relay-upstream','detail'=>$detail));
+              exit;
+          }
+          $code = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+          $ctype = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
+          curl_close($ch);
+          http_response_code($code > 0 ? $code : 502);
+          header('Content-Type: ' . ($ctype ?: 'application/json; charset=utf-8'));
+          header('Cache-Control: no-store');
+          echo $out;
+          PHP
+          php -l "$RUNNER_TEMP/aurum-relay.php"
+
+      - name: Configure existing Bluehost SSH carrier
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+          BLUEHOST_SSH_PRIVATE_KEY: ${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$BLUEHOST_HOST"; test -n "$BLUEHOST_USERNAME"; test -n "$BLUEHOST_SSH_PRIVATE_KEY"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$BLUEHOST_SSH_PRIVATE_KEY" > "$HOME/.ssh/bluehost_deploy"
+          chmod 600 "$HOME/.ssh/bluehost_deploy"
+          ssh-keyscan -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts"
+
+      - name: Back up old entrypoint and install relay
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote='public_html/arkmatx/aurum'
+          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" "mkdir -p '$remote'; if [ -f '$remote/index.php' ]; then cp -p '$remote/index.php' '$remote/index.php.pre-relay-${GITHUB_RUN_ID}'; fi"
+          scp -i "$HOME/.ssh/bluehost_deploy" -P 22 "$RUNNER_TEMP/aurum-relay.php" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/index.php"
+          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" "chmod 644 '$remote/index.php'; rm -f '$remote/.htaccess'; php -l '$remote/index.php'"
+
+      - name: Verify old controller URL now works through relay
+        id: verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          url='https://arkmatx.com/aurum/index.php'
+          code="$(curl -sS -L -o /tmp/primary.json -w '%{http_code}' "$url" || true)"
+          echo "http=$code" >> "$GITHUB_OUTPUT"
+          test "$code" = '200'
+          grep -F 'Aurum-Arkmatx' /tmp/primary.json >/dev/null
+          grep -F 'work_lease' /tmp/primary.json >/dev/null
+          lease="$(curl -sS -L "$url/work/lease?node_id=825e5a7b7d4a7aed&capabilities=bbpi4-bootstrap")"
+          printf '%s' "$lease" | grep -F 'controller' >/dev/null
+
+      - name: Record compatibility relay result
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git checkout main
+          git reset --hard origin/main
+          mkdir -p deployments
+          verified_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          outcome='${{ steps.verify.outcome }}'
+          code='${{ steps.verify.outputs.http }}'
+          status='relay-failed-failover-remains-live'
+          if [ "$outcome" = 'success' ]; then status='primary-url-relayed-and-verified'; fi
+          printf '{\n  "primary": "https://arkmatx.com/aurum/index.php",\n  "upstream": "https://madmorrigan.com/aurum-failover/index.php",\n  "http": "%s",\n  "verification": "%s",\n  "status": "%s",\n  "verified_at_utc": "%s"\n}\n' "$code" "$outcome" "$status" "$verified_at" > deployments/aurum-primary-relay.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add deployments/aurum-primary-relay.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Record Aurum primary relay result [skip ci]'
+          git push origin main

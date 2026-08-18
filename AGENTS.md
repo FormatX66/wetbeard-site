@@ -2,6 +2,23 @@
 
 These instructions apply to GPT/agent work in this repository.
 
+## Universal state-first execution
+
+Before meaningful action, determine proportionally:
+
+`intent -> observed current state -> required state -> delta -> constraints -> minimum useful action -> verification`
+
+An action must either change a state required by the user's outcome or produce
+genuinely new evidence. If it can do neither, do not run it.
+
+- Prefer cached verified evidence and deterministic local work before model/API calls.
+- Deduplicate work; retry only when input, implementation, environment, evidence, hypothesis, dependency, or authority changed.
+- Distinguish `success`, `waiting`, `refused`, `blocked`, `no_change`, and `failed` instead of treating every non-success as failure.
+- Expected waiting/refusal/no-change states must not create red workflows or inbox noise.
+- Verification determines success; later receipt/status bookkeeping must not retroactively fail an already-verified deployment.
+- Timestamps, counters, polls, and receipt rewrites are evidence, not meaningful progress by themselves.
+- Fix recurring problems at the earliest shared invariant rather than adding repeated retries around symptoms.
+
 ## Mandatory troubleshooting bootstrap
 
 Before asking the user for help with a technical failure, bottleneck, build/deploy problem, integration issue, or repeated setup problem:

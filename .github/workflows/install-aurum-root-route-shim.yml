@@ -1,0 +1,114 @@
+name: Install Aurum Root Route Shim
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/install-aurum-root-route-shim.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify failover controller before changing routing
+        shell: bash
+        run: |
+          set -euo pipefail
+          url='https://madmorrigan.com/aurum-failover/index.php/work/status?id=bbpi4-bootstrap-v1'
+          body="$(curl -sS -L --fail-with-body "$url")"
+          printf '%s' "$body" | grep -F 'bbpi4-bootstrap-v1' >/dev/null
+
+      - name: Configure existing Bluehost SSH carrier
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+          BLUEHOST_SSH_PRIVATE_KEY: ${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$BLUEHOST_HOST"; test -n "$BLUEHOST_USERNAME"; test -n "$BLUEHOST_SSH_PRIVATE_KEY"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$BLUEHOST_SSH_PRIVATE_KEY" > "$HOME/.ssh/bluehost_deploy"
+          chmod 600 "$HOME/.ssh/bluehost_deploy"
+          ssh-keyscan -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts"
+
+      - name: Install reversible route shim at verified arkmatx.com document root
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" "RUN_ID=$GITHUB_RUN_ID bash -s" <<'REMOTE'
+          set -euo pipefail
+          root='public_html/arkmatx'
+          ht="$root/.htaccess"
+          backup="$root/.htaccess.pre-aurum-route-${RUN_ID}"
+          mkdir -p "$root"
+          if [ -f "$ht" ]; then cp -p "$ht" "$backup"; else : > "$ht"; fi
+          tmp="$(mktemp)"
+          awk '
+            /^# BEGIN AURUM PRIMARY RELAY ROUTES$/ {skip=1; next}
+            /^# END AURUM PRIMARY RELAY ROUTES$/ {skip=0; next}
+            !skip {print}
+          ' "$ht" > "$tmp"
+          cat >> "$tmp" <<'RULES'
+
+          # BEGIN AURUM PRIMARY RELAY ROUTES
+          RewriteEngine On
+          RewriteRule ^aurum/index\.php/(.*)$ aurum/index.php?__aurum_path=/$1 [QSA,L]
+          RewriteRule ^aurum/(status|nodes|events|uaf)$ aurum/index.php?__aurum_path=/$1 [QSA,L]
+          RewriteRule ^aurum/work/(.*)$ aurum/index.php?__aurum_path=/work/$1 [QSA,L]
+          # END AURUM PRIMARY RELAY ROUTES
+          RULES
+          cat "$tmp" > "$ht"
+          rm -f "$tmp"
+          chmod 644 "$ht"
+          REMOTE
+
+      - name: Verify worker routes through original controller URL read-only
+        id: verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          root='https://arkmatx.com/aurum/index.php'
+          code="$(curl -sS -L -o /tmp/root.json -w '%{http_code}' "$root" || true)"
+          echo "root_http=$code" >> "$GITHUB_OUTPUT"
+          test "$code" = '200'
+          grep -F 'Aurum-Arkmatx' /tmp/root.json >/dev/null
+          work_code="$(curl -sS -L -o /tmp/work.json -w '%{http_code}' "$root/work/status?id=bbpi4-bootstrap-v1" || true)"
+          echo "work_http=$work_code" >> "$GITHUB_OUTPUT"
+          test "$work_code" = '200'
+          grep -F 'bbpi4-bootstrap-v1' /tmp/work.json >/dev/null
+          nodes_code="$(curl -sS -L -o /tmp/nodes.json -w '%{http_code}' "$root/nodes" || true)"
+          echo "nodes_http=$nodes_code" >> "$GITHUB_OUTPUT"
+          test "$nodes_code" = '200'
+          grep -F 'controller' /tmp/nodes.json >/dev/null
+
+      - name: Record route shim result
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git checkout main
+          git reset --hard origin/main
+          mkdir -p deployments
+          checked="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          outcome='${{ steps.verify.outcome }}'
+          status='route-shim-failed-failover-preserved'
+          if [ "$outcome" = 'success' ]; then status='worker-routes-through-original-url-verified'; fi
+          printf '{\n  "document_root": "public_html/arkmatx",\n  "primary": "https://arkmatx.com/aurum/index.php",\n  "root_http": "%s",\n  "work_http": "%s",\n  "nodes_http": "%s",\n  "verification": "%s",\n  "probe_mode": "read-only",\n  "status": "%s",\n  "verified_at_utc": "%s"\n}\n' '${{ steps.verify.outputs.root_http }}' '${{ steps.verify.outputs.work_http }}' '${{ steps.verify.outputs.nodes_http }}' "$outcome" "$status" "$checked" > deployments/aurum-root-route-shim.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add deployments/aurum-root-route-shim.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Record Aurum root route shim [skip ci]'
+          git push origin main

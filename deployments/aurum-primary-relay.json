@@ -2,7 +2,7 @@
   "primary": "https://arkmatx.com/aurum/index.php",
   "upstream": "https://madmorrigan.com/aurum-failover/index.php",
   "http": "200",
-  "verification": "success",
-  "status": "primary-url-relayed-and-verified",
-  "verified_at_utc": "2026-08-18T22:29:00Z"
+  "verification": "failure",
+  "status": "relay-failed-failover-remains-live",
+  "verified_at_utc": "2026-08-18T22:30:06Z"
 }

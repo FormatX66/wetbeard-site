@@ -1,9 +1,14 @@
 {
   "primary": "https://arkmatx.com/aurum/index.php",
-  "upstream": "https://madmorrigan.com/aurum-failover/index.php",
-  "http": "200",
-  "verification": "failure",
-  "status": "relay-failed-failover-remains-live",
-  "probe_mode": "read-only",
-  "verified_at_utc": "2026-08-18T22:33:25Z"
+  "upstream": "https://madmorrigan.com/aurum-failover",
+  "root_http": "200",
+  "status_http": "200",
+  "lease_http": "200",
+  "root_ok": "true",
+  "status_ok": "true",
+  "lease_ok": "true",
+  "verification": "success",
+  "status": "installed-worker-urls-relayed-and-verified",
+  "probe_mode": "read-only-status-plus-nonmatching-lease-no-real-work-consumed",
+  "verified_at_utc": "2026-08-18T22:41:07Z"
 }

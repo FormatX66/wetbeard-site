@@ -38,11 +38,18 @@ jobs:
           cat > "$RUNNER_TEMP/aurum-relay.php" <<'PHP'
           <?php
           $base = 'https://madmorrigan.com/aurum-failover/index.php';
-          $uri = $_SERVER['REQUEST_URI'] ?? '/aurum/index.php';
-          $suffix = preg_replace('#^/aurum/index\.php#', '', $uri);
-          if ($suffix === null) $suffix = '';
-          $target = $base . $suffix;
           $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+          $pathInfo = $_SERVER['PATH_INFO'] ?? ($_SERVER['ORIG_PATH_INFO'] ?? '');
+          if ($pathInfo === '') {
+              $requestUri = $_SERVER['REQUEST_URI'] ?? '/aurum/index.php';
+              $path = parse_url($requestUri, PHP_URL_PATH);
+              if (!is_string($path)) $path = '';
+              $prefix = '/aurum/index.php';
+              if (strpos($path, $prefix) === 0) $pathInfo = substr($path, strlen($prefix));
+          }
+          if ($pathInfo !== '' && $pathInfo[0] !== '/') $pathInfo = '/' . $pathInfo;
+          $query = $_SERVER['QUERY_STRING'] ?? '';
+          $target = $base . $pathInfo . ($query !== '' ? '?' . $query : '');
           $body = file_get_contents('php://input');
           if (!function_exists('curl_init')) {
               http_response_code(500);
@@ -56,7 +63,8 @@ jobs:
           curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
           curl_setopt($ch, CURLOPT_TIMEOUT, 20);
           curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
-          curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json', 'Cache-Control: no-cache', 'User-Agent: Aurum-Primary-Relay/1'));
+          curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json', 'Cache-Control: no-cache', 'User-Agent: Aurum-Primary-Relay/2'));
+          if ($method === 'HEAD') curl_setopt($ch, CURLOPT_NOBODY, true);
           if ($method !== 'GET' && $method !== 'HEAD' && $body !== false && $body !== '') curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
           $out = curl_exec($ch);
           if ($out === false) {

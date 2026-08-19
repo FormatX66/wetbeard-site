@@ -20,53 +20,53 @@
   ],
   "recent_commits": [
     {
-      "sha": "62dc8d56",
-      "message": "Make state-first reasoning part of GPT operating rules",
-      "date": "2026-08-18T17:07:48Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/62dc8d56bebcca9d2b950696d58bb718073aefd2"
+      "sha": "0f04e41b",
+      "message": "Make Aurum deployment relay-aware and non-consuming",
+      "date": "2026-08-18T22:46:26Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/0f04e41bb162ee8739b190d05234b6543461754d"
     },
     {
-      "sha": "f946b0ed",
-      "message": "Apply state-first execution logic to site agents",
-      "date": "2026-08-18T17:06:01Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/f946b0edf6c9a6cb8fef13242f8bff58af7096e0"
+      "sha": "e32afbbd",
+      "message": "Make Aurum worker recovery probe state-driven",
+      "date": "2026-08-18T22:44:10Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/e32afbbd9a9757a1ebda1666613bfd302e10683a"
     },
     {
-      "sha": "df372142",
-      "message": "Strengthen deployment receipt failure rule",
-      "date": "2026-08-18T16:35:08Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/df372142324edb82e52bb8fb9f117e233f4a9780"
+      "sha": "27e327ac",
+      "message": "Record Aurum worker resume probe [skip ci]",
+      "date": "2026-08-18T22:41:59Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/27e327ac72dbe3db4e6434f1624c188ceec61c9e"
     },
     {
-      "sha": "429a2a89",
-      "message": "Stop timestamp-only ArkmatX status commits",
-      "date": "2026-08-18T16:33:04Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/429a2a89eef2044bcc1c12a48fcd1815bba57636"
+      "sha": "91ebc17e",
+      "message": "Probe Aurum worker freshness after route recovery",
+      "date": "2026-08-18T22:41:51Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/91ebc17e6b9ccb9ee44878c7fb56290391889798"
     },
     {
-      "sha": "bcb81b8d",
-      "message": "Keep production success independent of receipt writes",
-      "date": "2026-08-18T16:27:45Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/bcb81b8dac59240d384ac56c305d8d31db0e853f"
+      "sha": "b8ce4bc1",
+      "message": "Record Aurum primary relay result [skip ci]",
+      "date": "2026-08-18T22:41:07Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/b8ce4bc17089b960357a93d8215da823df12a778"
     },
     {
-      "sha": "3d96503e",
-      "message": "Decouple staging success from receipt publishing",
-      "date": "2026-08-18T16:27:26Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/3d96503e162bd2a9ad8ba698d5e365ecc8ea2c19"
+      "sha": "787bb99b",
+      "message": "Point installed Aurum workers at clean failover routes",
+      "date": "2026-08-18T22:40:50Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/787bb99bcaf7fde3697c0e14b31c182d382d0b23"
     },
     {
-      "sha": "6b9c956f",
-      "message": "Refresh ArkmatX GitHub status",
-      "date": "2026-08-18T13:07:17Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/6b9c956f9a51215e04b4dea464145b1f4d299d4e"
+      "sha": "244efe8c",
+      "message": "Record Aurum worker routing repair [skip ci]",
+      "date": "2026-08-18T22:39:59Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/244efe8cecd2fbdd415f594761871d35d2f2b901"
     },
     {
-      "sha": "9d5a6f9e",
-      "message": "Refresh ArkmatX GitHub status",
-      "date": "2026-08-18T07:04:06Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/9d5a6f9e7448b7749738b6e64c811bfc2122d888"
+      "sha": "a03be996",
+      "message": "Repair Aurum worker routing end to end",
+      "date": "2026-08-18T22:39:39Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/a03be9962b3d4ea26f131c37f85479a09c991ca9"
     }
   ],
-  "updated_at": "2026-08-18T18:56:41Z"
+  "updated_at": "2026-08-19T01:53:11Z"
 }

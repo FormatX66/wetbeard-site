@@ -20,6 +20,12 @@
   ],
   "recent_commits": [
     {
+      "sha": "f080ecc2",
+      "message": "Refresh ArkmatX GitHub status [skip ci]",
+      "date": "2026-08-20T13:11:01Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/f080ecc2747c484f35ea37fe6c96965567c63b6b"
+    },
+    {
       "sha": "356160d1",
       "message": "Refresh ArkmatX GitHub status [skip ci]",
       "date": "2026-08-20T07:05:49Z",
@@ -60,13 +66,7 @@
       "message": "Make Aurum deployment relay-aware and non-consuming",
       "date": "2026-08-18T22:46:26Z",
       "html_url": "https://github.com/FormatX66/wetbeard-site/commit/0f04e41bb162ee8739b190d05234b6543461754d"
-    },
-    {
-      "sha": "e32afbbd",
-      "message": "Make Aurum worker recovery probe state-driven",
-      "date": "2026-08-18T22:44:10Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/e32afbbd9a9757a1ebda1666613bfd302e10683a"
     }
   ],
-  "updated_at": "2026-08-20T13:11:01Z"
+  "updated_at": "2026-08-20T18:59:12Z"
 }

@@ -20,6 +20,18 @@
   ],
   "recent_commits": [
     {
+      "sha": "6768ba55",
+      "message": "Publish canonical Aurum dashboard via existing MadMorrigan SSH",
+      "date": "2026-08-21T18:20:52Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/6768ba5568bc1ce245bd65c95b17dc302a631ada"
+    },
+    {
+      "sha": "4a8919ce",
+      "message": "Refresh ArkmatX GitHub status [skip ci]",
+      "date": "2026-08-21T13:10:50Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/4a8919ce77a182130d42e6feffc7c037e3414190"
+    },
+    {
       "sha": "74632a02",
       "message": "Refresh ArkmatX GitHub status [skip ci]",
       "date": "2026-08-21T07:07:05Z",
@@ -54,19 +66,7 @@
       "message": "Refresh ArkmatX GitHub status [skip ci]",
       "date": "2026-08-20T01:51:39Z",
       "html_url": "https://github.com/FormatX66/wetbeard-site/commit/95e7bdc68b6c9b13b4c0007542a0d6673390fc6e"
-    },
-    {
-      "sha": "c1d7dbde",
-      "message": "Refresh ArkmatX GitHub status [skip ci]",
-      "date": "2026-08-19T18:53:00Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/c1d7dbde937b3516080a4025b4f824ce495d81b9"
-    },
-    {
-      "sha": "7e5fbfee",
-      "message": "Refresh ArkmatX GitHub status [skip ci]",
-      "date": "2026-08-19T13:08:20Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/7e5fbfee0101fb89d4a30ba855b71aadb90d6c7d"
     }
   ],
-  "updated_at": "2026-08-21T13:10:50Z"
+  "updated_at": "2026-08-21T18:55:53Z"
 }

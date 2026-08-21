@@ -38,7 +38,8 @@ jobs:
           test -s "$out"
           grep -Fq 'AURUM_OPERATOR_COMMANDS_V1_CANONICAL' "$out"
           grep -Fq 'Proposed commands are never presented as runnable' "$out"
-          grep -Fq 'operator commands' "$out"
+          grep -Fq 'Parses the live registry by table headers' "$out"
+          grep -Fq 'Hopper-proven' "$out"
           echo "file=$out" >> "$GITHUB_OUTPUT"
 
       - name: Configure existing Bluehost SSH carrier
@@ -78,17 +79,18 @@ jobs:
           set -euo pipefail
           python3 - "$RUNNER_TEMP/index.html" <<'PY'
           from pathlib import Path
+          import re
           import sys
           p=Path(sys.argv[1])
           text=p.read_text(encoding='utf-8')
-          tag='<script src="./operator-commands.js?v=1"></script>'
-          if tag not in text:
-              if '</body>' not in text:
-                  raise SystemExit('dashboard body close missing')
-              text=text.replace('</body>',tag+'\n</body>',1)
+          text=re.sub(r'<script src="\./operator-commands\.js\?v=\d+"></script>\s*', '', text)
+          tag='<script src="./operator-commands.js?v=2"></script>'
+          if '</body>' not in text:
+              raise SystemExit('dashboard body close missing')
+          text=text.replace('</body>',tag+'\n</body>',1)
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './operator-commands.js?v=1' "$RUNNER_TEMP/index.html"
+          grep -Fq './operator-commands.js?v=2' "$RUNNER_TEMP/index.html"
 
       - name: Publish operator command surface
         env:
@@ -111,16 +113,15 @@ jobs:
           asset="$(mktemp)"
           registry="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
-          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/operator-commands.js?rev=1' -o "$asset"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/operator-commands.js?rev=2' -o "$asset"
           curl --fail-with-body --silent --show-error --location --retry 3 --retry-all-errors --retry-delay 2 'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/docs/AURUM_COMMANDS.md' -o "$registry"
-          grep -Fq './operator-commands.js?v=1' "$page"
+          grep -Fq './operator-commands.js?v=2' "$page"
           grep -Fq 'AURUM_OPERATOR_COMMANDS_V1_CANONICAL' "$asset"
-          grep -Fq 'Operator Commands' "$asset"
-          grep -Fq '| `RUN` ' "$registry"
-          grep -Fq '| `RESET` ' "$registry"
-          grep -Fq '| `OPEN` ' "$registry"
-          grep -Fq '| `aurum status` ' "$registry"
-          grep -Fq 'Proposed' "$registry"
+          grep -Fq 'Parses the live registry by table headers' "$asset"
+          grep -Fq 'Hopper-proven' "$asset"
+          grep -Fq '| `status` | Physical |' "$registry"
+          grep -Fq '| `input-status` | Implemented |' "$registry"
+          grep -Fq '| `RUN` | Approval-gated fixed read-only diagnostics | Documented |' "$registry"
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
 
       - name: Roll back if verification fails
@@ -157,6 +158,8 @@ jobs:
             "runtime_projection_component": "Web/Aurum-Arkmatx/operator-commands-v1.js",
             "credential_carrier_repo": "FormatX66/wetbeard-site",
             "operator_command_registry": "FormatX66/BoxBrain/docs/AURUM_COMMANDS.md",
+            "header_aware_registry_parser": true,
+            "hopper_physical_command_maturity": true,
             "proposed_commands_are_not_runnable": true,
             "expandable": true,
             "status": "verified-live",

@@ -1,0 +1,14 @@
+{
+  "site": "arkmatx-aurum-dashboard",
+  "url": "https://arkmatx.com/aurum/dashboard/",
+  "canonical_website_repo": "FormatX66/ClusterSites",
+  "canonical_component": "services/aurum-arkmatx/operator-commands-v1.js",
+  "runtime_projection_repo": "FormatX66/BoxBrain",
+  "runtime_projection_component": "Web/Aurum-Arkmatx/operator-commands-v1.js",
+  "credential_carrier_repo": "FormatX66/wetbeard-site",
+  "operator_command_registry": "FormatX66/BoxBrain/docs/AURUM_COMMANDS.md",
+  "proposed_commands_are_not_runnable": true,
+  "expandable": true,
+  "status": "verified-live",
+  "verified_at_utc": "2026-08-21T21:13:53Z"
+}

@@ -27,16 +27,17 @@ jobs:
       - name: Check out deployment carrier
         uses: actions/checkout@v4
 
-      - name: Fetch canonical ClusterSites activity clarity component
+      - name: Fetch public mirror of canonical ClusterSites activity clarity component
         id: source
         shell: bash
         run: |
           set -euo pipefail
-          url='https://raw.githubusercontent.com/FormatX66/ClusterSites/main/services/aurum-arkmatx/activity-clarity-v1.js'
+          url='https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/activity-clarity-v1.js'
           target="$RUNNER_TEMP/activity-clarity.js"
           curl --fail-with-body --silent --show-error --location "$url" -o "$target"
           test -s "$target"
           grep -Fq 'AURUM_ACTIVITY_CLARITY_V1_CANONICAL' "$target"
+          grep -Fq 'Canonical website owner: FormatX66/ClusterSites.' "$target"
           grep -Fq 'idempotent confirmations, not new frontier progress' "$target"
           grep -Fq 'full repository history' "$target"
           echo "file=$target" >> "$GITHUB_OUTPUT"
@@ -115,6 +116,7 @@ jobs:
           grep -Fq './command-center.js?v=32' "$page"
           grep -Fq './activity-clarity.js?v=1' "$page"
           grep -Fq 'AURUM_ACTIVITY_CLARITY_V1_CANONICAL' "$component"
+          grep -Fq 'Canonical website owner: FormatX66/ClusterSites.' "$component"
           grep -Fq 'idempotent confirmations, not new frontier progress' "$component"
           grep -Fq 'full repository history' "$component"
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
@@ -149,6 +151,8 @@ jobs:
             "url": "${{ steps.verify.outputs.url }}",
             "canonical_website_repo": "FormatX66/ClusterSites",
             "canonical_component": "services/aurum-arkmatx/activity-clarity-v1.js",
+            "runtime_mirror_repo": "FormatX66/BoxBrain",
+            "runtime_mirror_component": "Web/Aurum-Arkmatx/activity-clarity-v1.js",
             "credential_carrier_repo": "FormatX66/wetbeard-site",
             "routine_receipt_compaction": true,
             "audit_evidence_preserved": true,

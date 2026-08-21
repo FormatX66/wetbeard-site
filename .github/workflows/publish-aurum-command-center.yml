@@ -26,13 +26,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Fetch public command-center projection
+      - name: Fetch corrected public command-center projection
         shell: bash
         run: |
           set -euo pipefail
           curl --fail-with-body --silent --show-error --location \
-            'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/command-center.js' \
+            'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/command-center-v2.js' \
             -o "$RUNNER_TEMP/command-center.js"
+          grep -Fq 'Aurum Command Center v2' "$RUNNER_TEMP/command-center.js"
           grep -Fq 'frontiers advancing' "$RUNNER_TEMP/command-center.js"
           grep -Fq 'your actions' "$RUNNER_TEMP/command-center.js"
           grep -Fq '#6c63ff' "$RUNNER_TEMP/command-center.js"
@@ -102,7 +103,8 @@ jobs:
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/command-center.js' -o "$shell"
           grep -Fq './command-center.js' "$page"
-          grep -Fq 'frontiers advancing' "$shell"
+          grep -Fq 'Aurum Command Center v2' "$shell"
+          grep -Fq 'Frontiers advancing' "$shell"
           grep -Fq 'Your action center' "$shell"
           grep -Fq 'Aurum • live machine command center' "$shell"
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
@@ -135,6 +137,7 @@ jobs:
             "url": "${{ steps.verify.outputs.url }}",
             "canonical_website_repo": "FormatX66/ClusterSites",
             "public_projection_repo": "FormatX66/BoxBrain",
+            "public_projection_component": "command-center-v2.js",
             "credential_carrier_repo": "FormatX66/wetbeard-site",
             "theme": "aurum-dark-violet",
             "expandable_summary": true,

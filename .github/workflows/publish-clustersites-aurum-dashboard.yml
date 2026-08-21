@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   publish:
-    name: Publish Aurum Command Center v3.1
+    name: Publish Aurum Command Center v3.2
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -29,7 +29,7 @@ jobs:
         run: |
           set -euo pipefail
           base_url='https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/dashboard.html'
-          shell_url='https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/command-center-v3.1.js'
+          shell_url='https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/command-center-v3.2.js'
           source_api='https://api.github.com/repos/FormatX66/BoxBrain/commits/main'
           target="$RUNNER_TEMP/aurum-dashboard.html"
           shell="$RUNNER_TEMP/command-center.js"
@@ -48,7 +48,7 @@ jobs:
               raise SystemExit('Aurum projection route contract changed; refusing blind deployment')
           text=text.replace(old,new,1)
           text=text.replace('href=\"./\">Aurum portal','href=\"/aurum/\">Aurum portal',1)
-          tag='<script src="./command-center.js?v=31"></script>'
+          tag='<script src="./command-center.js?v=32"></script>'
           if tag not in text:
               if '</body>' not in text:
                   raise SystemExit('dashboard missing body close')
@@ -59,8 +59,8 @@ jobs:
           test -s "$shell"
           grep -Fq 'Progress is proof, not activity.' "$target"
           grep -Fq 'voice-status.json' "$target"
-          grep -Fq './command-center.js?v=31' "$target"
-          grep -Fq 'AURUM_COMMAND_CENTER_V3_1_CANONICAL' "$shell"
+          grep -Fq './command-center.js?v=32' "$target"
+          grep -Fq 'AURUM_COMMAND_CENTER_V3_2_CANONICAL' "$shell"
           grep -Fq 'frontiers advancing' "$shell"
           grep -Fq 'needs work' "$shell"
           grep -Fq 'your actions' "$shell"
@@ -94,7 +94,7 @@ jobs:
         run: |
           set -euo pipefail
           remote='public_html/arkmatx/aurum/dashboard'
-          backup=".aurum-dashboard-backups/v31-$GITHUB_RUN_ID"
+          backup=".aurum-dashboard-backups/v32-$GITHUB_RUN_ID"
           ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
             "set -eu; mkdir -p '$remote' '$backup'; if [ -f '$remote/index.html' ]; then cp -p '$remote/index.html' '$backup/index.html'; else touch '$backup/.missing-index.html'; fi; if [ -f '$remote/command-center.js' ]; then cp -p '$remote/command-center.js' '$backup/command-center.js'; else touch '$backup/.missing-command-center.js'; fi"
           echo 'ready=true' >> "$GITHUB_OUTPUT"
@@ -120,10 +120,10 @@ jobs:
           shell="$(mktemp)"
           mirror="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
-          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/command-center.js?rev=31' -o "$shell"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/command-center.js?rev=32' -o "$shell"
           grep -Fq 'Progress is proof, not activity.' "$page"
-          grep -Fq './command-center.js?v=31' "$page"
-          grep -Fq 'AURUM_COMMAND_CENTER_V3_1_CANONICAL' "$shell"
+          grep -Fq './command-center.js?v=32' "$page"
+          grep -Fq 'AURUM_COMMAND_CENTER_V3_2_CANONICAL' "$shell"
           grep -Fq 'Frontiers Advancing' "$shell"
           grep -Fq 'Needs Work' "$shell"
           grep -Fq 'Your Actions' "$shell"
@@ -136,7 +136,7 @@ jobs:
           assert payload['schema']=='aurum-voice-status-v1'
           assert len(payload.get('human_capabilities',[]))==7
           assert 'human_action' in payload.get('overall',{})
-          print('AURUM_COMMAND_CENTER_V31_MIRROR_OK')
+          print('AURUM_COMMAND_CENTER_V32_MIRROR_OK')
           PY
           status="$(curl --fail-with-body --silent --show-error --location --retry 3 --retry-all-errors --retry-delay 2 'https://arkmatx.com/aurum/index.php')"
           printf '%s' "$status" | grep -Fq 'Aurum-Arkmatx'
@@ -151,7 +151,7 @@ jobs:
         run: |
           set -euo pipefail
           remote='public_html/arkmatx/aurum/dashboard'
-          backup=".aurum-dashboard-backups/v31-$GITHUB_RUN_ID"
+          backup=".aurum-dashboard-backups/v32-$GITHUB_RUN_ID"
           ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
             "set -eu; if [ -f '$backup/index.html' ]; then cp -p '$backup/index.html' '$remote/index.html'; elif [ -f '$backup/.missing-index.html' ]; then rm -f '$remote/index.html'; fi; if [ -f '$backup/command-center.js' ]; then cp -p '$backup/command-center.js' '$remote/command-center.js'; elif [ -f '$backup/.missing-command-center.js' ]; then rm -f '$remote/command-center.js'; fi"
 
@@ -172,11 +172,11 @@ jobs:
             "url": "${{ steps.verify.outputs.url }}",
             "canonical_website_repo": "FormatX66/ClusterSites",
             "canonical_dashboard": "services/aurum-arkmatx/dashboard-v3.html",
-            "canonical_behavior": "services/aurum-arkmatx/command-center-v3.1.js",
+            "canonical_behavior": "services/aurum-arkmatx/command-center-v3.2.js",
             "runtime_projection_repo": "FormatX66/BoxBrain",
             "runtime_projection_sha": "${{ steps.source.outputs.projection_sha }}",
             "credential_carrier_repo": "FormatX66/wetbeard-site",
-            "command_center_version": "3.1",
+            "command_center_version": "3.2",
             "stable_runtime_asset": "command-center.js",
             "aurum_gui_theme": "dark-violet",
             "expandable_summary": true,
@@ -195,6 +195,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-dashboard-live.json
-          git commit -m 'Record Aurum dashboard v3.1 live deployment [skip ci]' || exit 0
+          git commit -m 'Record Aurum dashboard v3.2 live deployment [skip ci]' || exit 0
           git pull --rebase origin main
           git push origin HEAD:main

@@ -1,0 +1,15 @@
+{
+  "site": "aurum-command-center",
+  "url": "https://arkmatx.com/aurum/dashboard/",
+  "canonical_website_repo": "FormatX66/ClusterSites",
+  "canonical_component": "services/aurum-arkmatx/activity-clarity-v1.js",
+  "runtime_mirror_repo": "FormatX66/BoxBrain",
+  "runtime_mirror_component": "Web/Aurum-Arkmatx/activity-clarity-v1.js",
+  "credential_carrier_repo": "FormatX66/wetbeard-site",
+  "routine_receipt_compaction": true,
+  "audit_evidence_preserved": true,
+  "routine_receipts_are_not_frontier_progress": true,
+  "routine_receipts_are_not_human_actions": true,
+  "status": "verified-live",
+  "verified_at_utc": "2026-08-21T22:54:08Z"
+}

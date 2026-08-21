@@ -1,0 +1,16 @@
+{
+  "site": "aurum-command-center",
+  "url": "https://arkmatx.com/aurum/dashboard/",
+  "canonical_website_repo": "FormatX66/ClusterSites",
+  "public_projection_repo": "FormatX66/BoxBrain",
+  "credential_carrier_repo": "FormatX66/wetbeard-site",
+  "theme": "aurum-dark-violet",
+  "expandable_summary": true,
+  "expandable_systems": true,
+  "expandable_traits": true,
+  "expandable_panels": true,
+  "operator_action_center": true,
+  "semantic_frontier_progress": true,
+  "status": "verified-live",
+  "verified_at_utc": "2026-08-21T19:30:20Z"
+}

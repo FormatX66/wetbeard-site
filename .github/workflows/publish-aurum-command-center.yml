@@ -1,0 +1,143 @@
+name: Publish Aurum Command Center Shell
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-aurum-command-center.yml'
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - Publish ClusterSites Aurum Dashboard
+    types:
+      - completed
+
+permissions:
+  contents: read
+
+concurrency:
+  group: aurum-command-center-shell-production
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Fetch public command-center projection
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail-with-body --silent --show-error --location \
+            'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/command-center.js' \
+            -o "$RUNNER_TEMP/command-center.js"
+          grep -Fq 'frontiers advancing' "$RUNNER_TEMP/command-center.js"
+          grep -Fq 'your actions' "$RUNNER_TEMP/command-center.js"
+          grep -Fq '#6c63ff' "$RUNNER_TEMP/command-center.js"
+
+      - name: Configure existing Bluehost SSH carrier
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+          BLUEHOST_SSH_PRIVATE_KEY: ${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$BLUEHOST_HOST"
+          test -n "$BLUEHOST_USERNAME"
+          test -n "$BLUEHOST_SSH_PRIVATE_KEY"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$BLUEHOST_SSH_PRIVATE_KEY" > "$HOME/.ssh/bluehost_deploy"
+          chmod 600 "$HOME/.ssh/bluehost_deploy"
+          ssh-keyscan -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts"
+
+      - name: Back up and read current dashboard
+        id: backup
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote='public_html/arkmatx/aurum/dashboard'
+          backup=".aurum-dashboard-backups/command-center-$GITHUB_RUN_ID"
+          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "set -eu; mkdir -p '$backup'; cp -p '$remote/index.html' '$backup/index.html'; if [ -f '$remote/command-center.js' ]; then cp -p '$remote/command-center.js' '$backup/command-center.js'; else touch '$backup/.missing-command-center.js'; fi"
+          scp -i "$HOME/.ssh/bluehost_deploy" -P 22 \
+            "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/index.html" "$RUNNER_TEMP/index.html"
+          echo 'ready=true' >> "$GITHUB_OUTPUT"
+
+      - name: Inject command-center shell
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - "$RUNNER_TEMP/index.html" <<'PY'
+          from pathlib import Path
+          import sys
+          path = Path(sys.argv[1])
+          text = path.read_text(encoding='utf-8')
+          tag = '<script src="./command-center.js"></script>'
+          if tag not in text:
+              if '</body>' not in text:
+                  raise SystemExit('dashboard has no </body> marker')
+              text = text.replace('</body>', tag + '\n</body>', 1)
+          path.write_text(text, encoding='utf-8')
+          PY
+          grep -Fq './command-center.js' "$RUNNER_TEMP/index.html"
+
+      - name: Publish Aurum command center
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote='public_html/arkmatx/aurum/dashboard'
+          scp -i "$HOME/.ssh/bluehost_deploy" -P 22 "$RUNNER_TEMP/index.html" \
+            "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/index.html"
+          scp -i "$HOME/.ssh/bluehost_deploy" -P 22 "$RUNNER_TEMP/command-center.js" \
+            "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/command-center.js"
+          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "chmod 644 '$remote/index.html' '$remote/command-center.js'"
+
+      - name: Verify live Aurum command center
+        id: verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          page="$(mktemp)"
+          shell="$(mktemp)"
+          final_url="$(curl --fail-with-body --silent --show-error --location \
+            --retry 5 --retry-all-errors --retry-delay 2 \
+            -H 'Cache-Control: no-cache' \
+            -o "$page" -w '%{url_effective}' \
+            'https://arkmatx.com/aurum/dashboard/')"
+          curl --fail-with-body --silent --show-error --location \
+            --retry 5 --retry-all-errors --retry-delay 2 \
+            -H 'Cache-Control: no-cache' \
+            'https://arkmatx.com/aurum/dashboard/command-center.js' -o "$shell"
+          grep -Fq './command-center.js' "$page"
+          grep -Fq 'frontiers advancing' "$shell"
+          grep -Fq 'Your action center' "$shell"
+          grep -Fq 'Aurum • live machine command center' "$shell"
+          echo "url=$final_url" >> "$GITHUB_OUTPUT"
+
+      - name: Roll back if verification fails
+        if: ${{ failure() && steps.backup.outputs.ready == 'true' }}
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote='public_html/arkmatx/aurum/dashboard'
+          backup=".aurum-dashboard-backups/command-center-$GITHUB_RUN_ID"
+          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "set -eu; cp -p '$backup/index.html' '$remote/index.html'; if [ -f '$backup/command-center.js' ]; then cp -p '$backup/command-center.js' '$remote/command-center.js'; elif [ -f '$backup/.missing-command-center.js' ]; then rm -f '$remote/command-center.js'; fi"
+
+      - name: Record verified command-center receipt
+        if: success()
+        shell: bash
+        run: |
+          printf 'AURUM_COMMAND_CENTER verified-live url=%s\n' '${{ steps.verify.outputs.url }}'

@@ -3,6 +3,7 @@
   "url": "https://arkmatx.com/aurum/dashboard/",
   "canonical_website_repo": "FormatX66/ClusterSites",
   "public_projection_repo": "FormatX66/BoxBrain",
+  "public_projection_component": "command-center-v2.js",
   "credential_carrier_repo": "FormatX66/wetbeard-site",
   "theme": "aurum-dark-violet",
   "expandable_summary": true,
@@ -12,5 +13,5 @@
   "operator_action_center": true,
   "semantic_frontier_progress": true,
   "status": "verified-live",
-  "verified_at_utc": "2026-08-21T19:30:20Z"
+  "verified_at_utc": "2026-08-21T19:32:22Z"
 }

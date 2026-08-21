@@ -23,22 +23,43 @@ jobs:
       - name: Check out deployment carrier
         uses: actions/checkout@v4
 
-      - name: Check out canonical ClusterSites source
-        uses: actions/checkout@v4
-        with:
-          repository: FormatX66/ClusterSites
-          ref: main
-          path: cluster
-
-      - name: Validate canonical dashboard source
+      - name: Prepare public Aurum dashboard projection
         id: source
         shell: bash
         run: |
           set -euo pipefail
-          test -s cluster/services/aurum-arkmatx/dashboard.html
-          grep -Fq 'Aurum Command Center' cluster/services/aurum-arkmatx/dashboard.html
-          source_sha="$(git -C cluster rev-parse HEAD)"
+          source_url='https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/dashboard.html'
+          source_api='https://api.github.com/repos/FormatX66/BoxBrain/commits/main'
+          target="$RUNNER_TEMP/aurum-dashboard.html"
+          curl --fail-with-body --silent --show-error --location "$source_url" -o "$target"
+          source_json="$(curl --fail-with-body --silent --show-error --location \
+            -H 'Accept: application/vnd.github+json' "$source_api")"
+          source_sha="$(printf '%s' "$source_json" | python3 -c 'import json,sys; print(json.load(sys.stdin)["sha"])')"
+          python3 - "$target" "$source_sha" <<'PY'
+          from pathlib import Path
+          import re
+          import sys
+
+          path = Path(sys.argv[1])
+          sha = sys.argv[2]
+          text = path.read_text(encoding='utf-8')
+          text = text.replace('<head>', f'<head>\n<!-- DEPLOYMENT PROJECTION: canonical website ownership remains FormatX66/ClusterSites; public dashboard projection source FormatX66/BoxBrain@{sha} -->', 1)
+          text = text.replace('href="./">Aurum portal', 'href="/aurum/">Aurum portal', 1)
+          text, count = re.subn(
+              r"function rel\(path\)\{return directoryBase\(\)\+path\.replace\(/\^\\//,''\)\}",
+              "function rel(path){const p=path.replace(/^\\//,'');return p==='status'?'/aurum/index.php':`/aurum/index.php/${p}`}",
+              text,
+              count=1,
+          )
+          if count != 1:
+              raise SystemExit('Could not patch Aurum edge route helper in dashboard projection')
+          path.write_text(text, encoding='utf-8')
+          PY
+          test -s "$target"
+          grep -Fq 'Aurum Command Center' "$target"
+          grep -Fq '/aurum/index.php' "$target"
           echo "sha=$source_sha" >> "$GITHUB_OUTPUT"
+          echo "file=$target" >> "$GITHUB_OUTPUT"
 
       - name: Configure existing Bluehost SSH carrier
         env:
@@ -70,7 +91,7 @@ jobs:
             "set -eu; mkdir -p '$remote' '$backup'; if [ -f '$remote/index.html' ]; then cp -p '$remote/index.html' '$backup/index.html'; else touch '$backup/.missing-index.html'; fi"
           echo 'ready=true' >> "$GITHUB_OUTPUT"
 
-      - name: Publish canonical dashboard
+      - name: Publish dashboard projection
         env:
           BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
           BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
@@ -79,12 +100,12 @@ jobs:
           set -euo pipefail
           remote='public_html/arkmatx/aurum/dashboard/index.html'
           scp -i "$HOME/.ssh/bluehost_deploy" -P 22 \
-            cluster/services/aurum-arkmatx/dashboard.html \
+            "${{ steps.source.outputs.file }}" \
             "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote"
           ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
             "chmod 644 '$remote'"
 
-      - name: Verify public dashboard
+      - name: Verify public dashboard and Aurum edge
         id: verify
         shell: bash
         run: |
@@ -97,7 +118,11 @@ jobs:
             --write-out '%{url_effective}' \
             'https://arkmatx.com/aurum/dashboard')"
           grep -Fq 'Aurum Command Center' "$body"
-          grep -Fq 'Live status from ArkmatX' "$body"
+          grep -Fq '/aurum/index.php' "$body"
+          status="$(curl --fail-with-body --silent --show-error --location \
+            --retry 3 --retry-all-errors --retry-delay 2 \
+            'https://arkmatx.com/aurum/index.php')"
+          printf '%s' "$status" | grep -Fq 'Aurum-Arkmatx'
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
 
       - name: Roll back dashboard if verification fails
@@ -128,9 +153,10 @@ jobs:
           {
             "site": "arkmatx-aurum-dashboard",
             "url": "${{ steps.verify.outputs.url }}",
-            "source_repo": "FormatX66/ClusterSites",
-            "source_sha": "${{ steps.source.outputs.sha }}",
-            "carrier_repo": "FormatX66/wetbeard-site",
+            "canonical_website_repo": "FormatX66/ClusterSites",
+            "public_projection_repo": "FormatX66/BoxBrain",
+            "projection_sha": "${{ steps.source.outputs.sha }}",
+            "credential_carrier_repo": "FormatX66/wetbeard-site",
             "status": "verified-live",
             "verified_at_utc": "$verified_at"
           }

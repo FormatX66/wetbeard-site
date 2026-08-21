@@ -3,8 +3,9 @@
   "url": "https://arkmatx.com/aurum/dashboard/",
   "canonical_website_repo": "FormatX66/ClusterSites",
   "public_projection_repo": "FormatX66/BoxBrain",
-  "projection_sha": "c57ce8c62baeb099ccac7337f002d1662ca54252",
+  "projection_sha": "c4b1a176b07328d5602d25189f0a433bf5332068",
   "credential_carrier_repo": "FormatX66/wetbeard-site",
+  "trait_progress_component": "verified-live",
   "status": "verified-live",
-  "verified_at_utc": "2026-08-21T19:00:07Z"
+  "verified_at_utc": "2026-08-21T19:05:33Z"
 }

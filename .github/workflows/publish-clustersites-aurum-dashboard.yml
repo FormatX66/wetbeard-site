@@ -1,0 +1,143 @@
+name: Publish ClusterSites Aurum Dashboard
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-clustersites-aurum-dashboard.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: clustersites-aurum-dashboard-production
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish arkmatx.com/aurum/dashboard
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Check out deployment carrier
+        uses: actions/checkout@v4
+
+      - name: Check out canonical ClusterSites source
+        uses: actions/checkout@v4
+        with:
+          repository: FormatX66/ClusterSites
+          ref: main
+          path: cluster
+
+      - name: Validate canonical dashboard source
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s cluster/services/aurum-arkmatx/dashboard.html
+          grep -Fq 'Aurum Command Center' cluster/services/aurum-arkmatx/dashboard.html
+          source_sha="$(git -C cluster rev-parse HEAD)"
+          echo "sha=$source_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Configure existing Bluehost SSH carrier
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+          BLUEHOST_SSH_PRIVATE_KEY: ${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$BLUEHOST_HOST"
+          test -n "$BLUEHOST_USERNAME"
+          test -n "$BLUEHOST_SSH_PRIVATE_KEY"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$BLUEHOST_SSH_PRIVATE_KEY" > "$HOME/.ssh/bluehost_deploy"
+          chmod 600 "$HOME/.ssh/bluehost_deploy"
+          ssh-keyscan -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts"
+
+      - name: Back up current dashboard target
+        id: backup
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote='public_html/arkmatx/aurum/dashboard'
+          backup=".aurum-dashboard-backups/$GITHUB_RUN_ID"
+          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "set -eu; mkdir -p '$remote' '$backup'; if [ -f '$remote/index.html' ]; then cp -p '$remote/index.html' '$backup/index.html'; else touch '$backup/.missing-index.html'; fi"
+          echo 'ready=true' >> "$GITHUB_OUTPUT"
+
+      - name: Publish canonical dashboard
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote='public_html/arkmatx/aurum/dashboard/index.html'
+          scp -i "$HOME/.ssh/bluehost_deploy" -P 22 \
+            cluster/services/aurum-arkmatx/dashboard.html \
+            "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote"
+          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "chmod 644 '$remote'"
+
+      - name: Verify public dashboard
+        id: verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          body="$(mktemp)"
+          final_url="$(curl --fail-with-body --silent --show-error --location \
+            --retry 5 --retry-all-errors --retry-delay 3 \
+            --header 'Cache-Control: no-cache' \
+            --output "$body" \
+            --write-out '%{url_effective}' \
+            'https://arkmatx.com/aurum/dashboard')"
+          grep -Fq 'Aurum Command Center' "$body"
+          grep -Fq 'Live status from ArkmatX' "$body"
+          echo "url=$final_url" >> "$GITHUB_OUTPUT"
+
+      - name: Roll back dashboard if verification fails
+        if: ${{ failure() && steps.backup.outputs.ready == 'true' }}
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote='public_html/arkmatx/aurum/dashboard/index.html'
+          backup=".aurum-dashboard-backups/$GITHUB_RUN_ID"
+          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "set -eu; if [ -f '$backup/index.html' ]; then cp -p '$backup/index.html' '$remote'; elif [ -f '$backup/.missing-index.html' ]; then rm -f '$remote'; fi"
+
+      - name: Record verified deployment receipt
+        if: ${{ success() }}
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git checkout main
+          git reset --hard origin/main
+          mkdir -p deployments
+          verified_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          cat > deployments/aurum-dashboard-live.json <<EOF
+          {
+            "site": "arkmatx-aurum-dashboard",
+            "url": "${{ steps.verify.outputs.url }}",
+            "source_repo": "FormatX66/ClusterSites",
+            "source_sha": "${{ steps.source.outputs.sha }}",
+            "carrier_repo": "FormatX66/wetbeard-site",
+            "status": "verified-live",
+            "verified_at_utc": "$verified_at"
+          }
+          EOF
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add deployments/aurum-dashboard-live.json
+          git commit -m 'Record Aurum dashboard live deployment [skip ci]' || exit 0
+          git pull --rebase origin main
+          git push origin HEAD:main

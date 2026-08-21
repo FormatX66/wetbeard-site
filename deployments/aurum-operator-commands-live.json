@@ -7,8 +7,10 @@
   "runtime_projection_component": "Web/Aurum-Arkmatx/operator-commands-v1.js",
   "credential_carrier_repo": "FormatX66/wetbeard-site",
   "operator_command_registry": "FormatX66/BoxBrain/docs/AURUM_COMMANDS.md",
+  "header_aware_registry_parser": true,
+  "hopper_physical_command_maturity": true,
   "proposed_commands_are_not_runnable": true,
   "expandable": true,
   "status": "verified-live",
-  "verified_at_utc": "2026-08-21T21:13:53Z"
+  "verified_at_utc": "2026-08-21T21:47:22Z"
 }

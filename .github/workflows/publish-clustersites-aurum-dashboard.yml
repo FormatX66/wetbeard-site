@@ -65,7 +65,7 @@ jobs:
         run: |
           set -euo pipefail
           remote='public_html/arkmatx/aurum/dashboard'
-          backup="$HOME/.aurum-dashboard-backups/$GITHUB_RUN_ID"
+          backup=".aurum-dashboard-backups/$GITHUB_RUN_ID"
           ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
             "set -eu; mkdir -p '$remote' '$backup'; if [ -f '$remote/index.html' ]; then cp -p '$remote/index.html' '$backup/index.html'; else touch '$backup/.missing-index.html'; fi"
           echo 'ready=true' >> "$GITHUB_OUTPUT"
@@ -109,7 +109,7 @@ jobs:
         run: |
           set -euo pipefail
           remote='public_html/arkmatx/aurum/dashboard/index.html'
-          backup="$HOME/.aurum-dashboard-backups/$GITHUB_RUN_ID"
+          backup=".aurum-dashboard-backups/$GITHUB_RUN_ID"
           ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
             "set -eu; if [ -f '$backup/index.html' ]; then cp -p '$backup/index.html' '$remote'; elif [ -f '$backup/.missing-index.html' ]; then rm -f '$remote'; fi"
 

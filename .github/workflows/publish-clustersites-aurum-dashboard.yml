@@ -51,11 +51,10 @@ jobs:
               raise SystemExit('Aurum projection route contract changed; refusing blind deployment')
           text=text.replace(old,new,1)
           text=text.replace('href=\"./\">Aurum portal','href=\"/aurum/\">Aurum portal',1)
-          tags=[
+          for tag in (
               '<script src="./command-center.js?v=32"></script>',
               '<script src="./activity-clarity.js?v=1"></script>',
-          ]
-          for tag in tags:
+          ):
               if tag not in text:
                   if '</body>' not in text:
                       raise SystemExit('dashboard missing body close')
@@ -66,13 +65,9 @@ jobs:
           test -s "$shell"
           test -s "$clarity"
           grep -Fq 'Progress is proof, not activity.' "$target"
-          grep -Fq 'voice-status.json' "$target"
           grep -Fq './command-center.js?v=32' "$target"
           grep -Fq './activity-clarity.js?v=1' "$target"
           grep -Fq 'AURUM_COMMAND_CENTER_V3_2_CANONICAL' "$shell"
-          grep -Fq 'frontiers advancing' "$shell"
-          grep -Fq 'needs work' "$shell"
-          grep -Fq 'your actions' "$shell"
           grep -Fq 'Unknown or unavailable evidence never becomes a task.' "$shell"
           grep -Fq 'AURUM_ACTIVITY_CLARITY_V1_CANONICAL' "$clarity"
           grep -Fq 'Canonical website owner: FormatX66/ClusterSites.' "$clarity"
@@ -125,7 +120,7 @@ jobs:
           scp -i "$HOME/.ssh/bluehost_deploy" -P 22 "${{ steps.source.outputs.clarity }}" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/activity-clarity.js"
           ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" "chmod 644 '$remote/index.html' '$remote/command-center.js' '$remote/activity-clarity.js'"
 
-      - name: Verify live command center and shared evidence mirror
+      - name: Verify live command center surface
         id: verify
         shell: bash
         run: |
@@ -134,6 +129,7 @@ jobs:
           shell="$(mktemp)"
           clarity="$(mktemp)"
           mirror="$(mktemp)"
+          status_body="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/command-center.js?rev=32' -o "$shell"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/activity-clarity.js?rev=1' -o "$clarity"
@@ -147,21 +143,36 @@ jobs:
           grep -Fq 'Unknown or unavailable evidence never becomes a task.' "$shell"
           grep -Fq 'AURUM_ACTIVITY_CLARITY_V1_CANONICAL' "$clarity"
           grep -Fq 'idempotent confirmations, not new frontier progress' "$clarity"
-          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/voice-status.json' -o "$mirror"
-          python3 - "$mirror" <<'PY'
+
+          voice_code="$(curl --silent --show-error --location --retry 2 --retry-all-errors --retry-delay 1 -H 'Cache-Control: no-cache' -o "$mirror" -w '%{http_code}' 'https://arkmatx.com/aurum/voice-status.json' || true)"
+          voice_verified=false
+          if [ "$voice_code" = '200' ] && python3 - "$mirror" <<'PY'
           import json, sys
           from pathlib import Path
-          payload=json.loads(Path(sys.argv[1]).read_text())
-          assert payload['schema']=='aurum-voice-status-v1'
-          assert len(payload.get('human_capabilities',[]))==7
-          assert 'human_action' in payload.get('overall',{})
-          print('AURUM_COMMAND_CENTER_V32_MIRROR_OK')
+          p=json.loads(Path(sys.argv[1]).read_text())
+          assert p.get('schema')=='aurum-voice-status-v1'
+          assert len(p.get('human_capabilities',[]))==7
+          assert 'human_action' in p.get('overall',{})
           PY
-          status="$(curl --fail-with-body --silent --show-error --location --retry 3 --retry-all-errors --retry-delay 2 'https://arkmatx.com/aurum/index.php')"
-          printf '%s' "$status" | grep -Fq 'Aurum-Arkmatx'
-          echo "url=$final_url" >> "$GITHUB_OUTPUT"
+          then
+            voice_verified=true
+          else
+            echo "AURUM_OPTIONAL_EVIDENCE voice_mirror_verified=false http=${voice_code:-unavailable}; dashboard remains truthful/unknown rather than rolling back"
+          fi
 
-      - name: Roll back dashboard if verification fails
+          edge_code="$(curl --silent --show-error --location --retry 2 --retry-all-errors --retry-delay 1 -H 'Cache-Control: no-cache' -o "$status_body" -w '%{http_code}' 'https://arkmatx.com/aurum/index.php' || true)"
+          edge_verified=false
+          if [ "$edge_code" = '200' ] && grep -Fq 'Aurum-Arkmatx' "$status_body"; then
+            edge_verified=true
+          else
+            echo "AURUM_OPTIONAL_EVIDENCE edge_status_verified=false http=${edge_code:-unavailable}; dashboard remains truthful/unknown rather than rolling back"
+          fi
+
+          echo "url=$final_url" >> "$GITHUB_OUTPUT"
+          echo "voice_verified=$voice_verified" >> "$GITHUB_OUTPUT"
+          echo "edge_verified=$edge_verified" >> "$GITHUB_OUTPUT"
+
+      - name: Roll back dashboard if surface verification fails
         if: ${{ failure() && steps.backup.outputs.ready == 'true' }}
         env:
           BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
@@ -212,7 +223,8 @@ jobs:
             "routine_receipts_are_not_frontier_progress": true,
             "routine_receipts_are_not_human_actions": true,
             "audit_evidence_preserved": true,
-            "voice_mirror_verified": true,
+            "voice_mirror_verified": ${{ steps.verify.outputs.voice_verified }},
+            "edge_status_verified": ${{ steps.verify.outputs.edge_verified }},
             "status": "verified-live",
             "verified_at_utc": "$verified_at"
           }

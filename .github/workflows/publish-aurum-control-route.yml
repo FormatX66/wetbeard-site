@@ -38,12 +38,12 @@ jobs:
           curl --fail-with-body --silent --show-error --location \
             'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/action-ownership-v1.js' -o "$action"
           test -s "$route"; test -s "$action"
-          grep -Fq 'AURUM_CONTROL_ROUTE_V1_1_CANONICAL' "$route"
-          grep -Fq 'raw download URLs' "$route"
+          grep -Fq 'AURUM_CONTROL_ROUTE_V1_2_CANONICAL' "$route"
+          grep -Fq 'aged proof requests' "$route"
+          grep -Fq 'mark stalled after 20 min' "$route"
           grep -Fq 'GitHub → main PC → BBPI4 → Hopper' "$route"
-          grep -Fq 'Route failures are Aurum/system work' "$route"
-          grep -Fq 'AURUM_ACTION_OWNERSHIP_V1_1_CANONICAL' "$action"
-          grep -Fq 'BoxBrain → Hopper control-route proof' "$action"
+          grep -Fq 'AURUM_ACTION_OWNERSHIP_V1_2_CANONICAL' "$action"
+          grep -Fq 'route dispatch stall' "$action"
           echo "route=$route" >> "$GITHUB_OUTPUT"
           echo "action=$action" >> "$GITHUB_OUTPUT"
 
@@ -84,9 +84,10 @@ jobs:
           from pathlib import Path
           import re, sys
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
-          route='<script src="./control-route.js?v=11"></script>'
-          action='<script src="./action-ownership.js?v=1"></script>'
+          route='<script src="./control-route.js?v=12"></script>'
+          action='<script src="./action-ownership.js?v=12"></script>'
           text=re.sub(r'<script src="\./control-route\.js\?v=[^"]+"></script>', route, text)
+          text=re.sub(r'<script src="\./action-ownership\.js\?v=[^"]+"></script>', action, text)
           if route not in text:
               if action in text:
                   text=text.replace(action,route+'\n'+action,1)
@@ -94,10 +95,15 @@ jobs:
                   text=text.replace('</body>',route+'\n'+action+'\n</body>',1)
               else:
                   raise SystemExit('dashboard missing body close')
+          if action not in text:
+              if '</body>' in text:
+                  text=text.replace('</body>',action+'\n</body>',1)
+              else:
+                  raise SystemExit('dashboard missing body close for action ownership')
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './control-route.js?v=11' "$RUNNER_TEMP/index.html"
-          grep -Fq './action-ownership.js?v=1' "$RUNNER_TEMP/index.html"
+          grep -Fq './control-route.js?v=12' "$RUNNER_TEMP/index.html"
+          grep -Fq './action-ownership.js?v=12' "$RUNNER_TEMP/index.html"
 
       - name: Publish control route and ownership integration
         env:
@@ -120,14 +126,14 @@ jobs:
           set -euo pipefail
           page="$(mktemp)"; route="$(mktemp)"; action="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
-          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/control-route.js?rev=11' -o "$route"
-          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/action-ownership.js?rev=11' -o "$action"
-          grep -Fq './control-route.js?v=11' "$page"
-          grep -Fq 'AURUM_CONTROL_ROUTE_V1_1_CANONICAL' "$route"
-          grep -Fq 'raw download URLs' "$route"
-          grep -Fq 'BoxBrain → Hopper Route' "$route"
-          grep -Fq 'AURUM_ACTION_OWNERSHIP_V1_1_CANONICAL' "$action"
-          grep -Fq 'BoxBrain → Hopper control-route proof' "$action"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/control-route.js?rev=12' -o "$route"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/action-ownership.js?rev=12' -o "$action"
+          grep -Fq './control-route.js?v=12' "$page"
+          grep -Fq './action-ownership.js?v=12' "$page"
+          grep -Fq 'AURUM_CONTROL_ROUTE_V1_2_CANONICAL' "$route"
+          grep -Fq 'mark stalled after 20 min' "$route"
+          grep -Fq 'AURUM_ACTION_OWNERSHIP_V1_2_CANONICAL' "$action"
+          grep -Fq 'route dispatch stall' "$action"
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
 
       - name: Roll back if verification fails
@@ -159,13 +165,16 @@ jobs:
             "canonical_website_repo": "FormatX66/ClusterSites",
             "canonical_component": "services/aurum-arkmatx/control-route-v1.js",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/control-route-v1.js",
-            "component_revision": "1.1",
+            "component_revision": "1.2",
+            "action_ownership_revision": "1.2",
             "github_contents_payload": "raw-download-url",
             "credential_carrier_repo": "FormatX66/wetbeard-site",
             "route": ["GitHub", "main-PC-runner", "SSH", "BoxBrain-Pi4", "LAN", "Hopper"],
             "read_only": true,
             "expandable": true,
             "needs_work_integration": true,
+            "aged_request_stall_seconds": 1200,
+            "stalled_route_owned_by_system": true,
             "human_action_inference": false,
             "action_ownership_integrated": true,
             "canonical_deployment_owner": "FormatX66/ClusterSites",

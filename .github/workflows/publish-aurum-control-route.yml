@@ -26,12 +26,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Fetch canonical ClusterSites command surfaces
+      - name: Fetch public projections of canonical ClusterSites command surfaces
         id: source
         shell: bash
         run: |
           set -euo pipefail
-          base='https://raw.githubusercontent.com/FormatX66/ClusterSites/main/services/aurum-arkmatx'
+          # ClusterSites remains canonical, but it is private. The deployment carrier has no
+          # cross-repository private token, so production consumes the public BoxBrain mirrors
+          # that carry the canonical markers and are updated from ClusterSites.
+          base='https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx'
           route="$RUNNER_TEMP/control-route.js"
           reach="$RUNNER_TEMP/pi4-reachability.js"
           observer="$RUNNER_TEMP/pi-hopper-observer.js"
@@ -209,7 +212,7 @@ jobs:
             "site": "aurum-control-route",
             "url": "${{ steps.verify.outputs.url }}",
             "canonical_website_repo": "FormatX66/ClusterSites",
-            "production_source": "direct-canonical-clustersites",
+            "production_source": "public-projection-of-canonical-clustersites",
             "canonical_component": "services/aurum-arkmatx/control-route-v1.js",
             "canonical_reachability_component": "services/aurum-arkmatx/pi4-reachability-v1.js",
             "canonical_observer_component": "services/aurum-arkmatx/pi-hopper-observer-v1.js",

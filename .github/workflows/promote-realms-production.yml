@@ -1,10 +1,9 @@
 name: Promote Verified Realms to Production
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - .github/workflows/promote-realms-production.yml
+  # Legacy promotion is manual-only. Canonical site repositories own automatic
+  # production releases, and editing this guard must not redeploy another site.
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -18,7 +17,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        site: [arkmatx, xanderzombie]
+        # ArkmatX production is owned by FormatX66/ClusterSites. Keeping it out
+        # of this legacy matrix prevents stale site output from replacing live.
+        site: [xanderzombie]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -57,7 +58,6 @@ jobs:
           [[ "$REMOTE" != *VERIFY* ]] || { echo "Unverified path"; exit 1; }
           EXTRA=()
           if [ "$SITE" = xanderzombie ]; then EXTRA+=(--exclude data/ --exclude generated/); fi
-          if [ "$SITE" = arkmatx ]; then EXTRA+=(--exclude world-state.json); fi
           ssh "${{ secrets.BLUEHOST_USERNAME }}@${{ secrets.BLUEHOST_HOST }}" "mkdir -p '$REMOTE'"
           rsync -az --delete "${EXTRA[@]}" "sites/$SITE/dist/" "${{ secrets.BLUEHOST_USERNAME }}@${{ secrets.BLUEHOST_HOST }}:$REMOTE/"
           for n in 1 2 3 4 5; do

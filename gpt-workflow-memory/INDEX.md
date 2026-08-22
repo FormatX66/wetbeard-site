@@ -27,6 +27,7 @@ Search this file first, then open the matching incident/workflow.
 | CI guardrails | README falsely trips forbidden path, npm cache without lockfile, preflight false positive | `incidents/ci-path-guardrail-false-positive.md` |
 | Deployment status race | deploy succeeded but receipt/status push failed, non-fast-forward, ref-lock | `incidents/deployment-status-push-race.md` |
 | Deployment safety | rsync --delete risks deleting persistent data | `incidents/rsync-persistent-data-protection.md` |
+| Deployment ownership | stale legacy repository overwrites canonical production site, competing deploy workflows | `incidents/legacy-source-production-overwrite.md` |
 | AI backends | API key exposed risk, private creator backend, server-side OpenAI key | `patterns/server-side-ai-credentials.md` |
 | Secret availability | need to know whether API/admin secret exists without exposing it | `workflows/runtime-secret-presence-probe.md` |
 | Creator publishing | private notes/images/prompts, AI draft, approval, publish, public search | `workflows/private-creator-to-public-pipeline.md` |

@@ -1,0 +1,14 @@
+{
+  "site": "aurum-command-center-progress-truth",
+  "url": "https://arkmatx.com/aurum/dashboard/",
+  "canonical_website_repo": "FormatX66/ClusterSites",
+  "canonical_component": "services/aurum-arkmatx/progress-truth-v1.js",
+  "public_projection_repo": "FormatX66/BoxBrain",
+  "stable_runtime_asset": "progress-truth.js",
+  "stable_proof_is_healthy": true,
+  "stable_proof_is_frontier_movement": false,
+  "stable_proof_is_needs_work": false,
+  "stable_proof_is_human_action": false,
+  "status": "verified-live",
+  "verified_at_utc": "2026-08-22T20:50:31Z"
+}

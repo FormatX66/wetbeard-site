@@ -20,53 +20,53 @@
   ],
   "recent_commits": [
     {
-      "sha": "703a815e",
-      "message": "Publish BBPI4 seed-aware Aurum command surfaces",
-      "date": "2026-08-22T06:47:49Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/703a815e9de57cc14459aeded76da9e9de20cc33"
-    },
-    {
-      "sha": "66d49ae9",
+      "sha": "2c4060c9",
       "message": "Record Aurum control route live deployment [skip ci]",
-      "date": "2026-08-22T04:48:08Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/66d49ae9d0596fa96aef2be9b939e426b3e2eb66"
+      "date": "2026-08-22T12:02:15Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/2c4060c94c4b15c75f3c9d3e0fdb5ee55d57da50"
     },
     {
-      "sha": "5b0a52ea",
-      "message": "Publish aged Aurum route-stall ownership",
-      "date": "2026-08-22T04:47:48Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/5b0a52ea22c6419990fa93f35c770213e8a87c9b"
+      "sha": "59f3c2db",
+      "message": "Deploy canonical Aurum surfaces through public BoxBrain projection",
+      "date": "2026-08-22T12:01:58Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/59f3c2db8e5f17931a8fb27660b9ec38e0efbd34"
     },
     {
-      "sha": "db12fc19",
+      "sha": "e7fdee53",
+      "message": "Deploy Pi4 Hopper observer from canonical ClusterSites source",
+      "date": "2026-08-22T11:57:49Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/e7fdee53f02bf3b5159f457f92237bb04585ba4a"
+    },
+    {
+      "sha": "93003e6e",
+      "message": "Deploy layered Pi4 reachability from canonical ClusterSites source",
+      "date": "2026-08-22T11:47:08Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/93003e6e3c30c3dfbd6f58abdc5df41cd4203121"
+    },
+    {
+      "sha": "f5922339",
       "message": "Record Aurum control route live deployment [skip ci]",
-      "date": "2026-08-22T03:57:09Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/db12fc19ed647d0aa8a7c27ec45a2c4a8a3d12f4"
+      "date": "2026-08-22T09:49:55Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/f5922339a4e4865b1c7e43e15ff9ca5e9a43c3ff"
     },
     {
-      "sha": "42416545",
-      "message": "Deploy corrected Aurum control route evidence parser",
-      "date": "2026-08-22T03:56:48Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/42416545c966e2a07a1e943d91b3d4efd65d2226"
+      "sha": "fdd0e59b",
+      "message": "Deploy clarified BBPI4 reachability boundary",
+      "date": "2026-08-22T09:49:39Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/fdd0e59ba820b218da5773013ee0809907c99c36"
     },
     {
-      "sha": "2de43a98",
-      "message": "Record Aurum action ownership live deployment [skip ci]",
-      "date": "2026-08-22T03:54:51Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/2de43a983a187f12d4ff20ea4ffecb2dd2bea24c"
-    },
-    {
-      "sha": "24e8006c",
-      "message": "Publish route-aware Aurum action ownership",
-      "date": "2026-08-22T03:54:33Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/24e8006c2a3601a6b4df2b24455b61773ae44558"
-    },
-    {
-      "sha": "b6fbe3ba",
+      "sha": "c2f97dbf",
       "message": "Record Aurum control route live deployment [skip ci]",
-      "date": "2026-08-22T03:54:26Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/b6fbe3ba694f790bf284b3b7d5f640f758359393"
+      "date": "2026-08-22T07:49:59Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/c2f97dbf16a89b10013f25ec75a9686f4cd1c77b"
+    },
+    {
+      "sha": "b77b51ce",
+      "message": "Batch Aurum dashboard SSH transfers to reduce carrier churn",
+      "date": "2026-08-22T07:49:38Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/b77b51ce66cf97d51fd525832d3f73059f45409e"
     }
   ],
-  "updated_at": "2026-08-22T06:59:16Z"
+  "updated_at": "2026-08-22T13:00:56Z"
 }

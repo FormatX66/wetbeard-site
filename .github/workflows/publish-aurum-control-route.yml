@@ -38,7 +38,8 @@ jobs:
           curl --fail-with-body --silent --show-error --location \
             'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/action-ownership-v1.js' -o "$action"
           test -s "$route"; test -s "$action"
-          grep -Fq 'AURUM_CONTROL_ROUTE_V1_CANONICAL' "$route"
+          grep -Fq 'AURUM_CONTROL_ROUTE_V1_1_CANONICAL' "$route"
+          grep -Fq 'raw download URLs' "$route"
           grep -Fq 'GitHub → main PC → BBPI4 → Hopper' "$route"
           grep -Fq 'Route failures are Aurum/system work' "$route"
           grep -Fq 'AURUM_ACTION_OWNERSHIP_V1_1_CANONICAL' "$action"
@@ -81,10 +82,11 @@ jobs:
           set -euo pipefail
           python3 - "$RUNNER_TEMP/index.html" <<'PY'
           from pathlib import Path
-          import sys
+          import re, sys
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
-          route='<script src="./control-route.js?v=1"></script>'
+          route='<script src="./control-route.js?v=11"></script>'
           action='<script src="./action-ownership.js?v=1"></script>'
+          text=re.sub(r'<script src="\./control-route\.js\?v=[^"]+"></script>', route, text)
           if route not in text:
               if action in text:
                   text=text.replace(action,route+'\n'+action,1)
@@ -94,7 +96,7 @@ jobs:
                   raise SystemExit('dashboard missing body close')
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './control-route.js?v=1' "$RUNNER_TEMP/index.html"
+          grep -Fq './control-route.js?v=11' "$RUNNER_TEMP/index.html"
           grep -Fq './action-ownership.js?v=1' "$RUNNER_TEMP/index.html"
 
       - name: Publish control route and ownership integration
@@ -118,10 +120,11 @@ jobs:
           set -euo pipefail
           page="$(mktemp)"; route="$(mktemp)"; action="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
-          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/control-route.js?rev=1' -o "$route"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/control-route.js?rev=11' -o "$route"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/action-ownership.js?rev=11' -o "$action"
-          grep -Fq './control-route.js?v=1' "$page"
-          grep -Fq 'AURUM_CONTROL_ROUTE_V1_CANONICAL' "$route"
+          grep -Fq './control-route.js?v=11' "$page"
+          grep -Fq 'AURUM_CONTROL_ROUTE_V1_1_CANONICAL' "$route"
+          grep -Fq 'raw download URLs' "$route"
           grep -Fq 'BoxBrain → Hopper Route' "$route"
           grep -Fq 'AURUM_ACTION_OWNERSHIP_V1_1_CANONICAL' "$action"
           grep -Fq 'BoxBrain → Hopper control-route proof' "$action"
@@ -156,6 +159,8 @@ jobs:
             "canonical_website_repo": "FormatX66/ClusterSites",
             "canonical_component": "services/aurum-arkmatx/control-route-v1.js",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/control-route-v1.js",
+            "component_revision": "1.1",
+            "github_contents_payload": "raw-download-url",
             "credential_carrier_repo": "FormatX66/wetbeard-site",
             "route": ["GitHub", "main-PC-runner", "SSH", "BoxBrain-Pi4", "LAN", "Hopper"],
             "read_only": true,

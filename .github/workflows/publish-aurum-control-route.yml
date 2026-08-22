@@ -52,7 +52,7 @@ jobs:
           echo "seed=$seed" >> "$GITHUB_OUTPUT"
           echo "action=$action" >> "$GITHUB_OUTPUT"
 
-      - name: Configure existing Bluehost SSH carrier
+      - name: Configure existing Bluehost SSH carrier with bounded retry
         env:
           BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
           BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
@@ -64,7 +64,17 @@ jobs:
           install -m 700 -d "$HOME/.ssh"
           printf '%s\n' "$BLUEHOST_SSH_PRIVATE_KEY" > "$HOME/.ssh/bluehost_deploy"
           chmod 600 "$HOME/.ssh/bluehost_deploy"
-          ssh-keyscan -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts"
+          : > "$HOME/.ssh/known_hosts"
+          for attempt in 1 2 3 4 5; do
+            if ssh-keyscan -T 10 -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 5 ]; then
+              echo "Bluehost SSH keyscan remained unavailable after $attempt bounded attempts" >&2
+              exit 1
+            fi
+            sleep $((attempt * 5))
+          done
 
       - name: Back up current command center
         id: backup
@@ -74,11 +84,21 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          retry() {
+            local attempt=1 rc=0
+            while true; do
+              "$@" && return 0
+              rc=$?
+              if [ "$attempt" -ge 5 ]; then return "$rc"; fi
+              sleep $((attempt * 5))
+              attempt=$((attempt + 1))
+            done
+          }
           remote='public_html/arkmatx/aurum/dashboard'
           backup=".aurum-dashboard-backups/control-route-$GITHUB_RUN_ID"
-          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+          retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
             "set -eu; mkdir -p '$remote' '$backup'; cp -p '$remote/index.html' '$backup/index.html'; if [ -f '$remote/control-route.js' ]; then cp -p '$remote/control-route.js' '$backup/control-route.js'; else touch '$backup/.missing-control-route.js'; fi; if [ -f '$remote/seed-delivery.js' ]; then cp -p '$remote/seed-delivery.js' '$backup/seed-delivery.js'; else touch '$backup/.missing-seed-delivery.js'; fi; if [ -f '$remote/action-ownership.js' ]; then cp -p '$remote/action-ownership.js' '$backup/action-ownership.js'; else touch '$backup/.missing-action-ownership.js'; fi"
-          scp -i "$HOME/.ssh/bluehost_deploy" -P 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/index.html" "$RUNNER_TEMP/index.html"
+          retry scp -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -P 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/index.html" "$RUNNER_TEMP/index.html"
           echo 'ready=true' >> "$GITHUB_OUTPUT"
 
       - name: Inject control-route and seed-delivery surfaces
@@ -116,12 +136,22 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          retry() {
+            local attempt=1 rc=0
+            while true; do
+              "$@" && return 0
+              rc=$?
+              if [ "$attempt" -ge 5 ]; then return "$rc"; fi
+              sleep $((attempt * 5))
+              attempt=$((attempt + 1))
+            done
+          }
           remote='public_html/arkmatx/aurum/dashboard'
-          scp -i "$HOME/.ssh/bluehost_deploy" -P 22 "$RUNNER_TEMP/index.html" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/index.html"
-          scp -i "$HOME/.ssh/bluehost_deploy" -P 22 "${{ steps.source.outputs.route }}" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/control-route.js"
-          scp -i "$HOME/.ssh/bluehost_deploy" -P 22 "${{ steps.source.outputs.seed }}" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/seed-delivery.js"
-          scp -i "$HOME/.ssh/bluehost_deploy" -P 22 "${{ steps.source.outputs.action }}" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/action-ownership.js"
-          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+          retry scp -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -P 22 "$RUNNER_TEMP/index.html" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/index.html"
+          retry scp -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -P 22 "${{ steps.source.outputs.route }}" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/control-route.js"
+          retry scp -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -P 22 "${{ steps.source.outputs.seed }}" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/seed-delivery.js"
+          retry scp -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -P 22 "${{ steps.source.outputs.action }}" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/action-ownership.js"
+          retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
             "chmod 644 '$remote/index.html' '$remote/control-route.js' '$remote/seed-delivery.js' '$remote/action-ownership.js'"
 
       - name: Verify live control and seed surfaces
@@ -153,8 +183,18 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          retry() {
+            local attempt=1 rc=0
+            while true; do
+              "$@" && return 0
+              rc=$?
+              if [ "$attempt" -ge 5 ]; then return "$rc"; fi
+              sleep $((attempt * 5))
+              attempt=$((attempt + 1))
+            done
+          }
           remote='public_html/arkmatx/aurum/dashboard'; backup=".aurum-dashboard-backups/control-route-$GITHUB_RUN_ID"
-          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+          retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
             "set -eu; cp -p '$backup/index.html' '$remote/index.html'; if [ -f '$backup/control-route.js' ]; then cp -p '$backup/control-route.js' '$remote/control-route.js'; elif [ -f '$backup/.missing-control-route.js' ]; then rm -f '$remote/control-route.js'; fi; if [ -f '$backup/seed-delivery.js' ]; then cp -p '$backup/seed-delivery.js' '$remote/seed-delivery.js'; elif [ -f '$backup/.missing-seed-delivery.js' ]; then rm -f '$remote/seed-delivery.js'; fi; if [ -f '$backup/action-ownership.js' ]; then cp -p '$backup/action-ownership.js' '$remote/action-ownership.js'; elif [ -f '$backup/.missing-action-ownership.js' ]; then rm -f '$remote/action-ownership.js'; fi"
 
       - name: Record verified control-route receipt
@@ -178,6 +218,9 @@ jobs:
             "component_revision": "1.3",
             "seed_delivery_revision": "1.0",
             "action_ownership_revision": "1.3",
+            "deployment_resilience_revision": "1.1",
+            "ssh_retry_attempts": 5,
+            "ssh_retry_policy": "bounded-linear-backoff",
             "route_failure_boundary_detail": true,
             "pi4_seed_delivery_visible": true,
             "correlated_failures_not_merged_as_cause": true,

@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   publish:
-    name: Publish Aurum Command Center v3.2
+    name: Publish Aurum Command Center v3.2 + Evidence Health v1.1
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -81,6 +81,7 @@ jobs:
           grep -Fq 'idempotent confirmations, not new frontier progress' "$clarity"
           grep -Fq 'AURUM_EVIDENCE_HEALTH_V1_1_CANONICAL' "$evidence"
           grep -Fq 'repository mirror is a read-only fallback' "$evidence"
+          grep -Fq "pill.textContent = 'Waiting'" "$evidence"
           grep -Fq 'Aurum/system work, not your action' "$evidence"
           echo "projection_sha=$projection_sha" >> "$GITHUB_OUTPUT"
           echo "file=$target" >> "$GITHUB_OUTPUT"
@@ -162,6 +163,7 @@ jobs:
           grep -Fq 'AURUM_EVIDENCE_HEALTH_V1_1_CANONICAL' "$evidence"
           grep -Fq 'Hosted voice endpoint' "$evidence"
           grep -Fq 'Repository voice mirror' "$evidence"
+          grep -Fq "pill.textContent = 'Waiting'" "$evidence"
           grep -Fq 'Aurum/system work, not your action' "$evidence"
 
           hosted_code="$(curl --silent --show-error --location --retry 2 --retry-all-errors --retry-delay 1 -H 'Cache-Control: no-cache' -o "$hosted_voice" -w '%{http_code}' 'https://arkmatx.com/aurum/voice-status.json' || true)"

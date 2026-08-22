@@ -1,0 +1,18 @@
+{
+  "site": "aurum-command-center",
+  "url": "https://arkmatx.com/aurum/dashboard/",
+  "canonical_website_repo": "FormatX66/ClusterSites",
+  "public_projection_repo": "FormatX66/BoxBrain",
+  "component": "autonomy-controller-v1.js",
+  "revision": "1.0",
+  "controller_cycle_surface": true,
+  "carrier_health_surface": true,
+  "enrollment_frontier_surface": true,
+  "expandable": true,
+  "needs_work_integration": true,
+  "human_action_inference": false,
+  "backup_before_publish": true,
+  "rollback_on_verify_failure": true,
+  "status": "verified-live",
+  "verified_at_utc": "2026-08-22T15:46:33Z"
+}

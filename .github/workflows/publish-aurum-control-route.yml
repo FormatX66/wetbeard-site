@@ -34,23 +34,28 @@ jobs:
           base='https://raw.githubusercontent.com/FormatX66/ClusterSites/main/services/aurum-arkmatx'
           route="$RUNNER_TEMP/control-route.js"
           reach="$RUNNER_TEMP/pi4-reachability.js"
+          observer="$RUNNER_TEMP/pi-hopper-observer.js"
           seed="$RUNNER_TEMP/seed-delivery.js"
           action="$RUNNER_TEMP/action-ownership.js"
           curl --fail-with-body --silent --show-error --location "$base/control-route-v1.js" -o "$route"
           curl --fail-with-body --silent --show-error --location "$base/pi4-reachability-v1.js" -o "$reach"
+          curl --fail-with-body --silent --show-error --location "$base/pi-hopper-observer-v1.js" -o "$observer"
           curl --fail-with-body --silent --show-error --location "$base/seed-delivery-v1.js" -o "$seed"
           curl --fail-with-body --silent --show-error --location "$base/action-ownership-v1.js" -o "$action"
-          test -s "$route"; test -s "$reach"; test -s "$seed"; test -s "$action"
+          test -s "$route"; test -s "$reach"; test -s "$observer"; test -s "$seed"; test -s "$action"
           grep -Fq 'AURUM_CONTROL_ROUTE_V1_3_CANONICAL' "$route"
           grep -Fq 'SSH attempts:' "$route"
           grep -Fq 'AURUM_PI4_REACHABILITY_V1_CANONICAL' "$reach"
           grep -Fq 'transport reachability, not proof of SSH identity' "$reach"
+          grep -Fq 'AURUM_PI_HOPPER_OBSERVER_V1_CANONICAL' "$observer"
+          grep -Fq 'self-hosted Pi runner / workflow dispatch needs Aurum system attention' "$observer"
           grep -Fq 'AURUM_SEED_DELIVERY_V1_2_CANONICAL' "$seed"
           grep -Fq 'reachabilitySuperseded' "$seed"
           grep -Fq 'AURUM_ACTION_OWNERSHIP_V1_5_CANONICAL' "$action"
           grep -Fq 'BBPI4 LAN route rediscovered; SSH path unstable' "$action"
           echo "route=$route" >> "$GITHUB_OUTPUT"
           echo "reach=$reach" >> "$GITHUB_OUTPUT"
+          echo "observer=$observer" >> "$GITHUB_OUTPUT"
           echo "seed=$seed" >> "$GITHUB_OUTPUT"
           echo "action=$action" >> "$GITHUB_OUTPUT"
 
@@ -93,7 +98,7 @@ jobs:
           backup=".aurum-dashboard-backups/control-route-$GITHUB_RUN_ID"
           retry_capture "$RUNNER_TEMP/index.html" \
             ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
-            "set -eu; mkdir -p '$remote' '$backup'; cp -p '$remote/index.html' '$backup/index.html'; for f in control-route.js pi4-reachability.js seed-delivery.js action-ownership.js; do if [ -f '$remote/'\"\$f\" ]; then cp -p '$remote/'\"\$f\" '$backup/'\"\$f\"; else touch '$backup/.missing-'\"\$f\"; fi; done; cat '$remote/index.html'"
+            "set -eu; mkdir -p '$remote' '$backup'; cp -p '$remote/index.html' '$backup/index.html'; for f in control-route.js pi4-reachability.js pi-hopper-observer.js seed-delivery.js action-ownership.js; do if [ -f '$remote/'\"\$f\" ]; then cp -p '$remote/'\"\$f\" '$backup/'\"\$f\"; else touch '$backup/.missing-'\"\$f\"; fi; done; cat '$remote/index.html'"
           test -s "$RUNNER_TEMP/index.html"
           echo 'ready=true' >> "$GITHUB_OUTPUT"
 
@@ -108,6 +113,7 @@ jobs:
           specs=[
             ('control-route.js','13'),
             ('pi4-reachability.js','1'),
+            ('pi-hopper-observer.js','1'),
             ('seed-delivery.js','12'),
             ('action-ownership.js','15'),
           ]
@@ -121,6 +127,7 @@ jobs:
           PY
           grep -Fq './control-route.js?v=13' "$RUNNER_TEMP/index.html"
           grep -Fq './pi4-reachability.js?v=1' "$RUNNER_TEMP/index.html"
+          grep -Fq './pi-hopper-observer.js?v=1' "$RUNNER_TEMP/index.html"
           grep -Fq './seed-delivery.js?v=12' "$RUNNER_TEMP/index.html"
           grep -Fq './action-ownership.js?v=15' "$RUNNER_TEMP/index.html"
 
@@ -137,32 +144,37 @@ jobs:
           cp "$RUNNER_TEMP/index.html" "$stage/index.html"
           cp "${{ steps.source.outputs.route }}" "$stage/control-route.js"
           cp "${{ steps.source.outputs.reach }}" "$stage/pi4-reachability.js"
+          cp "${{ steps.source.outputs.observer }}" "$stage/pi-hopper-observer.js"
           cp "${{ steps.source.outputs.seed }}" "$stage/seed-delivery.js"
           cp "${{ steps.source.outputs.action }}" "$stage/action-ownership.js"
           retry scp -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -P 22 \
-            "$stage/index.html" "$stage/control-route.js" "$stage/pi4-reachability.js" "$stage/seed-delivery.js" "$stage/action-ownership.js" \
+            "$stage/index.html" "$stage/control-route.js" "$stage/pi4-reachability.js" "$stage/pi-hopper-observer.js" "$stage/seed-delivery.js" "$stage/action-ownership.js" \
             "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/"
           retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
-            "chmod 644 '$remote/index.html' '$remote/control-route.js' '$remote/pi4-reachability.js' '$remote/seed-delivery.js' '$remote/action-ownership.js'"
+            "chmod 644 '$remote/index.html' '$remote/control-route.js' '$remote/pi4-reachability.js' '$remote/pi-hopper-observer.js' '$remote/seed-delivery.js' '$remote/action-ownership.js'"
 
       - name: Verify live layered BBPI4 surfaces
         id: verify
         shell: bash
         run: |
           set -euo pipefail
-          page="$(mktemp)"; route="$(mktemp)"; reach="$(mktemp)"; seed="$(mktemp)"; action="$(mktemp)"
+          page="$(mktemp)"; route="$(mktemp)"; reach="$(mktemp)"; observer="$(mktemp)"; seed="$(mktemp)"; action="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/control-route.js?rev=13' -o "$route"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/pi4-reachability.js?rev=1' -o "$reach"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/pi-hopper-observer.js?rev=1' -o "$observer"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/seed-delivery.js?rev=12' -o "$seed"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/action-ownership.js?rev=15' -o "$action"
           grep -Fq './control-route.js?v=13' "$page"
           grep -Fq './pi4-reachability.js?v=1' "$page"
+          grep -Fq './pi-hopper-observer.js?v=1' "$page"
           grep -Fq './seed-delivery.js?v=12' "$page"
           grep -Fq './action-ownership.js?v=15' "$page"
           grep -Fq 'AURUM_CONTROL_ROUTE_V1_3_CANONICAL' "$route"
           grep -Fq 'AURUM_PI4_REACHABILITY_V1_CANONICAL' "$reach"
           grep -Fq 'transport reachability, not proof of SSH identity' "$reach"
+          grep -Fq 'AURUM_PI_HOPPER_OBSERVER_V1_CANONICAL' "$observer"
+          grep -Fq 'self-hosted Pi runner / workflow dispatch needs Aurum system attention' "$observer"
           grep -Fq 'AURUM_SEED_DELIVERY_V1_2_CANONICAL' "$seed"
           grep -Fq 'reachabilitySuperseded' "$seed"
           grep -Fq 'AURUM_ACTION_OWNERSHIP_V1_5_CANONICAL' "$action"
@@ -180,7 +192,7 @@ jobs:
           retry() { local attempt=1 rc=0; while true; do "$@" && return 0; rc=$?; if [ "$attempt" -ge 5 ]; then return "$rc"; fi; sleep $((attempt * 5)); attempt=$((attempt + 1)); done; }
           remote='public_html/arkmatx/aurum/dashboard'; backup=".aurum-dashboard-backups/control-route-$GITHUB_RUN_ID"
           retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
-            "set -eu; cp -p '$backup/index.html' '$remote/index.html'; for f in control-route.js pi4-reachability.js seed-delivery.js action-ownership.js; do if [ -f '$backup/'\"\$f\" ]; then cp -p '$backup/'\"\$f\" '$remote/'\"\$f\"; elif [ -f '$backup/.missing-'\"\$f\" ]; then rm -f '$remote/'\"\$f\"; fi; done"
+            "set -eu; cp -p '$backup/index.html' '$remote/index.html'; for f in control-route.js pi4-reachability.js pi-hopper-observer.js seed-delivery.js action-ownership.js; do if [ -f '$backup/'\"\$f\" ]; then cp -p '$backup/'\"\$f\" '$remote/'\"\$f\"; elif [ -f '$backup/.missing-'\"\$f\" ]; then rm -f '$remote/'\"\$f\"; fi; done"
 
       - name: Record verified control-route receipt
         if: success()
@@ -200,11 +212,13 @@ jobs:
             "production_source": "direct-canonical-clustersites",
             "canonical_component": "services/aurum-arkmatx/control-route-v1.js",
             "canonical_reachability_component": "services/aurum-arkmatx/pi4-reachability-v1.js",
+            "canonical_observer_component": "services/aurum-arkmatx/pi-hopper-observer-v1.js",
             "canonical_seed_component": "services/aurum-arkmatx/seed-delivery-v1.js",
             "canonical_action_component": "services/aurum-arkmatx/action-ownership-v1.js",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx",
             "component_revision": "1.3",
             "pi4_reachability_revision": "1.0",
+            "pi_hopper_observer_revision": "1.0",
             "seed_delivery_revision": "1.2",
             "action_ownership_revision": "1.5",
             "deployment_resilience_revision": "1.3",
@@ -212,6 +226,8 @@ jobs:
             "ssh_retry_policy": "bounded-linear-backoff",
             "ssh_connection_batching": true,
             "layered_reachability_evidence": true,
+            "pi_hopper_observer_tracking": true,
+            "observer_stall_owned_by_system": true,
             "newer_evidence_supersedes_stale_boundary": true,
             "ssh_identity_distinct_from_tcp22": true,
             "root_cause_not_inferred": true,

@@ -1,0 +1,68 @@
+name: Probe Canonical Site Recovery Copies
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/probe-canonical-site-recovery.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure Bluehost SSH
+        shell: bash
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+          BLUEHOST_SSH_PRIVATE_KEY: ${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$BLUEHOST_HOST"
+          test -n "$BLUEHOST_USERNAME"
+          test -n "$BLUEHOST_SSH_PRIVATE_KEY"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$BLUEHOST_SSH_PRIVATE_KEY" > "$HOME/.ssh/id_ed25519"
+          chmod 600 "$HOME/.ssh/id_ed25519"
+          ssh-keyscan -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts"
+
+      - name: Probe recoverable canonical site files
+        shell: bash
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        run: |
+          set -euo pipefail
+          ssh "$BLUEHOST_USERNAME@$BLUEHOST_HOST" 'bash -s' <<'REMOTE'
+          set -eu
+          echo '=== ARKMATX_CANONICAL_RASTERS ==='
+          for f in workshop-mobile-v4.png server-mobile-v3.png paradox-mobile-v3.png; do
+            echo "-- $f"
+            find "$HOME" -maxdepth 7 -type f -name "$f" -print 2>/dev/null | sed "s#^$HOME#~#" | head -n 20 || true
+          done
+
+          echo '=== ARKMATX_REVIEW_DIRS ==='
+          for d in public_html/arkmatx/preview public_html/arkmatx/staging; do
+            if [ -d "$d" ]; then
+              printf '%s present\n' "$d"
+              find "$d/scenes" -maxdepth 1 -type f \( -name 'workshop-mobile-v4.png' -o -name 'server-mobile-v3.png' -o -name 'paradox-mobile-v3.png' \) -printf '%f %s bytes\n' 2>/dev/null || true
+            else
+              printf '%s missing\n' "$d"
+            fi
+          done
+
+          echo '=== SITE_BACKUPS ==='
+          find "$HOME" -maxdepth 5 -type f \( -iname '*arkmatx*.tgz' -o -iname '*arkmatx*.tar.gz' -o -iname '*xander*.tgz' -o -iname '*xander*.tar.gz' \) -print 2>/dev/null | sed "s#^$HOME#~#" | head -n 40 || true
+
+          echo '=== CURRENT_ROOTS ==='
+          for d in public_html/arkmatx public_html/xanderzombie; do
+            if [ -d "$d" ]; then
+              printf '%s present files=%s\n' "$d" "$(find "$d" -maxdepth 2 -type f 2>/dev/null | wc -l | tr -d ' ')"
+            else
+              printf '%s missing\n' "$d"
+            fi
+          done
+          REMOTE

@@ -4,6 +4,8 @@
   "canonical_website_repo": "FormatX66/ClusterSites",
   "canonical_component": "services/aurum-arkmatx/control-route-v1.js",
   "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/control-route-v1.js",
+  "component_revision": "1.1",
+  "github_contents_payload": "raw-download-url",
   "credential_carrier_repo": "FormatX66/wetbeard-site",
   "route": ["GitHub", "main-PC-runner", "SSH", "BoxBrain-Pi4", "LAN", "Hopper"],
   "read_only": true,
@@ -13,5 +15,5 @@
   "action_ownership_integrated": true,
   "canonical_deployment_owner": "FormatX66/ClusterSites",
   "status": "verified-live",
-  "verified_at_utc": "2026-08-22T03:54:26Z"
+  "verified_at_utc": "2026-08-22T03:57:09Z"
 }

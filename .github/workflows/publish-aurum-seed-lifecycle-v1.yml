@@ -1,0 +1,194 @@
+name: Publish Aurum Seed Lifecycle v1
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-aurum-seed-lifecycle-v1.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aurum-seed-lifecycle-production
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch validated public projection of canonical seed lifecycle
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          src="$RUNNER_TEMP/seed-lifecycle.js"
+          curl --fail-with-body --silent --show-error --location \
+            'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/seed-lifecycle-v1.js' \
+            -o "$src"
+          test -s "$src"
+          grep -Fq 'AURUM_SEED_LIFECYCLE_V1_CANONICAL' "$src"
+          grep -Fq 'Boot once. Grow continuously.' "$src"
+          grep -Fq 'Established nodes do not rebuild or reflash boot media for normal generations.' "$src"
+          grep -Fq 'human_action_requires_separate_current_evidence:true' "$src"
+          echo "file=$src" >> "$GITHUB_OUTPUT"
+
+      - name: Verify source against Aurum seed architecture
+        shell: bash
+        run: |
+          set -euo pipefail
+          payload="$RUNNER_TEMP/seed-policy.json"
+          policy="$RUNNER_TEMP/SEED_LIFECYCLE.md"
+          curl --fail-with-body --silent --show-error --location \
+            'https://api.github.com/repos/FormatX66/BoxBrain/contents/Projects/AurumPC/SEED_LIFECYCLE.md?ref=aurum%2Ftrunk-v0.01' \
+            -o "$payload"
+          jq -r '.content' "$payload" | tr -d '\n' | base64 --decode > "$policy"
+          grep -Fq '**Boot once. Grow continuously.**' "$policy"
+          grep -Fq 'Boot media is **not** part of the normal update path for Hopper or any established Aurum node.' "$policy"
+          grep -Fq 'A normal Aurum generation must **not** require rebuilding, reflashing, or replacing boot media.' "$policy"
+
+      - name: Configure Bluehost SSH with bounded retry
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+          BLUEHOST_SSH_PRIVATE_KEY: ${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$BLUEHOST_HOST"; test -n "$BLUEHOST_USERNAME"; test -n "$BLUEHOST_SSH_PRIVATE_KEY"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$BLUEHOST_SSH_PRIVATE_KEY" > "$HOME/.ssh/bluehost_deploy"
+          chmod 600 "$HOME/.ssh/bluehost_deploy"
+          : > "$HOME/.ssh/known_hosts"
+          for attempt in 1 2 3 4 5; do
+            if ssh-keyscan -T 10 -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null; then exit 0; fi
+            if [ "$attempt" -eq 5 ]; then exit 1; fi
+            sleep $((attempt * 5))
+          done
+
+      - name: Back up current command center and fetch index
+        id: backup
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          retry_capture() { local out="$1"; shift; local n=1 tmp; tmp="$(mktemp)"; while true; do if "$@" > "$tmp"; then mv "$tmp" "$out"; return 0; fi; if [ "$n" -ge 5 ]; then rm -f "$tmp"; return 1; fi; sleep $((n * 5)); n=$((n+1)); done; }
+          remote='public_html/arkmatx/aurum/dashboard'
+          backup=".aurum-dashboard-backups/seed-lifecycle-$GITHUB_RUN_ID"
+          retry_capture "$RUNNER_TEMP/index.html" \
+            ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "set -eu; mkdir -p '$remote' '$backup'; cp -p '$remote/index.html' '$backup/index.html'; if [ -f '$remote/seed-lifecycle.js' ]; then cp -p '$remote/seed-lifecycle.js' '$backup/seed-lifecycle.js'; else touch '$backup/.missing-seed-lifecycle.js'; fi; cat '$remote/index.html'"
+          test -s "$RUNNER_TEMP/index.html"
+          echo 'ready=true' >> "$GITHUB_OUTPUT"
+
+      - name: Inject cache-busted seed lifecycle component
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - "$RUNNER_TEMP/index.html" <<'PY'
+          from pathlib import Path
+          import re, sys
+          p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
+          text=re.sub(r'<script src="\./seed-lifecycle\.js(?:\?v=[^"]+)?"></script>\s*','',text)
+          tag='<script src="./seed-lifecycle.js?v=1"></script>'
+          markers=[
+              r'<script src="\./guidance\.js(?:\?v=[^"]+)?"></script>',
+              r'<script src="\./action-ownership\.js(?:\?v=[^"]+)?"></script>',
+              r'</body>'
+          ]
+          for pattern in markers:
+              m=re.search(pattern,text)
+              if not m: continue
+              text=text[:m.start()]+tag+'\n'+text[m.start():]
+              break
+          else:
+              raise SystemExit('dashboard missing seed lifecycle injection point')
+          p.write_text(text,encoding='utf-8')
+          PY
+          grep -Fq './seed-lifecycle.js?v=1' "$RUNNER_TEMP/index.html"
+
+      - name: Publish seed lifecycle component with bounded retries
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          retry() { local n=1; while true; do "$@" && return 0; if [ "$n" -ge 5 ]; then return 1; fi; sleep $((n * 5)); n=$((n+1)); done; }
+          remote='public_html/arkmatx/aurum/dashboard'
+          retry scp -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -P 22 \
+            "$RUNNER_TEMP/index.html" "${{ steps.source.outputs.file }}" \
+            "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/"
+          retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "set -eu; chmod 644 '$remote/index.html' '$remote/seed-lifecycle.js'"
+
+      - name: Verify live Aurum seed lifecycle
+        id: verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          page="$(mktemp)"; js="$(mktemp)"
+          final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' \
+            'https://arkmatx.com/aurum/dashboard/seed-lifecycle.js?rev=1' -o "$js"
+          grep -Fq './seed-lifecycle.js?v=1' "$page"
+          grep -Fq 'AURUM_SEED_LIFECYCLE_V1_CANONICAL' "$js"
+          grep -Fq 'Boot once. Grow continuously.' "$js"
+          grep -Fq 'Established nodes do not rebuild or reflash boot media for normal generations.' "$js"
+          grep -Fq 'human_action_requires_separate_current_evidence:true' "$js"
+          echo "url=$final_url" >> "$GITHUB_OUTPUT"
+
+      - name: Roll back on verification failure
+        if: ${{ failure() && steps.backup.outputs.ready == 'true' }}
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          retry() { local n=1; while true; do "$@" && return 0; if [ "$n" -ge 5 ]; then return 1; fi; sleep $((n * 5)); n=$((n+1)); done; }
+          remote='public_html/arkmatx/aurum/dashboard'; backup=".aurum-dashboard-backups/seed-lifecycle-$GITHUB_RUN_ID"
+          retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "set -eu; cp -p '$backup/index.html' '$remote/index.html'; if [ -f '$backup/seed-lifecycle.js' ]; then cp -p '$backup/seed-lifecycle.js' '$remote/seed-lifecycle.js'; elif [ -f '$backup/.missing-seed-lifecycle.js' ]; then rm -f '$remote/seed-lifecycle.js'; fi"
+
+      - name: Record verified live receipt
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git checkout main
+          git reset --hard origin/main
+          mkdir -p deployments
+          verified_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          cat > deployments/aurum-seed-lifecycle-live.json <<EOF_RECEIPT
+          {
+            "site": "aurum-command-center",
+            "url": "${{ steps.verify.outputs.url }}",
+            "canonical_website_repo": "FormatX66/ClusterSites",
+            "canonical_component": "services/aurum-arkmatx/seed-lifecycle-v1.js",
+            "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/seed-lifecycle-v1.js",
+            "deployment_carrier": "FormatX66/wetbeard-site",
+            "seed_lifecycle_revision": "1.0",
+            "canonical_law": "Boot once. Grow continuously.",
+            "normal_generation_path": "running-seed-propagation",
+            "boot_media_scope": "first-seed-or-recovery",
+            "normal_generation_reflash": false,
+            "human_action_requires_separate_current_evidence": true,
+            "rollback_protected": true,
+            "status": "verified-live",
+            "verified_at_utc": "$verified_at"
+          }
+          EOF_RECEIPT
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add deployments/aurum-seed-lifecycle-live.json
+          git commit -m 'Record Aurum seed lifecycle live [skip ci]' || exit 0
+          git pull --rebase origin main
+          git push origin HEAD:main

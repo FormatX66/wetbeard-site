@@ -1,0 +1,17 @@
+{
+  "site": "aurum-control-route",
+  "url": "https://arkmatx.com/aurum/dashboard/",
+  "canonical_website_repo": "FormatX66/ClusterSites",
+  "canonical_component": "services/aurum-arkmatx/control-route-v1.js",
+  "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/control-route-v1.js",
+  "credential_carrier_repo": "FormatX66/wetbeard-site",
+  "route": ["GitHub", "main-PC-runner", "SSH", "BoxBrain-Pi4", "LAN", "Hopper"],
+  "read_only": true,
+  "expandable": true,
+  "needs_work_integration": true,
+  "human_action_inference": false,
+  "action_ownership_integrated": true,
+  "canonical_deployment_owner": "FormatX66/ClusterSites",
+  "status": "verified-live",
+  "verified_at_utc": "2026-08-22T03:54:26Z"
+}

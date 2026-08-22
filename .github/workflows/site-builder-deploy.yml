@@ -40,8 +40,8 @@ jobs:
           SITE="${{ inputs.site }}"
           TARGET="${{ inputs.environment }}"
           DIR="sites/$SITE"
-          if [ "$SITE" = "arkmatx" ] && [ "$TARGET" = "production" ]; then
-            echo "ArkmatX production releases are owned by FormatX66/ClusterSites; refusing a legacy production deploy."
+          if { [ "$SITE" = "arkmatx" ] || [ "$SITE" = "xanderzombie" ]; } && [ "$TARGET" = "production" ]; then
+            echo "ArkmatX and XanderZombie production releases are owned by FormatX66/ClusterSites; refusing a legacy production deploy."
             exit 1
           fi
           test -f "$DIR/site.config.json" || { echo "Missing $DIR/site.config.json"; exit 1; }

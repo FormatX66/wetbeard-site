@@ -1,87 +1,16 @@
-name: Promote Verified Realms to Production
+name: Legacy Realm Production Promotion (Retired)
 
 on:
-  # Legacy promotion is manual-only. Canonical site repositories own automatic
-  # production releases, and editing this guard must not redeploy another site.
   workflow_dispatch:
 
 permissions:
   contents: read
 
-concurrency:
-  group: realm-production-promotion
-  cancel-in-progress: false
-
 jobs:
-  deploy:
-    strategy:
-      fail-fast: false
-      matrix:
-        # ArkmatX production is owned by FormatX66/ClusterSites. Keeping it out
-        # of this legacy matrix prevents stale site output from replacing live.
-        site: [xanderzombie]
+  retired:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: main
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Build ${{ matrix.site }}
-        working-directory: sites/${{ matrix.site }}
+      - name: Explain canonical ownership
         run: |
-          set -euo pipefail
-          if [ -f package-lock.json ]; then npm ci; else npm install --no-audit --no-fund; fi
-          npm run build -- --base=/
-      - name: Validate PHP runtime files
-        if: matrix.site == 'xanderzombie'
-        run: |
-          php -l sites/xanderzombie/dist/comic-api.php
-          php -l sites/xanderzombie/dist/studio.php
-          php -l sites/xanderzombie/dist/reel.php
-      - name: Configure SSH
-        run: |
-          set -euo pipefail
-          install -m 700 -d ~/.ssh
-          printf '%s\n' "${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H "${{ secrets.BLUEHOST_HOST }}" >> ~/.ssh/known_hosts
-      - name: Deploy production
-        shell: bash
-        run: |
-          set -euo pipefail
-          SITE="${{ matrix.site }}"
-          REMOTE=$(jq -r '.production.remotePath' "sites/$SITE/site.config.json")
-          URL=$(jq -r '.production.url' "sites/$SITE/site.config.json")
-          [[ "$REMOTE" == public_html/* ]] || { echo "Unsafe path"; exit 1; }
-          [[ "$REMOTE" != *VERIFY* ]] || { echo "Unverified path"; exit 1; }
-          EXTRA=()
-          if [ "$SITE" = xanderzombie ]; then EXTRA+=(--exclude data/ --exclude generated/); fi
-          ssh "${{ secrets.BLUEHOST_USERNAME }}@${{ secrets.BLUEHOST_HOST }}" "mkdir -p '$REMOTE'"
-          rsync -az --delete "${EXTRA[@]}" "sites/$SITE/dist/" "${{ secrets.BLUEHOST_USERNAME }}@${{ secrets.BLUEHOST_HOST }}:$REMOTE/"
-          for n in 1 2 3 4 5; do
-            code=$(curl -L -sS -o /tmp/$SITE.html -w '%{http_code}' "$URL" || true)
-            if [[ "$code" =~ ^2|3 ]]; then exit 0; fi
-            sleep 3
-          done
-          echo "$URL did not verify"; exit 1
-      - name: Prepare production receipt
-        if: success()
-        shell: bash
-        run: |
-          set -euo pipefail
-          SITE="${{ matrix.site }}"
-          URL=$(jq -r '.production.url' "sites/$SITE/site.config.json")
-          mkdir -p "$RUNNER_TEMP/deployment-receipt"
-          printf '{"site":"%s","url":"%s","commit_sha":"%s","run_id":"%s","status":"verified-live"}\n' "$SITE" "$URL" "$GITHUB_SHA" "$GITHUB_RUN_ID" > "$RUNNER_TEMP/deployment-receipt/$SITE-live.json"
-          cat "$RUNNER_TEMP/deployment-receipt/$SITE-live.json" >> "$GITHUB_STEP_SUMMARY"
-      - name: Publish production receipt artifact
-        if: success()
-        continue-on-error: true
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.site }}-production-receipt-${{ github.run_id }}
-          path: ${{ runner.temp }}/deployment-receipt/${{ matrix.site }}-live.json
-          if-no-files-found: error
-          retention-days: 90
+          echo "This legacy production workflow is retired."
+          echo "ArkmatX and XanderZombie production releases are owned by FormatX66/ClusterSites."

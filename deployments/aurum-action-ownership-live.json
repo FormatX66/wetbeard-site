@@ -9,6 +9,7 @@
   "unknown_never_creates_human_task": true,
   "native_frontier_included": true,
   "human_capability_boot_frontier_included": true,
+  "control_route_included": true,
   "status": "verified-live",
-  "verified_at_utc": "2026-08-22T02:49:32Z"
+  "verified_at_utc": "2026-08-22T03:54:51Z"
 }

@@ -1,0 +1,194 @@
+name: Publish Aurum Native Frontier
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-aurum-native-frontier.yml'
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - Publish ClusterSites Aurum Dashboard
+    types: [completed]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aurum-native-frontier-production
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Check out deployment carrier
+        uses: actions/checkout@v4
+
+      - name: Verify canonical component and public projection match
+        shell: bash
+        run: |
+          set -euo pipefail
+          canonical="$RUNNER_TEMP/native-frontier-canonical.js"
+          projection="$RUNNER_TEMP/native-frontier.js"
+          curl --fail-with-body --silent --show-error --location \
+            'https://raw.githubusercontent.com/FormatX66/ClusterSites/main/services/aurum-arkmatx/native-frontier-v1.js' -o "$canonical"
+          curl --fail-with-body --silent --show-error --location \
+            'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/native-frontier-v1.js' -o "$projection"
+          cmp "$canonical" "$projection"
+          grep -Fq 'AURUM_NATIVE_FRONTIER_V1_CANONICAL' "$canonical"
+          grep -Fq 'aurum-native-chain-resume-v1' "$canonical"
+          grep -Fq 'Aurum/system evidence work, not your action' "$canonical"
+
+      - name: Configure existing Bluehost SSH carrier
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+          BLUEHOST_SSH_PRIVATE_KEY: ${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$BLUEHOST_HOST"
+          test -n "$BLUEHOST_USERNAME"
+          test -n "$BLUEHOST_SSH_PRIVATE_KEY"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$BLUEHOST_SSH_PRIVATE_KEY" > "$HOME/.ssh/bluehost_deploy"
+          chmod 600 "$HOME/.ssh/bluehost_deploy"
+          ssh-keyscan -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts"
+
+      - name: Back up current dashboard and read index
+        id: backup
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote='public_html/arkmatx/aurum/dashboard'
+          backup=".aurum-dashboard-backups/native-frontier-$GITHUB_RUN_ID"
+          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "set -eu; mkdir -p '$remote' '$backup'; cp -p '$remote/index.html' '$backup/index.html'; if [ -f '$remote/native-frontier.js' ]; then cp -p '$remote/native-frontier.js' '$backup/native-frontier.js'; else touch '$backup/.missing-native-frontier.js'; fi"
+          scp -i "$HOME/.ssh/bluehost_deploy" -P 22 \
+            "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/index.html" "$RUNNER_TEMP/index.html"
+          echo 'ready=true' >> "$GITHUB_OUTPUT"
+
+      - name: Inject native frontier component
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - "$RUNNER_TEMP/index.html" <<'PY'
+          from pathlib import Path
+          import sys
+          p=Path(sys.argv[1])
+          text=p.read_text(encoding='utf-8')
+          tag='<script src="./native-frontier.js?v=1"></script>'
+          if tag not in text:
+              if '</body>' not in text:
+                  raise SystemExit('dashboard missing body close')
+              text=text.replace('</body>',tag+'\n</body>',1)
+          p.write_text(text,encoding='utf-8')
+          PY
+          grep -Fq './native-frontier.js?v=1' "$RUNNER_TEMP/index.html"
+
+      - name: Publish native frontier component
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote='public_html/arkmatx/aurum/dashboard'
+          scp -i "$HOME/.ssh/bluehost_deploy" -P 22 "$RUNNER_TEMP/index.html" \
+            "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/index.html"
+          scp -i "$HOME/.ssh/bluehost_deploy" -P 22 "$RUNNER_TEMP/native-frontier.js" \
+            "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/native-frontier.js"
+          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "chmod 644 '$remote/index.html' '$remote/native-frontier.js'"
+
+      - name: Verify live component and native-chain source
+        id: verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          page="$(mktemp)"
+          component="$(mktemp)"
+          envelope="$(mktemp)"
+          chain="$(mktemp)"
+          final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' \
+            'https://arkmatx.com/aurum/dashboard/native-frontier.js?rev=1' -o "$component"
+          grep -Fq './native-frontier.js?v=1' "$page"
+          grep -Fq 'AURUM_NATIVE_FRONTIER_V1_CANONICAL' "$component"
+          grep -Fq 'Aurum/system evidence work, not your action' "$component"
+          curl --fail-with-body --silent --show-error --location -H 'Accept: application/vnd.github+json' \
+            'https://api.github.com/repos/FormatX66/BoxBrain/contents/Projects/Codelation/autobuild/native_chain_state.json?ref=aurum%2Ftrunk-v0.01' -o "$envelope"
+          python3 - "$envelope" "$chain" "$GITHUB_OUTPUT" <<'PY'
+          import base64,json,sys
+          from pathlib import Path
+          envelope=json.loads(Path(sys.argv[1]).read_text())
+          raw=base64.b64decode(envelope['content']).decode('utf-8')
+          Path(sys.argv[2]).write_text(raw)
+          chain=json.loads(raw)
+          assert chain.get('schema')=='aurum-native-chain-resume-v1'
+          assert isinstance(chain.get('completed_generations'),int)
+          assert isinstance(chain.get('generations'),list) and chain['generations']
+          last=chain['generations'][-1]
+          with open(sys.argv[3],'a',encoding='utf-8') as out:
+              out.write(f"url={sys.argv[0] if False else ''}\n")
+              out.write(f"generation={chain.get('completed_generations')}\n")
+              out.write(f"gap={last.get('gap') or chain.get('next_gap') or ''}\n")
+              out.write(f"blocked_reason={chain.get('blocked_reason') or ''}\n")
+              out.write(f"evidence_reason={(chain.get('external_evidence') or {}).get('reason') or ''}\n")
+          PY
+          echo "url=$final_url" >> "$GITHUB_OUTPUT"
+
+      - name: Roll back if verification fails
+        if: ${{ failure() && steps.backup.outputs.ready == 'true' }}
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote='public_html/arkmatx/aurum/dashboard'
+          backup=".aurum-dashboard-backups/native-frontier-$GITHUB_RUN_ID"
+          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "set -eu; cp -p '$backup/index.html' '$remote/index.html'; if [ -f '$backup/native-frontier.js' ]; then cp -p '$backup/native-frontier.js' '$remote/native-frontier.js'; elif [ -f '$backup/.missing-native-frontier.js' ]; then rm -f '$remote/native-frontier.js'; fi"
+
+      - name: Record verified native-frontier receipt
+        if: success()
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git checkout main
+          git reset --hard origin/main
+          mkdir -p deployments
+          verified_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          cat > deployments/aurum-native-frontier-live.json <<EOF
+          {
+            "site": "aurum-command-center-native-frontier",
+            "url": "${{ steps.verify.outputs.url }}",
+            "canonical_website_repo": "FormatX66/ClusterSites",
+            "canonical_component": "services/aurum-arkmatx/native-frontier-v1.js",
+            "public_projection_repo": "FormatX66/BoxBrain",
+            "public_projection_component": "Web/Aurum-Arkmatx/native-frontier-v1.js",
+            "native_state_ref": "aurum/trunk-v0.01",
+            "completed_generations": ${{ steps.verify.outputs.generation }},
+            "frontier_gap": "${{ steps.verify.outputs.gap }}",
+            "blocked_reason": "${{ steps.verify.outputs.blocked_reason }}",
+            "external_evidence_reason": "${{ steps.verify.outputs.evidence_reason }}",
+            "unknown_evidence_creates_human_task": false,
+            "status": "verified-live",
+            "verified_at_utc": "$verified_at"
+          }
+          EOF
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add deployments/aurum-native-frontier-live.json
+          git commit -m 'Record Aurum native frontier live deployment [skip ci]' || exit 0
+          git pull --rebase origin main
+          git push origin HEAD:main

@@ -20,53 +20,53 @@
   ],
   "recent_commits": [
     {
-      "sha": "2c4060c9",
+      "sha": "c615ddc3",
+      "message": "Record Aurum evidence freshness live deployment [skip ci]",
+      "date": "2026-08-22T17:47:37Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/c615ddc37e793a91d787688a2914dcfcdb9ea48d"
+    },
+    {
+      "sha": "f04b47ba",
+      "message": "Deploy stale-safe Aurum operator evidence",
+      "date": "2026-08-22T17:47:22Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/f04b47ba6dcdbef74bc34929c746d317638c9bfe"
+    },
+    {
+      "sha": "c350b4d2",
+      "message": "Record Aurum autonomy controller live deployment [skip ci]",
+      "date": "2026-08-22T15:46:33Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/c350b4d24a20c2ff42c13c0652e4f6ef5dc377f8"
+    },
+    {
+      "sha": "5b13d1bf",
+      "message": "Deploy Aurum autonomy controller command surface",
+      "date": "2026-08-22T15:46:19Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/5b13d1bfa8c89b618df9369877db72c5cffca280"
+    },
+    {
+      "sha": "840a5045",
       "message": "Record Aurum control route live deployment [skip ci]",
-      "date": "2026-08-22T12:02:15Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/2c4060c94c4b15c75f3c9d3e0fdb5ee55d57da50"
+      "date": "2026-08-22T14:57:20Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/840a5045abc4ec4b75014f20a7f5f3c8e1c61c14"
     },
     {
-      "sha": "59f3c2db",
-      "message": "Deploy canonical Aurum surfaces through public BoxBrain projection",
-      "date": "2026-08-22T12:01:58Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/59f3c2db8e5f17931a8fb27660b9ec38e0efbd34"
+      "sha": "02ea2874",
+      "message": "Deploy live-confirmed workflow failure override",
+      "date": "2026-08-22T14:57:03Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/02ea28746b899c164e61a0419c1e24ae68b2ce95"
     },
     {
-      "sha": "e7fdee53",
-      "message": "Deploy Pi4 Hopper observer from canonical ClusterSites source",
-      "date": "2026-08-22T11:57:49Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/e7fdee53f02bf3b5159f457f92237bb04585ba4a"
-    },
-    {
-      "sha": "93003e6e",
-      "message": "Deploy layered Pi4 reachability from canonical ClusterSites source",
-      "date": "2026-08-22T11:47:08Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/93003e6e3c30c3dfbd6f58abdc5df41cd4203121"
-    },
-    {
-      "sha": "f5922339",
+      "sha": "a038a521",
       "message": "Record Aurum control route live deployment [skip ci]",
-      "date": "2026-08-22T09:49:55Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/f5922339a4e4865b1c7e43e15ff9ca5e9a43c3ff"
+      "date": "2026-08-22T14:53:05Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/a038a5218d3480f061465e3da4f6dda407458ccd"
     },
     {
-      "sha": "fdd0e59b",
-      "message": "Deploy clarified BBPI4 reachability boundary",
-      "date": "2026-08-22T09:49:39Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/fdd0e59ba820b218da5773013ee0809907c99c36"
-    },
-    {
-      "sha": "c2f97dbf",
-      "message": "Record Aurum control route live deployment [skip ci]",
-      "date": "2026-08-22T07:49:59Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/c2f97dbf16a89b10013f25ec75a9686f4cd1c77b"
-    },
-    {
-      "sha": "b77b51ce",
-      "message": "Batch Aurum dashboard SSH transfers to reduce carrier churn",
-      "date": "2026-08-22T07:49:38Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/b77b51ce66cf97d51fd525832d3f73059f45409e"
+      "sha": "827c605d",
+      "message": "Deploy enriched Aurum workflow failure detail",
+      "date": "2026-08-22T14:52:48Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/827c605d062db623fc01684531d4d7b987d124eb"
     }
   ],
-  "updated_at": "2026-08-22T13:00:56Z"
+  "updated_at": "2026-08-22T18:48:46Z"
 }

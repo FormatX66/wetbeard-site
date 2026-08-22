@@ -54,10 +54,11 @@ jobs:
               raise SystemExit('Aurum projection route contract changed; refusing blind deployment')
           text=text.replace(old,new,1)
           text=text.replace('href=\"./\">Aurum portal','href=\"/aurum/\">Aurum portal',1)
+          text=text.replace('<script src="./evidence-health.js?v=1"></script>','')
           for tag in (
               '<script src="./command-center.js?v=32"></script>',
               '<script src="./activity-clarity.js?v=1"></script>',
-              '<script src="./evidence-health.js?v=1"></script>',
+              '<script src="./evidence-health.js?v=11"></script>',
           ):
               if tag not in text:
                   if '</body>' not in text:
@@ -72,13 +73,14 @@ jobs:
           grep -Fq 'Progress is proof, not activity.' "$target"
           grep -Fq './command-center.js?v=32' "$target"
           grep -Fq './activity-clarity.js?v=1' "$target"
-          grep -Fq './evidence-health.js?v=1' "$target"
+          grep -Fq './evidence-health.js?v=11' "$target"
           grep -Fq 'AURUM_COMMAND_CENTER_V3_2_CANONICAL' "$shell"
           grep -Fq 'Unknown or unavailable evidence never becomes a task.' "$shell"
           grep -Fq 'AURUM_ACTIVITY_CLARITY_V1_CANONICAL' "$clarity"
           grep -Fq 'Canonical website owner: FormatX66/ClusterSites.' "$clarity"
           grep -Fq 'idempotent confirmations, not new frontier progress' "$clarity"
-          grep -Fq 'AURUM_EVIDENCE_HEALTH_V1_CANONICAL' "$evidence"
+          grep -Fq 'AURUM_EVIDENCE_HEALTH_V1_1_CANONICAL' "$evidence"
+          grep -Fq 'repository mirror is a read-only fallback' "$evidence"
           grep -Fq 'Aurum/system work, not your action' "$evidence"
           echo "projection_sha=$projection_sha" >> "$GITHUB_OUTPUT"
           echo "file=$target" >> "$GITHUB_OUTPUT"
@@ -139,16 +141,17 @@ jobs:
           shell="$(mktemp)"
           clarity="$(mktemp)"
           evidence="$(mktemp)"
-          mirror="$(mktemp)"
+          hosted_voice="$(mktemp)"
+          static_voice="$(mktemp)"
           status_body="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/command-center.js?rev=32' -o "$shell"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/activity-clarity.js?rev=1' -o "$clarity"
-          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/evidence-health.js?rev=1' -o "$evidence"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/evidence-health.js?rev=11' -o "$evidence"
           grep -Fq 'Progress is proof, not activity.' "$page"
           grep -Fq './command-center.js?v=32' "$page"
           grep -Fq './activity-clarity.js?v=1' "$page"
-          grep -Fq './evidence-health.js?v=1' "$page"
+          grep -Fq './evidence-health.js?v=11' "$page"
           grep -Fq 'AURUM_COMMAND_CENTER_V3_2_CANONICAL' "$shell"
           grep -Fq 'Frontiers Advancing' "$shell"
           grep -Fq 'Needs Work' "$shell"
@@ -156,12 +159,14 @@ jobs:
           grep -Fq 'Unknown or unavailable evidence never becomes a task.' "$shell"
           grep -Fq 'AURUM_ACTIVITY_CLARITY_V1_CANONICAL' "$clarity"
           grep -Fq 'idempotent confirmations, not new frontier progress' "$clarity"
-          grep -Fq 'AURUM_EVIDENCE_HEALTH_V1_CANONICAL' "$evidence"
+          grep -Fq 'AURUM_EVIDENCE_HEALTH_V1_1_CANONICAL' "$evidence"
+          grep -Fq 'Hosted voice endpoint' "$evidence"
+          grep -Fq 'Repository voice mirror' "$evidence"
           grep -Fq 'Aurum/system work, not your action' "$evidence"
 
-          voice_code="$(curl --silent --show-error --location --retry 2 --retry-all-errors --retry-delay 1 -H 'Cache-Control: no-cache' -o "$mirror" -w '%{http_code}' 'https://arkmatx.com/aurum/voice-status.json' || true)"
-          voice_verified=false
-          if [ "$voice_code" = '200' ] && python3 - "$mirror" <<'PY'
+          hosted_code="$(curl --silent --show-error --location --retry 2 --retry-all-errors --retry-delay 1 -H 'Cache-Control: no-cache' -o "$hosted_voice" -w '%{http_code}' 'https://arkmatx.com/aurum/voice-status.json' || true)"
+          hosted_voice_verified=false
+          if [ "$hosted_code" = '200' ] && python3 - "$hosted_voice" <<'PY'
           import json, sys
           from pathlib import Path
           p=json.loads(Path(sys.argv[1]).read_text())
@@ -170,9 +175,25 @@ jobs:
           assert 'human_action' in p.get('overall',{})
           PY
           then
-            voice_verified=true
+            hosted_voice_verified=true
           else
-            echo "AURUM_OPTIONAL_EVIDENCE voice_mirror_verified=false http=${voice_code:-unavailable}; Evidence Sources card owns this as Aurum/system work"
+            echo "AURUM_OPTIONAL_EVIDENCE hosted_voice_endpoint_verified=false http=${hosted_code:-unavailable}; repository fallback may preserve voice truth"
+          fi
+
+          static_code="$(curl --silent --show-error --location --retry 2 --retry-all-errors --retry-delay 1 -H 'Cache-Control: no-cache' -o "$static_voice" -w '%{http_code}' 'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/voice-status.json' || true)"
+          static_voice_verified=false
+          if [ "$static_code" = '200' ] && python3 - "$static_voice" <<'PY'
+          import json, sys
+          from pathlib import Path
+          p=json.loads(Path(sys.argv[1]).read_text())
+          assert p.get('schema')=='aurum-voice-status-v1'
+          assert len(p.get('human_capabilities',[]))==7
+          assert 'human_action' in p.get('overall',{})
+          PY
+          then
+            static_voice_verified=true
+          else
+            echo "AURUM_OPTIONAL_EVIDENCE static_voice_mirror_verified=false http=${static_code:-unavailable}; Evidence Sources card owns this as Aurum/system work"
           fi
 
           edge_code="$(curl --silent --show-error --location --retry 2 --retry-all-errors --retry-delay 1 -H 'Cache-Control: no-cache' -o "$status_body" -w '%{http_code}' 'https://arkmatx.com/aurum/index.php' || true)"
@@ -184,7 +205,8 @@ jobs:
           fi
 
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
-          echo "voice_verified=$voice_verified" >> "$GITHUB_OUTPUT"
+          echo "hosted_voice_verified=$hosted_voice_verified" >> "$GITHUB_OUTPUT"
+          echo "static_voice_verified=$static_voice_verified" >> "$GITHUB_OUTPUT"
           echo "edge_verified=$edge_verified" >> "$GITHUB_OUTPUT"
 
       - name: Roll back dashboard if surface verification fails
@@ -224,6 +246,7 @@ jobs:
             "runtime_projection_sha": "${{ steps.source.outputs.projection_sha }}",
             "credential_carrier_repo": "FormatX66/wetbeard-site",
             "command_center_version": "3.2",
+            "evidence_health_version": "1.1",
             "stable_runtime_asset": "command-center.js",
             "activity_clarity_asset": "activity-clarity.js",
             "evidence_health_asset": "evidence-health.js",
@@ -242,7 +265,9 @@ jobs:
             "audit_evidence_preserved": true,
             "evidence_sources_visible": true,
             "evidence_source_outages_owned_by_system": true,
-            "voice_mirror_verified": ${{ steps.verify.outputs.voice_verified }},
+            "hosted_voice_endpoint_verified": ${{ steps.verify.outputs.hosted_voice_verified }},
+            "static_voice_mirror_verified": ${{ steps.verify.outputs.static_voice_verified }},
+            "voice_mirror_verified": ${{ steps.verify.outputs.hosted_voice_verified }},
             "edge_status_verified": ${{ steps.verify.outputs.edge_verified }},
             "status": "verified-live",
             "verified_at_utc": "$verified_at"

@@ -41,14 +41,13 @@ jobs:
           repo="$HOME/repositories/ClusterSites"
           ark_preview="$HOME/public_html/arkmatx/preview/repair-20260821-highres"
           xroot="$HOME/public_html/xanderzombie"
+          xsite="$repo/sites/xanderzombie"
 
           echo '=== CLUSTERSITES_CHECKOUT ==='
           test -d "$repo/.git"
           printf 'head=%s\n' "$(git -C "$repo" rev-parse HEAD)"
           printf 'branch=%s\n' "$(git -C "$repo" branch --show-current || true)"
           printf 'status_count=%s\n' "$(git -C "$repo" status --porcelain | wc -l | tr -d ' ')"
-          printf 'node=%s\n' "$(node --version 2>/dev/null || echo unavailable)"
-          printf 'npm=%s\n' "$(npm --version 2>/dev/null || echo unavailable)"
 
           echo '=== ARKMATX_HIGHRES_PREVIEW ==='
           test -d "$ark_preview"
@@ -56,46 +55,32 @@ jobs:
           grep -Fq 'Workshop Between Worlds' "$ark_preview/index.html"
           js_path="$(grep -Eo '/assets/[^\"]+\.js|assets/[^\"]+\.js' "$ark_preview/index.html" | head -n1 || true)"
           test -n "$js_path"
-          printf 'index_ok=true js=%s\n' "$js_path"
+          printf 'index_ok=true js=%s files=%s\n' "$js_path" "$(find "$ark_preview" -type f | wc -l | tr -d ' ')"
           for f in workshop-mobile-v4.png server-mobile-v3.png paradox-mobile-v3.png; do
             test -s "$ark_preview/scenes/$f"
-            printf '%s ' "$f"
-            sha256sum "$ark_preview/scenes/$f" | awk '{print $1}'
-          done
-          for f in world-state.php world-state-client.js scenes/render-manifest.json; do
-            if [ -f "$ark_preview/$f" ]; then printf '%s present %s bytes\n' "$f" "$(wc -c < "$ark_preview/$f" | tr -d ' ')"; else printf '%s missing\n' "$f"; fi
-          done
-          printf 'preview_files=%s\n' "$(find "$ark_preview" -type f | wc -l | tr -d ' ')"
-
-          echo '=== ARKMATX_LIVE_PROTECTED_PATHS ==='
-          for d in "$HOME/public_html/arkmatx/aurum" "$HOME/public_html/arkmatx/preview" "$HOME/public_html/arkmatx/state"; do
-            if [ -e "$d" ]; then printf '%s present\n' "${d#$HOME/}"; else printf '%s missing\n' "${d#$HOME/}"; fi
+            printf 'preview/%s %s\n' "$f" "$(sha256sum "$ark_preview/scenes/$f" | awk '{print $1}')"
           done
 
-          echo '=== XANDER_CANONICAL_SOURCE ==='
-          xsite="$repo/sites/xanderzombie"
-          test -s "$xsite/index.html"
-          test -s "$xsite/comic-api.php"
-          test -s "$xsite/studio.php"
-          test -s "$xsite/reel.php"
+          echo '=== XANDER_CANONICAL_VS_LIVE ==='
           php -l "$xsite/comic-api.php" >/dev/null
           php -l "$xsite/studio.php" >/dev/null
           php -l "$xsite/reel.php" >/dev/null
-          printf 'source_php_ok=true\n'
-          if [ -d "$xsite/dist" ]; then
-            printf 'dist_present=true files=%s\n' "$(find "$xsite/dist" -type f | wc -l | tr -d ' ')"
-            for f in index.html comic-api.php studio.php reel.php scenes/cemetery.svg scenes/town.svg scenes/woods.svg; do
-              if [ -f "$xsite/dist/$f" ]; then printf 'dist/%s %s\n' "$f" "$(sha256sum "$xsite/dist/$f" | awk '{print $1}')"; else printf 'dist/%s missing\n' "$f"; fi
-            done
-          else
-            printf 'dist_present=false\n'
-          fi
-
-          echo '=== XANDER_LIVE_COMPARISON ==='
-          test -d "$xroot"
-          for f in index.html comic-api.php studio.php reel.php scenes/cemetery.svg scenes/town.svg scenes/woods.svg; do
-            if [ -f "$xroot/$f" ]; then printf 'live/%s %s\n' "$f" "$(sha256sum "$xroot/$f" | awk '{print $1}')"; else printf 'live/%s missing\n' "$f"; fi
+          mismatch=0
+          for f in index.html comic-api.php studio.php reel.php public/scenes/cemetery.svg public/scenes/town.svg public/scenes/woods.svg; do
+            case "$f" in
+              public/scenes/*) live_rel="${f#public/}" ;;
+              *) live_rel="$f" ;;
+            esac
+            src_hash="$(sha256sum "$xsite/$f" | awk '{print $1}')"
+            if [ -f "$xroot/$live_rel" ]; then
+              live_hash="$(sha256sum "$xroot/$live_rel" | awk '{print $1}')"
+            else
+              live_hash='missing'
+            fi
+            if [ "$src_hash" = "$live_hash" ]; then state='MATCH'; else state='DIFF'; mismatch=$((mismatch+1)); fi
+            printf '%s source=%s live=%s %s\n' "$live_rel" "$src_hash" "$live_hash" "$state"
           done
+          printf 'xander_mismatch_count=%s\n' "$mismatch"
           for d in "$xroot/data" "$xroot/generated" "$xroot/preview"; do
             if [ -e "$d" ]; then printf '%s present\n' "${d#$HOME/}"; else printf '%s missing\n' "${d#$HOME/}"; fi
           done

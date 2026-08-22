@@ -20,53 +20,53 @@
   ],
   "recent_commits": [
     {
-      "sha": "6d8c2bf2",
-      "message": "Use verified public projection for native frontier deploy",
-      "date": "2026-08-22T01:49:59Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/6d8c2bf25fec3133326a0706cac8bbd4c0ceb561"
+      "sha": "703a815e",
+      "message": "Publish BBPI4 seed-aware Aurum command surfaces",
+      "date": "2026-08-22T06:47:49Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/703a815e9de57cc14459aeded76da9e9de20cc33"
     },
     {
-      "sha": "4134f182",
-      "message": "Publish verified Aurum native self-build frontier",
-      "date": "2026-08-22T01:48:02Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/4134f1821ddaf4e98a4ae5a8d7fe70dbb75d0052"
+      "sha": "66d49ae9",
+      "message": "Record Aurum control route live deployment [skip ci]",
+      "date": "2026-08-22T04:48:08Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/66d49ae9d0596fa96aef2be9b939e426b3e2eb66"
     },
     {
-      "sha": "50d095c9",
-      "message": "Record Aurum operator commands live deployment [skip ci]",
-      "date": "2026-08-22T01:03:08Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/50d095c96d6eaef6c89ff5ff06e568e3a0095132"
+      "sha": "5b0a52ea",
+      "message": "Publish aged Aurum route-stall ownership",
+      "date": "2026-08-22T04:47:48Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/5b0a52ea22c6419990fa93f35c770213e8a87c9b"
     },
     {
-      "sha": "69e248d7",
-      "message": "Record Aurum dashboard v3.2 live deployment [skip ci]",
-      "date": "2026-08-22T01:02:49Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/69e248d75f1e64a3ffa14ae2d3cd4b1257b392f7"
+      "sha": "db12fc19",
+      "message": "Record Aurum control route live deployment [skip ci]",
+      "date": "2026-08-22T03:57:09Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/db12fc19ed647d0aa8a7c27ec45a2c4a8a3d12f4"
     },
     {
-      "sha": "925fc9ec",
-      "message": "Verify Needs Work-compatible evidence fallback state",
-      "date": "2026-08-22T01:02:27Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/925fc9ec5601c8185692136c4655c9f2bc8097ff"
+      "sha": "42416545",
+      "message": "Deploy corrected Aurum control route evidence parser",
+      "date": "2026-08-22T03:56:48Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/42416545c966e2a07a1e943d91b3d4efd65d2226"
     },
     {
-      "sha": "55102054",
-      "message": "Record Aurum operator commands live deployment [skip ci]",
-      "date": "2026-08-22T01:00:30Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/5510205465c262f74cc68839c6e235bb5fcf7d07"
+      "sha": "2de43a98",
+      "message": "Record Aurum action ownership live deployment [skip ci]",
+      "date": "2026-08-22T03:54:51Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/2de43a983a187f12d4ff20ea4ffecb2dd2bea24c"
     },
     {
-      "sha": "d67f14ab",
-      "message": "Record Aurum dashboard v3.2 live deployment [skip ci]",
-      "date": "2026-08-22T01:00:08Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/d67f14ab00489f43540ce47b050a9a99f8b3c1d3"
+      "sha": "24e8006c",
+      "message": "Publish route-aware Aurum action ownership",
+      "date": "2026-08-22T03:54:33Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/24e8006c2a3601a6b4df2b24455b61773ae44558"
     },
     {
-      "sha": "afbb23bf",
-      "message": "Deploy clarified Aurum evidence fallback health",
-      "date": "2026-08-22T00:59:45Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/afbb23bf8067e275caa22316bad5b3c589a1b963"
+      "sha": "b6fbe3ba",
+      "message": "Record Aurum control route live deployment [skip ci]",
+      "date": "2026-08-22T03:54:26Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/b6fbe3ba694f790bf284b3b7d5f640f758359393"
     }
   ],
-  "updated_at": "2026-08-22T01:50:08Z"
+  "updated_at": "2026-08-22T06:59:16Z"
 }

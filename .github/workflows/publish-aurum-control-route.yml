@@ -1,0 +1,176 @@
+name: Publish Aurum Control Route
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-aurum-control-route.yml'
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - Publish ClusterSites Aurum Dashboard
+    types: [completed]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aurum-control-route-production
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch canonical public projections
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          route="$RUNNER_TEMP/control-route.js"
+          action="$RUNNER_TEMP/action-ownership.js"
+          curl --fail-with-body --silent --show-error --location \
+            'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/control-route-v1.js' -o "$route"
+          curl --fail-with-body --silent --show-error --location \
+            'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/action-ownership-v1.js' -o "$action"
+          test -s "$route"; test -s "$action"
+          grep -Fq 'AURUM_CONTROL_ROUTE_V1_CANONICAL' "$route"
+          grep -Fq 'GitHub → main PC → BBPI4 → Hopper' "$route"
+          grep -Fq 'Route failures are Aurum/system work' "$route"
+          grep -Fq 'AURUM_ACTION_OWNERSHIP_V1_1_CANONICAL' "$action"
+          grep -Fq 'BoxBrain → Hopper control-route proof' "$action"
+          echo "route=$route" >> "$GITHUB_OUTPUT"
+          echo "action=$action" >> "$GITHUB_OUTPUT"
+
+      - name: Configure existing Bluehost SSH carrier
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+          BLUEHOST_SSH_PRIVATE_KEY: ${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$BLUEHOST_HOST"; test -n "$BLUEHOST_USERNAME"; test -n "$BLUEHOST_SSH_PRIVATE_KEY"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$BLUEHOST_SSH_PRIVATE_KEY" > "$HOME/.ssh/bluehost_deploy"
+          chmod 600 "$HOME/.ssh/bluehost_deploy"
+          ssh-keyscan -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts"
+
+      - name: Back up current command center
+        id: backup
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote='public_html/arkmatx/aurum/dashboard'
+          backup=".aurum-dashboard-backups/control-route-$GITHUB_RUN_ID"
+          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "set -eu; mkdir -p '$remote' '$backup'; cp -p '$remote/index.html' '$backup/index.html'; if [ -f '$remote/control-route.js' ]; then cp -p '$remote/control-route.js' '$backup/control-route.js'; else touch '$backup/.missing-control-route.js'; fi; if [ -f '$remote/action-ownership.js' ]; then cp -p '$remote/action-ownership.js' '$backup/action-ownership.js'; else touch '$backup/.missing-action-ownership.js'; fi"
+          scp -i "$HOME/.ssh/bluehost_deploy" -P 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/index.html" "$RUNNER_TEMP/index.html"
+          echo 'ready=true' >> "$GITHUB_OUTPUT"
+
+      - name: Inject control-route surface
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - "$RUNNER_TEMP/index.html" <<'PY'
+          from pathlib import Path
+          import sys
+          p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
+          route='<script src="./control-route.js?v=1"></script>'
+          action='<script src="./action-ownership.js?v=1"></script>'
+          if route not in text:
+              if action in text:
+                  text=text.replace(action,route+'\n'+action,1)
+              elif '</body>' in text:
+                  text=text.replace('</body>',route+'\n'+action+'\n</body>',1)
+              else:
+                  raise SystemExit('dashboard missing body close')
+          p.write_text(text,encoding='utf-8')
+          PY
+          grep -Fq './control-route.js?v=1' "$RUNNER_TEMP/index.html"
+          grep -Fq './action-ownership.js?v=1' "$RUNNER_TEMP/index.html"
+
+      - name: Publish control route and ownership integration
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote='public_html/arkmatx/aurum/dashboard'
+          scp -i "$HOME/.ssh/bluehost_deploy" -P 22 "$RUNNER_TEMP/index.html" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/index.html"
+          scp -i "$HOME/.ssh/bluehost_deploy" -P 22 "${{ steps.source.outputs.route }}" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/control-route.js"
+          scp -i "$HOME/.ssh/bluehost_deploy" -P 22 "${{ steps.source.outputs.action }}" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/action-ownership.js"
+          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "chmod 644 '$remote/index.html' '$remote/control-route.js' '$remote/action-ownership.js'"
+
+      - name: Verify live control route
+        id: verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          page="$(mktemp)"; route="$(mktemp)"; action="$(mktemp)"
+          final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/control-route.js?rev=1' -o "$route"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/action-ownership.js?rev=11' -o "$action"
+          grep -Fq './control-route.js?v=1' "$page"
+          grep -Fq 'AURUM_CONTROL_ROUTE_V1_CANONICAL' "$route"
+          grep -Fq 'BoxBrain → Hopper Route' "$route"
+          grep -Fq 'AURUM_ACTION_OWNERSHIP_V1_1_CANONICAL' "$action"
+          grep -Fq 'BoxBrain → Hopper control-route proof' "$action"
+          echo "url=$final_url" >> "$GITHUB_OUTPUT"
+
+      - name: Roll back if verification fails
+        if: ${{ failure() && steps.backup.outputs.ready == 'true' }}
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote='public_html/arkmatx/aurum/dashboard'; backup=".aurum-dashboard-backups/control-route-$GITHUB_RUN_ID"
+          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "set -eu; cp -p '$backup/index.html' '$remote/index.html'; if [ -f '$backup/control-route.js' ]; then cp -p '$backup/control-route.js' '$remote/control-route.js'; elif [ -f '$backup/.missing-control-route.js' ]; then rm -f '$remote/control-route.js'; fi; if [ -f '$backup/action-ownership.js' ]; then cp -p '$backup/action-ownership.js' '$remote/action-ownership.js'; elif [ -f '$backup/.missing-action-ownership.js' ]; then rm -f '$remote/action-ownership.js'; fi"
+
+      - name: Record verified control-route receipt
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git checkout main
+          git reset --hard origin/main
+          mkdir -p deployments
+          verified_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          cat > deployments/aurum-control-route-live.json <<EOF
+          {
+            "site": "aurum-control-route",
+            "url": "${{ steps.verify.outputs.url }}",
+            "canonical_website_repo": "FormatX66/ClusterSites",
+            "canonical_component": "services/aurum-arkmatx/control-route-v1.js",
+            "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/control-route-v1.js",
+            "credential_carrier_repo": "FormatX66/wetbeard-site",
+            "route": ["GitHub", "main-PC-runner", "SSH", "BoxBrain-Pi4", "LAN", "Hopper"],
+            "read_only": true,
+            "expandable": true,
+            "needs_work_integration": true,
+            "human_action_inference": false,
+            "action_ownership_integrated": true,
+            "canonical_deployment_owner": "FormatX66/ClusterSites",
+            "status": "verified-live",
+            "verified_at_utc": "$verified_at"
+          }
+          EOF
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add deployments/aurum-control-route-live.json
+          git commit -m 'Record Aurum control route live deployment [skip ci]' || exit 0
+          git pull --rebase origin main
+          git push origin HEAD:main

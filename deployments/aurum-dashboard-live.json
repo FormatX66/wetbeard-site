@@ -7,9 +7,10 @@
   "canonical_activity_clarity": "services/aurum-arkmatx/activity-clarity-v1.js",
   "canonical_evidence_health": "services/aurum-arkmatx/evidence-health-v1.js",
   "runtime_projection_repo": "FormatX66/BoxBrain",
-  "runtime_projection_sha": "e4a441be2e9c0c7e970f8fb242e1473ddc12e06c",
+  "runtime_projection_sha": "e2d49e1c30fb1e07e76c0d2c1ddd1af132b7e392",
   "credential_carrier_repo": "FormatX66/wetbeard-site",
   "command_center_version": "3.2",
+  "evidence_health_version": "1.1",
   "stable_runtime_asset": "command-center.js",
   "activity_clarity_asset": "activity-clarity.js",
   "evidence_health_asset": "evidence-health.js",
@@ -28,8 +29,10 @@
   "audit_evidence_preserved": true,
   "evidence_sources_visible": true,
   "evidence_source_outages_owned_by_system": true,
+  "hosted_voice_endpoint_verified": false,
+  "static_voice_mirror_verified": true,
   "voice_mirror_verified": false,
   "edge_status_verified": true,
   "status": "verified-live",
-  "verified_at_utc": "2026-08-21T22:56:09Z"
+  "verified_at_utc": "2026-08-22T01:00:08Z"
 }

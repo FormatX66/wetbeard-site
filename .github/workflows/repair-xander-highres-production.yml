@@ -1,0 +1,158 @@
+name: Repair Xander High-Resolution Production
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/repair-xander-highres-production.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure Bluehost SSH
+        shell: bash
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+          BLUEHOST_SSH_PRIVATE_KEY: ${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$BLUEHOST_HOST"
+          test -n "$BLUEHOST_USERNAME"
+          test -n "$BLUEHOST_SSH_PRIVATE_KEY"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$BLUEHOST_SSH_PRIVATE_KEY" > "$HOME/.ssh/id_ed25519"
+          chmod 600 "$HOME/.ssh/id_ed25519"
+          ssh-keyscan -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts"
+
+      - name: Preflight verified high-resolution Xander preview
+        id: preflight
+        shell: bash
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        run: |
+          set -euo pipefail
+          ssh "$BLUEHOST_USERNAME@$BLUEHOST_HOST" 'bash -s' <<'REMOTE'
+          set -eu
+          src="$HOME/public_html/xanderzombie/preview/repair-20260821-xander-highres"
+          root="$HOME/public_html/xanderzombie"
+          test -d "$src"
+          test -s "$src/index.html"
+          grep -Fq 'The Living Issue' "$src/index.html"
+          for f in \
+            cemetery-ink-mobile-v1.png cemetery-ink-v1.png \
+            town-ink-mobile-v1.png town-ink-v1.png \
+            woods-ink-mobile-v1.png woods-ink-v1.png \
+            comic-studio-hub-mobile-v1.png comic-studio-hub-v1.png \
+            studio-crt-mobile-v1.png studio-crt-v1.png; do
+            test -s "$src/scenes/$f"
+            magic="$(xxd -p -l 8 "$src/scenes/$f")"
+            test "$magic" = '89504e470d0a1a0a'
+          done
+          for f in comic-api.php studio.php reel.php; do
+            test -s "$src/$f"
+            php -l "$src/$f" >/dev/null
+          done
+          test -s "$src/studio-theme.css"
+          test -d "$root/data"
+          test -d "$root/generated"
+          test -d "$root/preview"
+          echo 'XANDER_HIGHRES_PREFLIGHT_OK'
+          REMOTE
+
+      - name: Back up current Xander production surface
+        id: backup
+        shell: bash
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        run: |
+          set -euo pipefail
+          ssh "$BLUEHOST_USERNAME@$BLUEHOST_HOST" 'bash -s' <<'REMOTE'
+          set -eu
+          root="$HOME/public_html/xanderzombie/"
+          stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+          backup="$HOME/.site-recovery-backups/xander-highres-$stamp"
+          mkdir -p "$backup/root"
+          rsync -a --delete \
+            --exclude '/data/' \
+            --exclude '/generated/' \
+            --exclude '/preview/' \
+            "$root" "$backup/root/"
+          printf '%s\n' "$backup" > "$HOME/.site-recovery-backups/latest-xander-highres.txt"
+          printf 'XANDER_BACKUP_READY path=%s\n' "$backup"
+          REMOTE
+
+      - name: Promote high-resolution Living Issue
+        shell: bash
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        run: |
+          set -euo pipefail
+          ssh "$BLUEHOST_USERNAME@$BLUEHOST_HOST" 'bash -s' <<'REMOTE'
+          set -eu
+          src="$HOME/public_html/xanderzombie/preview/repair-20260821-xander-highres/"
+          root="$HOME/public_html/xanderzombie/"
+          rsync -a \
+            --exclude '/data/' \
+            --exclude '/generated/' \
+            --exclude '/preview/' \
+            "$src" "$root"
+          echo 'XANDER_HIGHRES_PROMOTED'
+          REMOTE
+
+      - name: Verify high-resolution Xander production
+        shell: bash
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        run: |
+          set -euo pipefail
+          nonce="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          curl -LfsS -H 'Cache-Control: no-cache' "https://xanderzombie.com/?highres_repair=$nonce" -o /tmp/xander.html
+          grep -Fq 'The Living Issue' /tmp/xander.html
+          grep -Fq 'rain-window' /tmp/xander.html
+          for f in cemetery-ink-v1.png town-ink-v1.png woods-ink-v1.png comic-studio-hub-v1.png studio-crt-v1.png; do
+            curl -LfsS -H 'Cache-Control: no-cache' "https://xanderzombie.com/scenes/$f?highres_repair=$nonce" -o "/tmp/$f"
+            test "$(xxd -p -l 8 "/tmp/$f")" = '89504e470d0a1a0a'
+          done
+          ssh "$BLUEHOST_USERNAME@$BLUEHOST_HOST" 'bash -s' <<'REMOTE'
+          set -eu
+          src="$HOME/public_html/xanderzombie/preview/repair-20260821-xander-highres"
+          root="$HOME/public_html/xanderzombie"
+          test "$(sha256sum "$src/index.html" | awk '{print $1}')" = "$(sha256sum "$root/index.html" | awk '{print $1}')"
+          php -l "$root/comic-api.php" >/dev/null
+          php -l "$root/studio.php" >/dev/null
+          php -l "$root/reel.php" >/dev/null
+          test -d "$root/data"
+          test -d "$root/generated"
+          test -d "$root/preview"
+          echo 'XANDER_HIGHRES_PRODUCTION_VERIFIED'
+          REMOTE
+
+      - name: Roll back on failed verification
+        if: failure() && steps.backup.outcome == 'success'
+        shell: bash
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        run: |
+          set -euo pipefail
+          ssh "$BLUEHOST_USERNAME@$BLUEHOST_HOST" 'bash -s' <<'REMOTE'
+          set -eu
+          backup="$(cat "$HOME/.site-recovery-backups/latest-xander-highres.txt")"
+          root="$HOME/public_html/xanderzombie/"
+          test -d "$backup/root"
+          rsync -a --delete \
+            --exclude '/data/' \
+            --exclude '/generated/' \
+            --exclude '/preview/' \
+            "$backup/root/" "$root"
+          echo 'XANDER_HIGHRES_ROLLBACK_COMPLETE'
+          REMOTE

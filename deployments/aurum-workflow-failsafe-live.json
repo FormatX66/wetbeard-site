@@ -1,0 +1,15 @@
+{
+  "site": "aurum-command-center",
+  "url": "https://arkmatx.com/aurum/dashboard/",
+  "canonical_website_repo": "FormatX66/ClusterSites",
+  "canonical_component": "services/aurum-arkmatx/workflow-failsafe-v1.js",
+  "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/workflow-failsafe-v1.js",
+  "deployment_carrier": "FormatX66/wetbeard-site",
+  "workflow_failsafe_revision": "1.3",
+  "hopper_echo_physical_proof_tracking": true,
+  "self_hosted_runner_stall_owned_by_system": true,
+  "human_action_inference": false,
+  "rollback_protected": true,
+  "status": "verified-live",
+  "verified_at_utc": "2026-08-22T22:51:12Z"
+}

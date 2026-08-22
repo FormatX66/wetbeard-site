@@ -1,0 +1,14 @@
+{
+  "site": "aurum-action-ownership",
+  "url": "https://arkmatx.com/aurum/dashboard/",
+  "canonical_website_repo": "FormatX66/ClusterSites",
+  "canonical_component": "services/aurum-arkmatx/action-ownership-v1.js",
+  "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/action-ownership-v1.js",
+  "credential_carrier_repo": "FormatX66/wetbeard-site",
+  "human_and_system_work_separated": true,
+  "unknown_never_creates_human_task": true,
+  "native_frontier_included": true,
+  "human_capability_boot_frontier_included": true,
+  "status": "verified-live",
+  "verified_at_utc": "2026-08-22T02:49:32Z"
+}

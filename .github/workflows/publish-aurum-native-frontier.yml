@@ -126,10 +126,9 @@ jobs:
           from pathlib import Path
           envelope=json.loads(Path(sys.argv[1]).read_text())
           chain=json.loads(base64.b64decode(envelope['content']).decode('utf-8'))
-          schema=chain.get('schema') or (chain.get('_checkpoint') or {}).get('schema')
-          assert schema=='aurum-native-chain-resume-v1'
           assert isinstance(chain.get('completed_generations'),int)
           assert isinstance(chain.get('generations'),list) and chain['generations']
+          assert 'blocked_reason' in chain and 'external_evidence' in chain
           last=chain['generations'][-1]
           with open(sys.argv[2],'a',encoding='utf-8') as out:
               out.write(f"generation={chain.get('completed_generations')}\n")

@@ -29,7 +29,7 @@ jobs:
           chmod 600 "$HOME/.ssh/id_ed25519"
           ssh-keyscan -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts"
 
-      - name: Probe recoverable canonical site files
+      - name: Verify canonical checkout and recovery payloads
         shell: bash
         env:
           BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
@@ -38,31 +38,78 @@ jobs:
           set -euo pipefail
           ssh "$BLUEHOST_USERNAME@$BLUEHOST_HOST" 'bash -s' <<'REMOTE'
           set -eu
-          echo '=== ARKMATX_CANONICAL_RASTERS ==='
+          repo="$HOME/repositories/ClusterSites"
+          ark_preview="$HOME/public_html/arkmatx/preview/repair-20260821-highres"
+          xroot="$HOME/public_html/xanderzombie"
+
+          echo '=== CLUSTERSITES_CHECKOUT ==='
+          test -d "$repo/.git"
+          printf 'head=%s\n' "$(git -C "$repo" rev-parse HEAD)"
+          printf 'branch=%s\n' "$(git -C "$repo" branch --show-current || true)"
+          printf 'status_count=%s\n' "$(git -C "$repo" status --porcelain | wc -l | tr -d ' ')"
+          printf 'node=%s\n' "$(node --version 2>/dev/null || echo unavailable)"
+          printf 'npm=%s\n' "$(npm --version 2>/dev/null || echo unavailable)"
+
+          echo '=== ARKMATX_HIGHRES_PREVIEW ==='
+          test -d "$ark_preview"
+          test -s "$ark_preview/index.html"
+          grep -Fq 'Workshop Between Worlds' "$ark_preview/index.html"
+          js_path="$(grep -Eo '/assets/[^\"]+\.js|assets/[^\"]+\.js' "$ark_preview/index.html" | head -n1 || true)"
+          test -n "$js_path"
+          printf 'index_ok=true js=%s\n' "$js_path"
           for f in workshop-mobile-v4.png server-mobile-v3.png paradox-mobile-v3.png; do
-            echo "-- $f"
-            find "$HOME" -maxdepth 7 -type f -name "$f" -print 2>/dev/null | sed "s#^$HOME#~#" | head -n 20 || true
+            test -s "$ark_preview/scenes/$f"
+            printf '%s ' "$f"
+            sha256sum "$ark_preview/scenes/$f" | awk '{print $1}'
+          done
+          for f in world-state.php world-state-client.js scenes/render-manifest.json; do
+            if [ -f "$ark_preview/$f" ]; then printf '%s present %s bytes\n' "$f" "$(wc -c < "$ark_preview/$f" | tr -d ' ')"; else printf '%s missing\n' "$f"; fi
+          done
+          printf 'preview_files=%s\n' "$(find "$ark_preview" -type f | wc -l | tr -d ' ')"
+
+          echo '=== ARKMATX_LIVE_PROTECTED_PATHS ==='
+          for d in "$HOME/public_html/arkmatx/aurum" "$HOME/public_html/arkmatx/preview" "$HOME/public_html/arkmatx/state"; do
+            if [ -e "$d" ]; then printf '%s present\n' "${d#$HOME/}"; else printf '%s missing\n' "${d#$HOME/}"; fi
           done
 
-          echo '=== ARKMATX_REVIEW_DIRS ==='
-          for d in public_html/arkmatx/preview public_html/arkmatx/staging; do
-            if [ -d "$d" ]; then
-              printf '%s present\n' "$d"
-              find "$d/scenes" -maxdepth 1 -type f \( -name 'workshop-mobile-v4.png' -o -name 'server-mobile-v3.png' -o -name 'paradox-mobile-v3.png' \) -printf '%f %s bytes\n' 2>/dev/null || true
-            else
-              printf '%s missing\n' "$d"
-            fi
+          echo '=== XANDER_CANONICAL_SOURCE ==='
+          xsite="$repo/sites/xanderzombie"
+          test -s "$xsite/index.html"
+          test -s "$xsite/comic-api.php"
+          test -s "$xsite/studio.php"
+          test -s "$xsite/reel.php"
+          php -l "$xsite/comic-api.php" >/dev/null
+          php -l "$xsite/studio.php" >/dev/null
+          php -l "$xsite/reel.php" >/dev/null
+          printf 'source_php_ok=true\n'
+          if [ -d "$xsite/dist" ]; then
+            printf 'dist_present=true files=%s\n' "$(find "$xsite/dist" -type f | wc -l | tr -d ' ')"
+            for f in index.html comic-api.php studio.php reel.php scenes/cemetery.svg scenes/town.svg scenes/woods.svg; do
+              if [ -f "$xsite/dist/$f" ]; then printf 'dist/%s %s\n' "$f" "$(sha256sum "$xsite/dist/$f" | awk '{print $1}')"; else printf 'dist/%s missing\n' "$f"; fi
+            done
+          else
+            printf 'dist_present=false\n'
+          fi
+
+          echo '=== XANDER_LIVE_COMPARISON ==='
+          test -d "$xroot"
+          for f in index.html comic-api.php studio.php reel.php scenes/cemetery.svg scenes/town.svg scenes/woods.svg; do
+            if [ -f "$xroot/$f" ]; then printf 'live/%s %s\n' "$f" "$(sha256sum "$xroot/$f" | awk '{print $1}')"; else printf 'live/%s missing\n' "$f"; fi
           done
-
-          echo '=== SITE_BACKUPS ==='
-          find "$HOME" -maxdepth 5 -type f \( -iname '*arkmatx*.tgz' -o -iname '*arkmatx*.tar.gz' -o -iname '*xander*.tgz' -o -iname '*xander*.tar.gz' \) -print 2>/dev/null | sed "s#^$HOME#~#" | head -n 40 || true
-
-          echo '=== CURRENT_ROOTS ==='
-          for d in public_html/arkmatx public_html/xanderzombie; do
-            if [ -d "$d" ]; then
-              printf '%s present files=%s\n' "$d" "$(find "$d" -maxdepth 2 -type f 2>/dev/null | wc -l | tr -d ' ')"
-            else
-              printf '%s missing\n' "$d"
-            fi
+          for d in "$xroot/data" "$xroot/generated" "$xroot/preview"; do
+            if [ -e "$d" ]; then printf '%s present\n' "${d#$HOME/}"; else printf '%s missing\n' "${d#$HOME/}"; fi
           done
           REMOTE
+
+      - name: Verify public endpoints without cache
+        shell: bash
+        run: |
+          set -euo pipefail
+          ark_code="$(curl -L -sS -H 'Cache-Control: no-cache' -o /tmp/ark.html -w '%{http_code}' 'https://arkmatx.com/?recovery_probe=20260822')"
+          x_code="$(curl -L -sS -H 'Cache-Control: no-cache' -o /tmp/xander.html -w '%{http_code}' 'https://xanderzombie.com/?recovery_probe=20260822')"
+          printf 'arkmatx_http=%s\n' "$ark_code"
+          printf 'xander_http=%s\n' "$x_code"
+          grep -F 'Workshop Between Worlds' /tmp/ark.html >/dev/null && echo 'arkmatx_brand=true' || echo 'arkmatx_brand=false'
+          grep -F 'XANDER ZOMBIE' /tmp/xander.html >/dev/null && echo 'xander_brand=true' || echo 'xander_brand=false'
+          aurum_code="$(curl -L -sS -H 'Cache-Control: no-cache' -o /tmp/aurum.html -w '%{http_code}' 'https://arkmatx.com/aurum/dashboard/' || true)"
+          printf 'aurum_dashboard_http=%s\n' "$aurum_code"

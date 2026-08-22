@@ -1,0 +1,17 @@
+{
+  "site": "aurum-command-center",
+  "url": "https://arkmatx.com/aurum/dashboard/",
+  "canonical_website_repo": "FormatX66/ClusterSites",
+  "canonical_component": "services/aurum-arkmatx/seed-lifecycle-v1.js",
+  "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/seed-lifecycle-v1.js",
+  "deployment_carrier": "FormatX66/wetbeard-site",
+  "seed_lifecycle_revision": "1.0",
+  "canonical_law": "Boot once. Grow continuously.",
+  "normal_generation_path": "running-seed-propagation",
+  "boot_media_scope": "first-seed-or-recovery",
+  "normal_generation_reflash": false,
+  "human_action_requires_separate_current_evidence": true,
+  "rollback_protected": true,
+  "status": "verified-live",
+  "verified_at_utc": "2026-08-22T23:46:41Z"
+}

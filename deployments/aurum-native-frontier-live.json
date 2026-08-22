@@ -1,0 +1,16 @@
+{
+  "site": "aurum-command-center-native-frontier",
+  "url": "https://arkmatx.com/aurum/dashboard/",
+  "canonical_website_repo": "FormatX66/ClusterSites",
+  "canonical_component": "services/aurum-arkmatx/native-frontier-v1.js",
+  "public_projection_repo": "FormatX66/BoxBrain",
+  "public_projection_component": "Web/Aurum-Arkmatx/native-frontier-v1.js",
+  "native_state_ref": "aurum/trunk-v0.01",
+  "completed_generations": 65,
+  "frontier_gap": "adaptive_shell_gui_live_trial",
+  "blocked_reason": "external-prerequisite-blocked",
+  "external_evidence_reason": "gui-live-trial-evidence-expired",
+  "unknown_evidence_creates_human_task": false,
+  "status": "verified-live",
+  "verified_at_utc": "2026-08-22T01:54:39Z"
+}

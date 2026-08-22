@@ -7,12 +7,14 @@
   "canonical_reachability_component": "services/aurum-arkmatx/pi4-reachability-v1.js",
   "canonical_observer_component": "services/aurum-arkmatx/pi-hopper-observer-v1.js",
   "canonical_seed_component": "services/aurum-arkmatx/seed-delivery-v1.js",
+  "canonical_failsafe_component": "services/aurum-arkmatx/workflow-failsafe-v1.js",
   "canonical_action_component": "services/aurum-arkmatx/action-ownership-v1.js",
   "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx",
   "component_revision": "1.3",
   "pi4_reachability_revision": "1.0",
   "pi_hopper_observer_revision": "1.0",
   "seed_delivery_revision": "1.2",
+  "workflow_failsafe_revision": "1.0",
   "action_ownership_revision": "1.5",
   "deployment_resilience_revision": "1.3",
   "ssh_retry_attempts": 5,
@@ -21,6 +23,9 @@
   "layered_reachability_evidence": true,
   "pi_hopper_observer_tracking": true,
   "observer_stall_owned_by_system": true,
+  "workflow_failsafe_tracking": true,
+  "live_noncompleted_run_confirmation": true,
+  "stalled_workflow_owned_by_system": true,
   "newer_evidence_supersedes_stale_boundary": true,
   "ssh_identity_distinct_from_tcp22": true,
   "root_cause_not_inferred": true,
@@ -33,5 +38,5 @@
   "human_action_inference": false,
   "canonical_deployment_owner": "FormatX66/ClusterSites",
   "status": "verified-live",
-  "verified_at_utc": "2026-08-22T12:02:15Z"
+  "verified_at_utc": "2026-08-22T13:51:57Z"
 }

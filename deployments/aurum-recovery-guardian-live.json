@@ -1,0 +1,18 @@
+{
+  "site": "aurum-command-center",
+  "url": "https://arkmatx.com/aurum/dashboard/",
+  "canonical_website_repo": "FormatX66/ClusterSites",
+  "canonical_component": "services/aurum-arkmatx/recovery-guardian-v1.js",
+  "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/recovery-guardian-v1.js",
+  "deployment_carrier": "FormatX66/wetbeard-site",
+  "recovery_guardian_revision": "1.0",
+  "architecture_locked": true,
+  "mandatory_base_seed": true,
+  "implementation_proof_inferred_from_docs": false,
+  "needs_work_owner": "aurum-system",
+  "human_action_inference": false,
+  "expandable": true,
+  "rollback_protected": true,
+  "status": "verified-live",
+  "verified_at_utc": "2026-08-23T04:48:40Z"
+}

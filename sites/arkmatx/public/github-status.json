@@ -20,6 +20,36 @@
   ],
   "recent_commits": [
     {
+      "sha": "59504c8f",
+      "message": "Record Aurum autonomy controller live deployment [skip ci]",
+      "date": "2026-08-23T15:51:07Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/59504c8ffcd1e0d977954608cffcfa944d1f4dc5"
+    },
+    {
+      "sha": "761faa75",
+      "message": "Deploy autonomy scheduler and edge checkpoint split",
+      "date": "2026-08-23T15:50:54Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/761faa75e08f2fc1931ef4cd56ef8b3c1bc65163"
+    },
+    {
+      "sha": "f1b299d4",
+      "message": "Record hosted-mirror-aware Aurum evidence health live [skip ci]",
+      "date": "2026-08-23T13:53:59Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/f1b299d41bff589132d9b7ac0c5abebfaca3d1bf"
+    },
+    {
+      "sha": "b6249f2b",
+      "message": "Deploy hosted-mirror-aware Aurum evidence health",
+      "date": "2026-08-23T13:53:45Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/b6249f2b4757c266dc38da4fd1e083ee362286c8"
+    },
+    {
+      "sha": "07734d91",
+      "message": "Refresh ArkmatX GitHub status [skip ci]",
+      "date": "2026-08-23T13:01:51Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/07734d91e1525a4226559ad4f2922a0475101804"
+    },
+    {
       "sha": "d4233ed6",
       "message": "Record rerun-safe workflow failsafe live [skip ci]",
       "date": "2026-08-23T12:51:01Z",
@@ -36,37 +66,7 @@
       "message": "Record Aurum Recovery Guardian trait live [skip ci]",
       "date": "2026-08-23T10:44:11Z",
       "html_url": "https://github.com/FormatX66/wetbeard-site/commit/f0e396f45cd992b91d2667cb41103ed857b03bc0"
-    },
-    {
-      "sha": "2066be5f",
-      "message": "Deploy Recovery Guardian trait maturity",
-      "date": "2026-08-23T10:43:57Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/2066be5f7aae65a1808e0d4bc402d1ed4a918514"
-    },
-    {
-      "sha": "cc2d21f0",
-      "message": "Refresh ArkmatX GitHub status [skip ci]",
-      "date": "2026-08-23T07:00:52Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/cc2d21f01a18916917b4bc37e02b101c74c518d4"
-    },
-    {
-      "sha": "33b1d6d7",
-      "message": "Record Aurum recovery guardian live [skip ci]",
-      "date": "2026-08-23T04:48:40Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/33b1d6d7306a727dc44da77dad48329869a42533"
-    },
-    {
-      "sha": "691d587b",
-      "message": "Deploy Aurum Recovery Guardian command-center surface",
-      "date": "2026-08-23T04:48:26Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/691d587badacca2febce19d85ab7cb89a6ac863c"
-    },
-    {
-      "sha": "88719e00",
-      "message": "Record Aurum runner-scope truth live [skip ci]",
-      "date": "2026-08-23T03:45:14Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/88719e00faf274a91e61b8daeaf2433003bf2c2b"
     }
   ],
-  "updated_at": "2026-08-23T13:01:51Z"
+  "updated_at": "2026-08-23T18:48:20Z"
 }

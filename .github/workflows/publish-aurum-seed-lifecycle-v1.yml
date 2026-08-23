@@ -49,8 +49,8 @@ jobs:
           curl --fail-with-body --silent --show-error --location \
             'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/docs/architecture/SEED_RECOVERY_ARCHITECTURE.md' -o "$recovery"
           grep -Fq 'Git stores the genetics. Seeds carry the germ.' "$genetics"
-          grep -Fq 'must not overwrite or mutate the currently active organism during staging' "$genetics"
-          grep -Fq 'Promotion requires health evidence' "$genetics"
+          grep -Fq 'never overwrite the active organism during staging' "$genetics"
+          grep -Fq 'require health evidence before promotion' "$genetics"
           grep -Fq 'Any viable germ-bearing seed must be able to regrow directly into the current trusted genetics' "$recovery"
 
       - name: Configure Bluehost SSH with bounded retry

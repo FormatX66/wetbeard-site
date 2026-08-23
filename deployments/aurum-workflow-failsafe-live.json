@@ -5,7 +5,11 @@
   "canonical_component": "services/aurum-arkmatx/workflow-failsafe-v1.js",
   "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/workflow-failsafe-v1.js",
   "deployment_carrier": "FormatX66/wetbeard-site",
-  "workflow_failsafe_revision": "1.4",
+  "workflow_failsafe_revision": "1.5",
+  "attempt_scoped_readback_supported": true,
+  "legacy_readback_supported": true,
+  "newest_run_attempt_selection": true,
+  "readback_filename_visible": true,
   "hopper_echo_physical_proof_tracking": true,
   "self_hosted_runner_scheduler_placement_visible": true,
   "runner_root_cause_non_inference": true,
@@ -13,5 +17,5 @@
   "human_action_inference": false,
   "rollback_protected": true,
   "status": "verified-live",
-  "verified_at_utc": "2026-08-23T01:48:20Z"
+  "verified_at_utc": "2026-08-23T12:51:01Z"
 }

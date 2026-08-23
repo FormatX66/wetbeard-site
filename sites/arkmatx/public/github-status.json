@@ -20,6 +20,36 @@
   ],
   "recent_commits": [
     {
+      "sha": "d4233ed6",
+      "message": "Record rerun-safe workflow failsafe live [skip ci]",
+      "date": "2026-08-23T12:51:01Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/d4233ed6a180da2931ae1a6545dd2ed1012b8bd5"
+    },
+    {
+      "sha": "82fb1c60",
+      "message": "Deploy Aurum workflow failsafe v1.5",
+      "date": "2026-08-23T12:50:49Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/82fb1c60a60a9d641404d46bb79f84659206619f"
+    },
+    {
+      "sha": "f0e396f4",
+      "message": "Record Aurum Recovery Guardian trait live [skip ci]",
+      "date": "2026-08-23T10:44:11Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/f0e396f45cd992b91d2667cb41103ed857b03bc0"
+    },
+    {
+      "sha": "2066be5f",
+      "message": "Deploy Recovery Guardian trait maturity",
+      "date": "2026-08-23T10:43:57Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/2066be5f7aae65a1808e0d4bc402d1ed4a918514"
+    },
+    {
+      "sha": "cc2d21f0",
+      "message": "Refresh ArkmatX GitHub status [skip ci]",
+      "date": "2026-08-23T07:00:52Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/cc2d21f01a18916917b4bc37e02b101c74c518d4"
+    },
+    {
       "sha": "33b1d6d7",
       "message": "Record Aurum recovery guardian live [skip ci]",
       "date": "2026-08-23T04:48:40Z",
@@ -36,37 +66,7 @@
       "message": "Record Aurum runner-scope truth live [skip ci]",
       "date": "2026-08-23T03:45:14Z",
       "html_url": "https://github.com/FormatX66/wetbeard-site/commit/88719e00faf274a91e61b8daeaf2433003bf2c2b"
-    },
-    {
-      "sha": "625a47bf",
-      "message": "Deploy Aurum runner-scope truth layer",
-      "date": "2026-08-23T03:44:58Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/625a47bfc32c8a44c335e1ab030a8da658de536c"
-    },
-    {
-      "sha": "9ae56556",
-      "message": "Refresh ArkmatX GitHub status [skip ci]",
-      "date": "2026-08-23T01:59:42Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/9ae565569ce0c254637e01d925ab652ef39e7054"
-    },
-    {
-      "sha": "e7af191f",
-      "message": "Record runner-aware workflow failsafe live [skip ci]",
-      "date": "2026-08-23T01:48:20Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/e7af191f43ff5b59b3685a9a2a9882c1225b0946"
-    },
-    {
-      "sha": "9b248b9e",
-      "message": "Deploy Aurum workflow failsafe v1.4",
-      "date": "2026-08-23T01:48:05Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/9b248b9e14fccf5fba20d876e41345e329d2069b"
-    },
-    {
-      "sha": "00fc8d9f",
-      "message": "Record Aurum seed lifecycle live [skip ci]",
-      "date": "2026-08-22T23:46:41Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/00fc8d9f0fa729d735e1657b4627c27904052c73"
     }
   ],
-  "updated_at": "2026-08-23T07:00:52Z"
+  "updated_at": "2026-08-23T13:01:51Z"
 }

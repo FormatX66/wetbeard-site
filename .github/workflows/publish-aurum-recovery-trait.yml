@@ -1,0 +1,150 @@
+name: Publish Aurum Recovery Guardian Trait
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-aurum-recovery-trait.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aurum-recovery-trait-production
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch validated public projection of canonical traits
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          src="$RUNNER_TEMP/traits.js"
+          curl --fail-with-body --silent --show-error --location \
+            'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/traits.js' \
+            -o "$src"
+          test -s "$src"
+          grep -Fq "name:'Recovery Guardian'" "$src"
+          grep -Fq 'A/B seed slots, Last Known Good, State Guardian' "$src"
+          grep -Fq 'Built requires implementation evidence' "$src"
+          echo "file=$src" >> "$GITHUB_OUTPUT"
+
+      - name: Configure Bluehost SSH with bounded retry
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+          BLUEHOST_SSH_PRIVATE_KEY: ${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$BLUEHOST_HOST"; test -n "$BLUEHOST_USERNAME"; test -n "$BLUEHOST_SSH_PRIVATE_KEY"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$BLUEHOST_SSH_PRIVATE_KEY" > "$HOME/.ssh/bluehost_deploy"
+          chmod 600 "$HOME/.ssh/bluehost_deploy"
+          : > "$HOME/.ssh/known_hosts"
+          for attempt in 1 2 3 4 5; do
+            if ssh-keyscan -T 10 -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null; then exit 0; fi
+            if [ "$attempt" -eq 5 ]; then exit 1; fi
+            sleep $((attempt * 5))
+          done
+
+      - name: Back up current trait projection
+        id: backup
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          retry() { local n=1; while true; do "$@" && return 0; if [ "$n" -ge 5 ]; then return 1; fi; sleep $((n * 5)); n=$((n+1)); done; }
+          remote='public_html/arkmatx/aurum/dashboard'
+          backup=".aurum-dashboard-backups/recovery-trait-$GITHUB_RUN_ID"
+          retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "set -eu; mkdir -p '$remote' '$backup'; if [ -f '$remote/traits.js' ]; then cp -p '$remote/traits.js' '$backup/traits.js'; else touch '$backup/.missing-traits.js'; fi"
+          echo 'ready=true' >> "$GITHUB_OUTPUT"
+
+      - name: Publish Recovery Guardian trait with bounded retries
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          retry() { local n=1; while true; do "$@" && return 0; if [ "$n" -ge 5 ]; then return 1; fi; sleep $((n * 5)); n=$((n+1)); done; }
+          remote='public_html/arkmatx/aurum/dashboard'
+          retry scp -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -P 22 \
+            "${{ steps.source.outputs.file }}" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/traits.js"
+          retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "chmod 644 '$remote/traits.js'"
+
+      - name: Verify live Recovery Guardian trait
+        id: verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          traits="$(mktemp)"
+          final_url='https://arkmatx.com/aurum/dashboard/'
+          curl --fail-with-body --silent --show-error --location \
+            --retry 5 --retry-all-errors --retry-delay 2 \
+            -H 'Cache-Control: no-cache' \
+            'https://arkmatx.com/aurum/dashboard/traits.js?rev=recovery-guardian-v1' -o "$traits"
+          grep -Fq "name:'Recovery Guardian'" "$traits"
+          grep -Fq 'A/B seed slots, Last Known Good, State Guardian' "$traits"
+          grep -Fq 'Built requires implementation evidence' "$traits"
+          echo "url=$final_url" >> "$GITHUB_OUTPUT"
+
+      - name: Roll back on verification failure
+        if: ${{ failure() && steps.backup.outputs.ready == 'true' }}
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          retry() { local n=1; while true; do "$@" && return 0; if [ "$n" -ge 5 ]; then return 1; fi; sleep $((n * 5)); n=$((n+1)); done; }
+          remote='public_html/arkmatx/aurum/dashboard'; backup=".aurum-dashboard-backups/recovery-trait-$GITHUB_RUN_ID"
+          retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "set -eu; if [ -f '$backup/traits.js' ]; then cp -p '$backup/traits.js' '$remote/traits.js'; elif [ -f '$backup/.missing-traits.js' ]; then rm -f '$remote/traits.js'; fi"
+
+      - name: Record verified live receipt
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git checkout main
+          git reset --hard origin/main
+          mkdir -p deployments
+          verified_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          cat > deployments/aurum-recovery-trait-live.json <<EOF
+          {
+            "site": "aurum-command-center",
+            "url": "${{ steps.verify.outputs.url }}",
+            "canonical_website_repo": "FormatX66/ClusterSites",
+            "canonical_component": "services/aurum-arkmatx/traits.js",
+            "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/traits.js",
+            "deployment_carrier": "FormatX66/wetbeard-site",
+            "trait": "Recovery Guardian",
+            "defined_gate": "mandatory-architecture-locked",
+            "implementation_gate_requires_evidence": true,
+            "architecture_document_does_not_count_as_built": true,
+            "expandable_via_existing_guidance": true,
+            "human_action_inference": false,
+            "rollback_protected": true,
+            "status": "verified-live",
+            "verified_at_utc": "$verified_at"
+          }
+          EOF
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add deployments/aurum-recovery-trait-live.json
+          git commit -m 'Record Aurum Recovery Guardian trait live [skip ci]' || exit 0
+          git pull --rebase origin main
+          git push origin HEAD:main

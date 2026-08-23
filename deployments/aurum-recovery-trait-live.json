@@ -1,0 +1,17 @@
+{
+  "site": "aurum-command-center",
+  "url": "https://arkmatx.com/aurum/dashboard/",
+  "canonical_website_repo": "FormatX66/ClusterSites",
+  "canonical_component": "services/aurum-arkmatx/traits.js",
+  "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/traits.js",
+  "deployment_carrier": "FormatX66/wetbeard-site",
+  "trait": "Recovery Guardian",
+  "defined_gate": "mandatory-architecture-locked",
+  "implementation_gate_requires_evidence": true,
+  "architecture_document_does_not_count_as_built": true,
+  "expandable_via_existing_guidance": true,
+  "human_action_inference": false,
+  "rollback_protected": true,
+  "status": "verified-live",
+  "verified_at_utc": "2026-08-23T10:44:11Z"
+}

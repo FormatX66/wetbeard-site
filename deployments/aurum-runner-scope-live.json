@@ -1,0 +1,16 @@
+{
+  "site": "aurum-command-center",
+  "url": "https://arkmatx.com/aurum/dashboard/",
+  "canonical_website_repo": "FormatX66/ClusterSites",
+  "canonical_component": "services/aurum-arkmatx/runner-scope-v1.js",
+  "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/runner-scope-v1.js",
+  "deployment_carrier": "FormatX66/wetbeard-site",
+  "runner_scope_revision": "1.0",
+  "fresh_windows_peer_proof_can_narrow_linux_queue_boundary": true,
+  "global_self_hosted_outage_non_inference": true,
+  "linux_runner_root_cause_non_inference": true,
+  "human_action_inference": false,
+  "rollback_protected": true,
+  "status": "verified-live",
+  "verified_at_utc": "2026-08-23T03:45:13Z"
+}

@@ -31,25 +31,27 @@ jobs:
             'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/seed-lifecycle-v1.js' \
             -o "$src"
           test -s "$src"
-          grep -Fq 'AURUM_SEED_LIFECYCLE_V1_CANONICAL' "$src"
-          grep -Fq 'Boot once. Grow continuously.' "$src"
-          grep -Fq 'Established nodes do not rebuild or reflash boot media for normal generations.' "$src"
+          grep -Fq 'AURUM_SEED_LIFECYCLE_V1_1_CANONICAL' "$src"
+          grep -Fq 'Git stores the genetics. Seeds carry the germ. Machines regrow the phenotype.' "$src"
+          grep -Fq "normal_generation:'genetics-regrowth'" "$src"
+          grep -Fq 'candidate_only_staging:true' "$src"
           grep -Fq 'human_action_requires_separate_current_evidence:true' "$src"
           echo "file=$src" >> "$GITHUB_OUTPUT"
 
-      - name: Verify source against Aurum seed architecture
+      - name: Verify source against current Aurum genetics architecture
         shell: bash
         run: |
           set -euo pipefail
-          payload="$RUNNER_TEMP/seed-policy.json"
-          policy="$RUNNER_TEMP/SEED_LIFECYCLE.md"
+          genetics="$RUNNER_TEMP/RESEED_GENETICS_ARCHITECTURE.md"
+          recovery="$RUNNER_TEMP/SEED_RECOVERY_ARCHITECTURE.md"
           curl --fail-with-body --silent --show-error --location \
-            'https://api.github.com/repos/FormatX66/BoxBrain/contents/Projects/AurumPC/SEED_LIFECYCLE.md?ref=aurum%2Ftrunk-v0.01' \
-            -o "$payload"
-          jq -r '.content' "$payload" | tr -d '\n' | base64 --decode > "$policy"
-          grep -Fq '**Boot once. Grow continuously.**' "$policy"
-          grep -Fq 'Boot media is **not** part of the normal update path for Hopper or any established Aurum node.' "$policy"
-          grep -Fq 'A normal Aurum generation must **not** require rebuilding, reflashing, or replacing boot media.' "$policy"
+            'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/docs/architecture/RESEED_GENETICS_ARCHITECTURE.md' -o "$genetics"
+          curl --fail-with-body --silent --show-error --location \
+            'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/docs/architecture/SEED_RECOVERY_ARCHITECTURE.md' -o "$recovery"
+          grep -Fq 'Git stores the genetics. Seeds carry the germ.' "$genetics"
+          grep -Fq 'must not overwrite or mutate the currently active organism during staging' "$genetics"
+          grep -Fq 'Promotion requires health evidence' "$genetics"
+          grep -Fq 'Any viable germ-bearing seed must be able to regrow directly into the current trusted genetics' "$recovery"
 
       - name: Configure Bluehost SSH with bounded retry
         env:
@@ -96,8 +98,9 @@ jobs:
           import re, sys
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./seed-lifecycle\.js(?:\?v=[^"]+)?"></script>\s*','',text)
-          tag='<script src="./seed-lifecycle.js?v=1"></script>'
+          tag='<script src="./seed-lifecycle.js?v=11"></script>'
           markers=[
+              r'<script src="\./recovery-guardian\.js(?:\?v=[^"]+)?"></script>',
               r'<script src="\./guidance\.js(?:\?v=[^"]+)?"></script>',
               r'<script src="\./action-ownership\.js(?:\?v=[^"]+)?"></script>',
               r'</body>'
@@ -111,7 +114,7 @@ jobs:
               raise SystemExit('dashboard missing seed lifecycle injection point')
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './seed-lifecycle.js?v=1' "$RUNNER_TEMP/index.html"
+          grep -Fq './seed-lifecycle.js?v=11' "$RUNNER_TEMP/index.html"
 
       - name: Publish seed lifecycle component with bounded retries
         env:
@@ -136,12 +139,13 @@ jobs:
           page="$(mktemp)"; js="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' \
-            'https://arkmatx.com/aurum/dashboard/seed-lifecycle.js?rev=1' -o "$js"
-          grep -Fq './seed-lifecycle.js?v=1' "$page"
-          grep -Fq 'AURUM_SEED_LIFECYCLE_V1_CANONICAL' "$js"
-          grep -Fq 'Boot once. Grow continuously.' "$js"
-          grep -Fq 'Established nodes do not rebuild or reflash boot media for normal generations.' "$js"
+            'https://arkmatx.com/aurum/dashboard/seed-lifecycle.js?rev=11' -o "$js"
+          grep -Fq './seed-lifecycle.js?v=11' "$page"
+          grep -Fq 'AURUM_SEED_LIFECYCLE_V1_1_CANONICAL' "$js"
+          grep -Fq 'Git stores the genetics. Seeds carry the germ. Machines regrow the phenotype.' "$js"
+          grep -Fq "normal_generation:'genetics-regrowth'" "$js"
           grep -Fq 'human_action_requires_separate_current_evidence:true' "$js"
+          grep -Fq './recovery-guardian.js?v=11' "$page"
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
 
       - name: Roll back on verification failure
@@ -175,10 +179,14 @@ jobs:
             "canonical_component": "services/aurum-arkmatx/seed-lifecycle-v1.js",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/seed-lifecycle-v1.js",
             "deployment_carrier": "FormatX66/wetbeard-site",
-            "seed_lifecycle_revision": "1.0",
+            "seed_lifecycle_revision": "1.1",
             "canonical_law": "Boot once. Grow continuously.",
-            "normal_generation_path": "running-seed-propagation",
-            "boot_media_scope": "first-seed-or-recovery",
+            "genetics_law": "Git stores the genetics. Seeds carry the germ. Machines regrow the phenotype.",
+            "normal_generation_path": "genetics-regrowth",
+            "candidate_only_staging": true,
+            "live_overwrite_allowed": false,
+            "promotion_requires_health_evidence": true,
+            "boot_media_scope": "first-seed-or-external-germ-recovery",
             "normal_generation_reflash": false,
             "human_action_requires_separate_current_evidence": true,
             "rollback_protected": true,
@@ -189,6 +197,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-seed-lifecycle-live.json
-          git commit -m 'Record Aurum seed lifecycle live [skip ci]' || exit 0
+          git commit -m 'Record Aurum seed lifecycle v1.1 live [skip ci]' || exit 0
           git pull --rebase origin main
           git push origin HEAD:main

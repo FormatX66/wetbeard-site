@@ -1,4 +1,4 @@
-name: Publish Aurum Evidence Freshness
+name: Publish Aurum Evidence Health v1.3
 
 on:
   push:
@@ -21,29 +21,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Fetch public projections of canonical ClusterSites components
+      - name: Fetch public projection of canonical evidence health
         id: source
         shell: bash
         run: |
           set -euo pipefail
           evidence="$RUNNER_TEMP/evidence-health.js"
-          ownership="$RUNNER_TEMP/action-ownership.js"
           curl --fail-with-body --silent --show-error --location \
             'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/evidence-health-v1.js' -o "$evidence"
-          curl --fail-with-body --silent --show-error --location \
-            'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/action-ownership-v1.js' -o "$ownership"
-          test -s "$evidence"; test -s "$ownership"
-          grep -Fq 'AURUM_EVIDENCE_HEALTH_V1_2_CANONICAL' "$evidence"
+          test -s "$evidence"
+          grep -Fq 'AURUM_EVIDENCE_HEALTH_V1_3_CANONICAL' "$evidence"
           grep -Fq 'Canonical website owner: FormatX66/ClusterSites.' "$evidence"
-          grep -Fq 'VOICE_FRESH_MS = 6 * 60 * 60 * 1000' "$evidence"
-          grep -Fq 'stale for operator-action use' "$evidence"
-          grep -Fq 'AURUM_ACTION_OWNERSHIP_V1_6_CANONICAL' "$ownership"
-          grep -Fq 'Canonical website owner: FormatX66/ClusterSites.' "$ownership"
-          grep -Fq 'VOICE_MAX_AGE=6*60*60*1000' "$ownership"
-          grep -Fq 'Voice/action evidence must be fresh (≤6h)' "$ownership"
-          grep -Fq 'Stale/unknown voice evidence is blocked from assigning you work.' "$ownership"
+          grep -Fq 'six-hour operator-action window' "$evidence"
+          grep -Fq 'BoxBrain hosted mirror lane' "$evidence"
+          grep -Fq 'deploymentReceiptRank' "$evidence"
+          grep -Fq 'never creates a human task' "$evidence"
           echo "evidence=$evidence" >> "$GITHUB_OUTPUT"
-          echo "ownership=$ownership" >> "$GITHUB_OUTPUT"
 
       - name: Configure Bluehost SSH carrier with bounded retry
         env:
@@ -60,11 +53,14 @@ jobs:
           : > "$HOME/.ssh/known_hosts"
           for attempt in 1 2 3 4 5; do
             if ssh-keyscan -T 10 -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null; then exit 0; fi
-            if [ "$attempt" -eq 5 ]; then echo "Bluehost SSH keyscan remained unavailable after $attempt bounded attempts" >&2; exit 1; fi
+            if [ "$attempt" -eq 5 ]; then
+              echo "Bluehost SSH keyscan remained unavailable after $attempt bounded attempts" >&2
+              exit 1
+            fi
             sleep $((attempt * 5))
           done
 
-      - name: Back up current operator surfaces
+      - name: Back up live Evidence Sources surface
         id: backup
         env:
           BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
@@ -73,107 +69,118 @@ jobs:
         run: |
           set -euo pipefail
           retry_capture() {
-            local outfile="$1"; shift; local attempt=1 rc=0 tmp; tmp="$(mktemp)"
+            local outfile="$1"; shift
+            local attempt=1 rc=0 tmp
+            tmp="$(mktemp)"
             while true; do
               if "$@" > "$tmp"; then mv "$tmp" "$outfile"; return 0; fi
-              rc=$?; if [ "$attempt" -ge 5 ]; then rm -f "$tmp"; return "$rc"; fi
-              sleep $((attempt * 5)); attempt=$((attempt + 1))
+              rc=$?
+              if [ "$attempt" -ge 5 ]; then rm -f "$tmp"; return "$rc"; fi
+              sleep $((attempt * 5))
+              attempt=$((attempt + 1))
             done
           }
           remote='public_html/arkmatx/aurum/dashboard'
-          backup=".aurum-dashboard-backups/evidence-freshness-$GITHUB_RUN_ID"
+          backup=".aurum-dashboard-backups/evidence-health-v13-$GITHUB_RUN_ID"
           retry_capture "$RUNNER_TEMP/index.html" \
             ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
-            "set -eu; mkdir -p '$remote' '$backup'; cp -p '$remote/index.html' '$backup/index.html'; if [ -f '$remote/evidence-health.js' ]; then cp -p '$remote/evidence-health.js' '$backup/evidence-health.js'; else touch '$backup/.missing-evidence-health.js'; fi; if [ -f '$remote/action-ownership.js' ]; then cp -p '$remote/action-ownership.js' '$backup/action-ownership.js'; else touch '$backup/.missing-action-ownership.js'; fi; cat '$remote/index.html'"
+            "set -eu; mkdir -p '$remote' '$backup'; cp -p '$remote/index.html' '$backup/index.html'; if [ -f '$remote/evidence-health.js' ]; then cp -p '$remote/evidence-health.js' '$backup/evidence-health.js'; else touch '$backup/.missing-evidence-health.js'; fi; cat '$remote/index.html'"
           test -s "$RUNNER_TEMP/index.html"
           echo 'ready=true' >> "$GITHUB_OUTPUT"
 
-      - name: Inject freshness-aware surfaces
+      - name: Inject v1.3 evidence health without disturbing other surfaces
         shell: bash
         run: |
           set -euo pipefail
           python3 - "$RUNNER_TEMP/index.html" <<'PY'
           from pathlib import Path
           import re, sys
-          p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
-          text=re.sub(r'<script src="\./evidence-health\.js(?:\?v=[^"]+)?"></script>\s*','',text)
-          text=re.sub(r'<script src="\./action-ownership\.js(?:\?v=[^"]+)?"></script>\s*','',text)
-          if '</body>' not in text: raise SystemExit('dashboard missing body close')
-          tags='<script src="./evidence-health.js?v=12"></script>\n<script src="./action-ownership.js?v=16"></script>\n'
-          text=text.replace('</body>',tags+'</body>',1)
-          p.write_text(text,encoding='utf-8')
+          p = Path(sys.argv[1])
+          text = p.read_text(encoding='utf-8')
+          text = re.sub(r'<script src="\./evidence-health\.js(?:\?v=[^"]+)?"></script>\s*', '', text)
+          tag = '<script src="./evidence-health.js?v=13"></script>'
+          marker = re.search(r'<script src="\./action-ownership\.js(?:\?v=[^"]+)?"></script>', text)
+          if marker:
+              text = text[:marker.start()] + tag + '\n' + text[marker.start():]
+          elif '</body>' in text:
+              text = text.replace('</body>', tag + '\n</body>', 1)
+          else:
+              raise SystemExit('dashboard missing injection point')
+          p.write_text(text, encoding='utf-8')
           PY
-          grep -Fq './evidence-health.js?v=12' "$RUNNER_TEMP/index.html"
-          grep -Fq './action-ownership.js?v=16' "$RUNNER_TEMP/index.html"
+          grep -Fq './evidence-health.js?v=13' "$RUNNER_TEMP/index.html"
 
-      - name: Publish freshness-aware operator surfaces
+      - name: Publish evidence health with bounded retries
         env:
           BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
           BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
         shell: bash
         run: |
           set -euo pipefail
-          retry() { local attempt=1 rc=0; while true; do "$@" && return 0; rc=$?; if [ "$attempt" -ge 5 ]; then return "$rc"; fi; sleep $((attempt * 5)); attempt=$((attempt + 1)); done; }
+          retry() {
+            local attempt=1 rc=0
+            while true; do
+              "$@" && return 0
+              rc=$?
+              if [ "$attempt" -ge 5 ]; then return "$rc"; fi
+              sleep $((attempt * 5))
+              attempt=$((attempt + 1))
+            done
+          }
           remote='public_html/arkmatx/aurum/dashboard'
-          stage="$RUNNER_TEMP/aurum-evidence-freshness"; mkdir -p "$stage"
+          stage="$RUNNER_TEMP/aurum-evidence-health-v13"
+          mkdir -p "$stage"
           cp "$RUNNER_TEMP/index.html" "$stage/index.html"
           cp "${{ steps.source.outputs.evidence }}" "$stage/evidence-health.js"
-          cp "${{ steps.source.outputs.ownership }}" "$stage/action-ownership.js"
           retry scp -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -P 22 \
-            "$stage/index.html" "$stage/evidence-health.js" "$stage/action-ownership.js" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/"
+            "$stage/index.html" "$stage/evidence-health.js" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/"
           retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
-            "chmod 644 '$remote/index.html' '$remote/evidence-health.js' '$remote/action-ownership.js'"
+            "chmod 644 '$remote/index.html' '$remote/evidence-health.js'"
 
-      - name: Verify live freshness contract
+      - name: Verify live hosted-mirror-aware evidence health
         id: verify
         shell: bash
         run: |
           set -euo pipefail
-          page="$(mktemp)"; evidence="$(mktemp)"; ownership="$(mktemp)"; static_voice="$(mktemp)"; hosted_voice="$(mktemp)"
+          page="$(mktemp)"
+          evidence="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
-          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/evidence-health.js?rev=12' -o "$evidence"
-          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/action-ownership.js?rev=16' -o "$ownership"
-          grep -Fq './evidence-health.js?v=12' "$page"
-          grep -Fq './action-ownership.js?v=16' "$page"
-          grep -Fq 'AURUM_EVIDENCE_HEALTH_V1_2_CANONICAL' "$evidence"
-          grep -Fq 'Voice/action evidence older than six hours' "$evidence"
-          grep -Fq 'AURUM_ACTION_OWNERSHIP_V1_6_CANONICAL' "$ownership"
-          grep -Fq 'Stale/unknown voice evidence is blocked from assigning you work.' "$ownership"
-          grep -Fq 'Voice/action evidence must be fresh (≤6h)' "$ownership"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' \
+            'https://arkmatx.com/aurum/dashboard/evidence-health.js?rev=13' -o "$evidence"
+          grep -Fq './evidence-health.js?v=13' "$page"
+          grep -Fq 'AURUM_EVIDENCE_HEALTH_V1_3_CANONICAL' "$evidence"
+          grep -Fq 'BoxBrain hosted mirror lane' "$evidence"
+          grep -Fq 'not configured in BoxBrain hosted-mirror workflow' "$evidence"
+          grep -Fq 'not a request for credentials from you' "$evidence"
+          grep -Fq 'Stale or unavailable evidence never creates a human task by itself.' "$evidence"
 
-          static_code="$(curl --silent --show-error --location --retry 2 --retry-all-errors --retry-delay 1 -H 'Cache-Control: no-cache' -o "$static_voice" -w '%{http_code}' 'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/voice-status.json' || true)"
-          hosted_code="$(curl --silent --show-error --location --retry 2 --retry-all-errors --retry-delay 1 -H 'Cache-Control: no-cache' -o "$hosted_voice" -w '%{http_code}' 'https://arkmatx.com/aurum/voice-status.json' || true)"
-          read -r static_fresh static_age static_generated < <(python3 - "$static_voice" "$static_code" <<'PY'
-          import json, sys, datetime
-          from pathlib import Path
-          path, code = Path(sys.argv[1]), sys.argv[2]
-          if code != '200': print('false -1 unavailable'); raise SystemExit
-          try:
-              p=json.loads(path.read_text()); t=datetime.datetime.fromisoformat(p['generated_at_utc'].replace('Z','+00:00'))
-              age=max(0,int((datetime.datetime.now(datetime.timezone.utc)-t).total_seconds()))
-              print(('true' if age <= 21600 else 'false'), age, p['generated_at_utc'])
-          except Exception: print('false -1 invalid')
+          python3 - <<'PY' > "$RUNNER_TEMP/config-state"
+          import json, re, urllib.request
+          api = 'https://api.github.com/repos/FormatX66/BoxBrain/contents/Projects/AurumBridge/results?ref=main'
+          req = urllib.request.Request(api, headers={'Accept':'application/vnd.github+json','User-Agent':'aurum-command-center'})
+          with urllib.request.urlopen(req, timeout=20) as response:
+              items = json.load(response)
+          pat = re.compile(r'^web(-static)?-mirror-(\d+)(?:-attempt-(\d+))?\.json$', re.I)
+          ranked = []
+          for item in items:
+              m = pat.match(item.get('name',''))
+              if m:
+                  ranked.append((int(m.group(2)), int(m.group(3) or 0), item))
+          if not ranked:
+              raise SystemExit('no BoxBrain mirror receipt')
+          _, _, latest = max(ranked, key=lambda x:(x[0],x[1]))
+          with urllib.request.urlopen(latest['download_url'], timeout=20) as response:
+              payload = json.load(response)
+          configured = payload.get('hosted_deployment',{}).get('configured')
+          if payload.get('schema') == 'aurum-web-mirror-receipt-v1':
+              configured = True
+          missing = payload.get('hosted_deployment',{}).get('missing') or []
+          print('configured=' + ('true' if configured is True else 'false' if configured is False else 'unknown'))
+          print('missing_count=' + str(len(missing)))
+          print('receipt=' + latest['name'])
           PY
-          )
-          read -r hosted_fresh hosted_age hosted_generated < <(python3 - "$hosted_voice" "$hosted_code" <<'PY'
-          import json, sys, datetime
-          from pathlib import Path
-          path, code = Path(sys.argv[1]), sys.argv[2]
-          if code != '200': print('false -1 unavailable'); raise SystemExit
-          try:
-              p=json.loads(path.read_text()); t=datetime.datetime.fromisoformat(p['generated_at_utc'].replace('Z','+00:00'))
-              age=max(0,int((datetime.datetime.now(datetime.timezone.utc)-t).total_seconds()))
-              print(('true' if age <= 21600 else 'false'), age, p['generated_at_utc'])
-          except Exception: print('false -1 invalid')
-          PY
-          )
+          cat "$RUNNER_TEMP/config-state" >> "$GITHUB_OUTPUT"
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
-          echo "static_fresh=$static_fresh" >> "$GITHUB_OUTPUT"
-          echo "static_age=$static_age" >> "$GITHUB_OUTPUT"
-          echo "static_generated=$static_generated" >> "$GITHUB_OUTPUT"
-          echo "hosted_fresh=$hosted_fresh" >> "$GITHUB_OUTPUT"
-          echo "hosted_age=$hosted_age" >> "$GITHUB_OUTPUT"
-          echo "hosted_generated=$hosted_generated" >> "$GITHUB_OUTPUT"
 
       - name: Roll back if verification fails
         if: ${{ failure() && steps.backup.outputs.ready == 'true' }}
@@ -183,12 +190,22 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          retry() { local attempt=1 rc=0; while true; do "$@" && return 0; rc=$?; if [ "$attempt" -ge 5 ]; then return "$rc"; fi; sleep $((attempt * 5)); attempt=$((attempt + 1)); done; }
-          remote='public_html/arkmatx/aurum/dashboard'; backup=".aurum-dashboard-backups/evidence-freshness-$GITHUB_RUN_ID"
+          retry() {
+            local attempt=1 rc=0
+            while true; do
+              "$@" && return 0
+              rc=$?
+              if [ "$attempt" -ge 5 ]; then return "$rc"; fi
+              sleep $((attempt * 5))
+              attempt=$((attempt + 1))
+            done
+          }
+          remote='public_html/arkmatx/aurum/dashboard'
+          backup=".aurum-dashboard-backups/evidence-health-v13-$GITHUB_RUN_ID"
           retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
-            "set -eu; cp -p '$backup/index.html' '$remote/index.html'; if [ -f '$backup/evidence-health.js' ]; then cp -p '$backup/evidence-health.js' '$remote/evidence-health.js'; elif [ -f '$backup/.missing-evidence-health.js' ]; then rm -f '$remote/evidence-health.js'; fi; if [ -f '$backup/action-ownership.js' ]; then cp -p '$backup/action-ownership.js' '$remote/action-ownership.js'; elif [ -f '$backup/.missing-action-ownership.js' ]; then rm -f '$remote/action-ownership.js'; fi"
+            "set -eu; cp -p '$backup/index.html' '$remote/index.html'; if [ -f '$backup/evidence-health.js' ]; then cp -p '$backup/evidence-health.js' '$remote/evidence-health.js'; elif [ -f '$backup/.missing-evidence-health.js' ]; then rm -f '$remote/evidence-health.js'; fi"
 
-      - name: Record verified freshness receipt
+      - name: Record verified evidence-health receipt
         if: success()
         shell: bash
         run: |
@@ -205,17 +222,15 @@ jobs:
             "canonical_website_repo": "FormatX66/ClusterSites",
             "public_projection_repo": "FormatX66/BoxBrain",
             "credential_carrier_repo": "FormatX66/wetbeard-site",
-            "evidence_health_revision": "1.2",
+            "evidence_health_revision": "1.3",
             "action_ownership_revision": "1.6",
             "voice_freshness_window_seconds": 21600,
-            "stale_voice_is_system_work": true,
-            "stale_voice_can_create_human_action": false,
-            "static_voice_fresh": ${{ steps.verify.outputs.static_fresh }},
-            "static_voice_age_seconds": ${{ steps.verify.outputs.static_age }},
-            "static_voice_generated_at": "${{ steps.verify.outputs.static_generated }}",
-            "hosted_voice_fresh": ${{ steps.verify.outputs.hosted_fresh }},
-            "hosted_voice_age_seconds": ${{ steps.verify.outputs.hosted_age }},
-            "hosted_voice_generated_at": "${{ steps.verify.outputs.hosted_generated }}",
+            "hosted_mirror_configuration_visible": true,
+            "boxbrain_hosted_mirror_configured": "${{ steps.verify.outputs.configured }}",
+            "boxbrain_hosted_mirror_missing_setting_count": ${{ steps.verify.outputs.missing_count }},
+            "boxbrain_hosted_mirror_receipt": "${{ steps.verify.outputs.receipt }}",
+            "missing_hosted_mirror_configuration_is_system_work": true,
+            "missing_hosted_mirror_configuration_can_create_human_action": false,
             "backup_before_publish": true,
             "rollback_on_verify_failure": true,
             "status": "verified-live",
@@ -225,6 +240,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-evidence-freshness-live.json
-          git commit -m 'Record Aurum evidence freshness live deployment [skip ci]' || exit 0
+          git commit -m 'Record hosted-mirror-aware Aurum evidence health live [skip ci]' || exit 0
           git pull --rebase origin main
           git push origin HEAD:main

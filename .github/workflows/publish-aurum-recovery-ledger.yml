@@ -48,6 +48,8 @@ jobs:
           grep -Fq "preExecutionRecoveryWriteGateEvidence:writeGate?'hard-fail-closed-before-destructive-write':'not-verified'" "$src"
           grep -Fq 'preExecutionRecoveryReceiptRequired:true' "$src"
           grep -Fq 'remoteRepairCompletedSuppressesFlash:true' "$src"
+          grep -Fq "legacyRawWriteBypassEvidence:legacyDisabled?'legacy-destructive-workflow-disabled-and-contract-guarded':'not-verified'" "$src"
+          grep -Fq 'destructiveWriteHasSingleGuardedPath:legacyDisabled&&writeGate' "$src"
           grep -Fq 'repositoryImplementationIsPhysicalProof:false' "$src"
           grep -Fq "needsWorkOwner:'aurum-system'" "$src"
           grep -Fq 'humanActionRequired:false' "$src"
@@ -99,7 +101,7 @@ jobs:
           import re, sys
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./recovery-ledger\.js(?:\?v=[^"]+)?"></script>\s*','',text)
-          tag='<script src="./recovery-ledger.js?v=11"></script>'
+          tag='<script src="./recovery-ledger.js?v=12"></script>'
           marker=re.search(r'<script src="\./recovery-guardian\.js(?:\?v=[^"]+)?"></script>',text)
           if marker:
               text=text[:marker.end()]+'\n'+tag+text[marker.end():]
@@ -113,7 +115,7 @@ jobs:
                   raise SystemExit('dashboard missing injection point')
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './recovery-ledger.js?v=11' "$RUNNER_TEMP/index.html"
+          grep -Fq './recovery-ledger.js?v=12' "$RUNNER_TEMP/index.html"
 
       - name: Publish recovery ledger with bounded retries
         env:
@@ -138,8 +140,8 @@ jobs:
           page="$(mktemp)"; js="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' \
-            'https://arkmatx.com/aurum/dashboard/recovery-ledger.js?rev=11' -o "$js"
-          grep -Fq './recovery-ledger.js?v=11' "$page"
+            'https://arkmatx.com/aurum/dashboard/recovery-ledger.js?rev=12' -o "$js"
+          grep -Fq './recovery-ledger.js?v=12' "$page"
           grep -Fq 'AURUM_RECOVERY_LEDGER_V1_1_CANONICAL' "$js"
           grep -Fq 'Canonical website owner: FormatX66/ClusterSites.' "$js"
           grep -Fq 'Frontiers Advancing:' "$js"
@@ -154,6 +156,8 @@ jobs:
           grep -Fq "preExecutionRecoveryWriteGateEvidence:writeGate?'hard-fail-closed-before-destructive-write':'not-verified'" "$js"
           grep -Fq 'preExecutionRecoveryReceiptRequired:true' "$js"
           grep -Fq 'remoteRepairCompletedSuppressesFlash:true' "$js"
+          grep -Fq "legacyRawWriteBypassEvidence:legacyDisabled?'legacy-destructive-workflow-disabled-and-contract-guarded':'not-verified'" "$js"
+          grep -Fq 'destructiveWriteHasSingleGuardedPath:legacyDisabled&&writeGate' "$js"
           grep -Fq 'repositoryImplementationIsPhysicalProof:false' "$js"
           grep -Fq 'humanActionRequired:false' "$js"
           grep -Fq 'humanActionInference:false' "$js"
@@ -200,6 +204,8 @@ jobs:
             "offline_carrier_grants_write_authority": false,
             "preexecution_write_gate_visible": true,
             "remote_repair_completed_suppresses_flash": true,
+            "legacy_destructive_bypass_disabled": true,
+            "destructive_write_single_guarded_path": true,
             "physical_proof_inferred": false,
             "needs_work_owner": "aurum-system",
             "human_action_inference": false,

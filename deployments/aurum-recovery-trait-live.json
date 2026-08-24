@@ -6,12 +6,14 @@
   "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/traits.js",
   "deployment_carrier": "FormatX66/wetbeard-site",
   "trait": "Recovery Guardian",
-  "defined_gate": "mandatory-architecture-locked",
-  "implementation_gate_requires_evidence": true,
-  "architecture_document_does_not_count_as_built": true,
+  "recovery_guardian_trait_revision": "1.1",
+  "software_implementation_can_advance_built": true,
+  "germ_lane_can_advance_lane": true,
+  "germ_ci_cannot_advance_physical_verified": true,
+  "physical_verified_requires_recovery_evidence": true,
   "expandable_via_existing_guidance": true,
   "human_action_inference": false,
   "rollback_protected": true,
   "status": "verified-live",
-  "verified_at_utc": "2026-08-23T10:44:11Z"
+  "verified_at_utc": "2026-08-24T00:05:10Z"
 }

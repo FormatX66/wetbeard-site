@@ -1,4 +1,4 @@
-name: Publish Aurum Workflow Failsafe v1.5
+name: Publish Aurum Workflow Failsafe v1.6
 
 on:
   push:
@@ -21,19 +21,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Fetch validated public projection of canonical failsafe
+      - name: Fetch canonical failsafe and verified public projection
         id: source
         shell: bash
         run: |
           set -euo pipefail
+          canonical="$RUNNER_TEMP/workflow-failsafe-canonical.js"
           src="$RUNNER_TEMP/workflow-failsafe.js"
+          curl --fail-with-body --silent --show-error --location \
+            'https://raw.githubusercontent.com/FormatX66/ClusterSites/main/services/aurum-arkmatx/workflow-failsafe-v1.js' \
+            -o "$canonical"
           curl --fail-with-body --silent --show-error --location \
             'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/workflow-failsafe-v1.js' \
             -o "$src"
-          test -s "$src"
-          grep -Fq 'AURUM_WORKFLOW_FAILSAFE_V1_5_CANONICAL' "$src"
-          grep -Fq 'RUNID-attempt-N' "$src"
-          grep -Fq 'readbackFiles' "$src"
+          test -s "$canonical"; test -s "$src"
+          cmp -s "$canonical" "$src"
+          grep -Fq 'AURUM_WORKFLOW_FAILSAFE_V1_6_CANONICAL' "$src"
+          grep -Fq 'Unresolved required-proof lanes:' "$src"
+          grep -Fq 'required physical proof not produced' "$src"
+          grep -Fq 'A terminal cancellation ends that scheduler-placement diagnosis' "$src"
           grep -Fq 'Workflow state alone never creates a human task.' "$src"
           echo "file=$src" >> "$GITHUB_OUTPUT"
 
@@ -82,7 +88,7 @@ jobs:
           import re, sys
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./workflow-failsafe\.js(?:\?v=[^"]+)?"></script>\s*','',text)
-          tag='<script src="./workflow-failsafe.js?v=15"></script>'
+          tag='<script src="./workflow-failsafe.js?v=16"></script>'
           marker=re.search(r'<script src="\./action-ownership\.js(?:\?v=[^"]+)?"></script>',text)
           if marker:
               text=text[:marker.start()]+tag+'\n'+text[marker.start():]
@@ -92,7 +98,7 @@ jobs:
               raise SystemExit('dashboard missing injection point')
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './workflow-failsafe.js?v=15' "$RUNNER_TEMP/index.html"
+          grep -Fq './workflow-failsafe.js?v=16' "$RUNNER_TEMP/index.html"
 
       - name: Publish failsafe component with bounded retries
         env:
@@ -109,7 +115,7 @@ jobs:
           retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
             "set -eu; mv -f '$remote/workflow-failsafe-v1.js' '$remote/workflow-failsafe.js' 2>/dev/null || true; chmod 644 '$remote/index.html' '$remote/workflow-failsafe.js'"
 
-      - name: Verify live rerun-safe workflow failsafe
+      - name: Verify live cancelled-proof-aware workflow failsafe
         id: verify
         shell: bash
         run: |
@@ -117,11 +123,15 @@ jobs:
           page="$(mktemp)"; js="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' \
-            'https://arkmatx.com/aurum/dashboard/workflow-failsafe.js?rev=15' -o "$js"
-          grep -Fq './workflow-failsafe.js?v=15' "$page"
-          grep -Fq 'AURUM_WORKFLOW_FAILSAFE_V1_5_CANONICAL' "$js"
-          grep -Fq 'RUNID-attempt-N' "$js"
-          grep -Fq 'Active readback:' "$js"
+            'https://arkmatx.com/aurum/dashboard/workflow-failsafe.js?rev=16' -o "$js"
+          grep -Fq './workflow-failsafe.js?v=16' "$page"
+          grep -Fq 'AURUM_WORKFLOW_FAILSAFE_V1_6_CANONICAL' "$js"
+          grep -Fq 'Unresolved required-proof lanes:' "$js"
+          grep -Fq 'required physical proof not produced' "$js"
+          grep -Fq 'A terminal cancellation ends that scheduler-placement diagnosis' "$js"
+          grep -Fq 'Frontiers Advancing:' "$js"
+          grep -Fq 'Needs Work → Aurum/System:' "$js"
+          grep -Fq 'Your Actions:' "$js"
           grep -Fq 'Workflow state alone never creates a human task.' "$js"
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
 
@@ -155,17 +165,20 @@ jobs:
             "canonical_website_repo": "FormatX66/ClusterSites",
             "canonical_component": "services/aurum-arkmatx/workflow-failsafe-v1.js",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/workflow-failsafe-v1.js",
+            "canonical_projection_byte_parity_verified": true,
             "deployment_carrier": "FormatX66/wetbeard-site",
-            "workflow_failsafe_revision": "1.5",
+            "workflow_failsafe_revision": "1.6",
             "attempt_scoped_readback_supported": true,
             "legacy_readback_supported": true,
             "newest_run_attempt_selection": true,
             "readback_filename_visible": true,
             "hopper_echo_physical_proof_tracking": true,
-            "self_hosted_runner_scheduler_placement_visible": true,
+            "cancelled_required_proof_visible": true,
+            "cancelled_run_clears_scheduler_placement_diagnosis": true,
+            "cancelled_required_proof_owned_by_system": true,
             "runner_root_cause_non_inference": true,
-            "self_hosted_runner_stall_owned_by_system": true,
             "human_action_inference": false,
+            "frontiers_needs_work_actions_separation_visible": true,
             "rollback_protected": true,
             "status": "verified-live",
             "verified_at_utc": "$verified_at"
@@ -174,6 +187,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-workflow-failsafe-live.json
-          git commit -m 'Record rerun-safe workflow failsafe live [skip ci]' || exit 0
+          git commit -m 'Record cancelled-proof-aware workflow failsafe live [skip ci]' || exit 0
           git pull --rebase origin main
           git push origin HEAD:main

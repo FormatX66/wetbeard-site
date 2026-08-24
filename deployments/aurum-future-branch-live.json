@@ -5,10 +5,14 @@
   "canonical_component": "services/aurum-arkmatx/future-branch-v1.js",
   "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/future-branch-v1.js",
   "deployment_carrier": "FormatX66/wetbeard-site",
-  "future_branch_revision": "1.1",
+  "future_branch_revision": "1.2",
   "expandable": true,
   "core_operating_principle_visible": true,
   "experimental_executable_model_visible": true,
+  "cross_system_consumer_ci_visible": true,
+  "stateweave_consumer_visible": true,
+  "adaptive_kernel_consumer_visible": true,
+  "combined_bridge_consumer_visible": true,
   "schema_rollforward_visible": true,
   "method_carrier_pivot_visible": true,
   "calibration_visible": true,
@@ -22,5 +26,5 @@
   "backup_before_publish": true,
   "rollback_on_verify_failure": true,
   "status": "verified-live",
-  "verified_at_utc": "2026-08-24T05:46:02Z"
+  "verified_at_utc": "2026-08-24T10:52:37Z"
 }

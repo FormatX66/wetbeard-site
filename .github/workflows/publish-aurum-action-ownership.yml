@@ -33,22 +33,17 @@ jobs:
           set -euo pipefail
           src='https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/action-ownership-v1.js'
           file="$RUNNER_TEMP/action-ownership.js"
-          curl --fail-with-body --silent --show-error --location "$src" -o "$file"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 "$src" -o "$file"
           test -s "$file"
           node --check "$file"
-          grep -Fq 'AURUM_ACTION_OWNERSHIP_V1_8_CANONICAL' "$file"
-          grep -Fq 'Unknown or unavailable evidence never creates a human task.' "$file"
-          grep -Fq 'Human-capability boot proof' "$file"
-          grep -Fq 'Native self-build generation' "$file"
-          grep -Fq 'BoxBrain → Hopper control-route proof' "$file"
-          grep -Fq 'Recovery Guardian release/handoff evidence' "$file"
-          grep -Fq "r?.tinySeedReleaseState==='READY_TO_FLASH'" "$file"
-          grep -Fq "r?.preflightRequiredBeforeDestructiveWrite===true" "$file"
-          grep -Fq "r?.tinySeedPhysicalHandoffPhase==='WAITING_FOR_EXPLICIT_WRITE_AUTHORITY'" "$file"
-          grep -Fq 'Tiny Seed guarded flash authority — human-only step:' "$file"
-          grep -Fq 'The authorization is one-shot' "$file"
-          grep -Fq 'current media-handoff phase' "$file"
-          grep -Fq "window.addEventListener('aurum-recovery-guardian-state'" "$file"
+          grep -Fq 'AURUM_ACTION_OWNERSHIP_V1_9_CANONICAL' "$file"
+          grep -Fq 'Canonical website owner: FormatX66/ClusterSites.' "$file"
+          grep -Fq 'Future Branch pre-execution recovery gate' "$file"
+          grep -Fq 'HOPPER_RECOVERY' "$file"
+          grep -Fq "preExecutionState()==='manual-boundary-cleared'" "$file"
+          grep -Fq 'Missing evidence cannot become Your Actions.' "$file"
+          grep -Fq 'Recovery Guardian Tiny Seed actions are additionally blocked' "$file"
+          grep -Fq 'Unknown evidence never becomes your task.' "$file"
           echo "file=$file" >> "$GITHUB_OUTPUT"
 
       - name: Configure existing Bluehost SSH carrier
@@ -95,12 +90,12 @@ jobs:
           import re, sys
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./action-ownership\.js(?:\?v=[^"]+)?"></script>\s*','',text)
-          tag='<script src="./action-ownership.js?v=172"></script>'
+          tag='<script src="./action-ownership.js?v=190"></script>'
           if '</body>' not in text: raise SystemExit('dashboard missing body close')
           text=text.replace('</body>',tag+'\n</body>',1)
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './action-ownership.js?v=172' "$RUNNER_TEMP/index.html"
+          grep -Fq './action-ownership.js?v=190' "$RUNNER_TEMP/index.html"
 
       - name: Publish action ownership surface
         env:
@@ -122,20 +117,16 @@ jobs:
           set -euo pipefail
           page="$(mktemp)"; asset="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
-          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/action-ownership.js?rev=172' -o "$asset"
-          grep -Fq './action-ownership.js?v=172' "$page"
-          grep -Fq 'AURUM_ACTION_OWNERSHIP_V1_8_CANONICAL' "$asset"
-          grep -Fq '0 confirmed' "$asset"
-          grep -Fq 'AURUM' "$asset"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/action-ownership.js?rev=190' -o "$asset"
+          grep -Fq './action-ownership.js?v=190' "$page"
+          node --check "$asset"
+          grep -Fq 'AURUM_ACTION_OWNERSHIP_V1_9_CANONICAL' "$asset"
+          grep -Fq 'Future Branch pre-execution recovery gate' "$asset"
+          grep -Fq 'HOPPER_RECOVERY' "$asset"
+          grep -Fq "preExecutionState()==='manual-boundary-cleared'" "$asset"
+          grep -Fq 'Missing evidence cannot become Your Actions.' "$asset"
+          grep -Fq 'Recovery Guardian Tiny Seed actions are additionally blocked' "$asset"
           grep -Fq 'Unknown evidence never becomes your task.' "$asset"
-          grep -Fq 'BoxBrain → Hopper control-route proof' "$asset"
-          grep -Fq 'Recovery Guardian release/handoff evidence' "$asset"
-          grep -Fq "r?.tinySeedReleaseState==='READY_TO_FLASH'" "$asset"
-          grep -Fq "r?.preflightRequiredBeforeDestructiveWrite===true" "$asset"
-          grep -Fq "r?.tinySeedPhysicalHandoffPhase==='WAITING_FOR_EXPLICIT_WRITE_AUTHORITY'" "$asset"
-          grep -Fq 'Tiny Seed guarded flash authority — human-only step:' "$asset"
-          grep -Fq 'The authorization is one-shot' "$asset"
-          grep -Fq 'current media-handoff phase' "$asset"
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
 
       - name: Roll back if verification fails
@@ -169,21 +160,18 @@ jobs:
             "canonical_component": "services/aurum-arkmatx/action-ownership-v1.js",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/action-ownership-v1.js",
             "credential_carrier_repo": "FormatX66/wetbeard-site",
-            "action_ownership_revision": "1.8",
+            "action_ownership_revision": "1.9",
             "human_and_system_work_separated": true,
             "unknown_never_creates_human_task": true,
+            "future_branch_preexecution_gate_visible": true,
+            "hopper_remote_recovery_receipt_visible": true,
+            "missing_or_stale_remote_recovery_blocks_manual_handoff": true,
+            "successful_remote_repair_blocks_stale_tinyseed_handoff": true,
+            "terminal_unrepaired_remote_pass_can_release_verified_tinyseed_boundary": true,
             "voice_freshness_gate_preserved": true,
             "recovery_guardian_human_boundary_included": true,
-            "tinyseed_connection_boundary_supported": true,
-            "tinyseed_explicit_write_authority_boundary_supported": true,
-            "explicit_write_authority_is_human_only": true,
-            "one_shot_authority_wording_visible": true,
-            "ready_to_flash_requires_target_identity": true,
-            "preflight_before_destructive_write_required": true,
-            "native_frontier_included": true,
-            "human_capability_boot_frontier_included": true,
-            "control_route_included": true,
             "expandable_dashboard_preserved": true,
+            "backup_before_publish": true,
             "rollback_protected": true,
             "status": "verified-live",
             "verified_at_utc": "$verified_at"
@@ -192,6 +180,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-action-ownership-live.json
-          git commit -m 'Record Aurum action ownership v1.8 live [skip ci]' || exit 0
+          git commit -m 'Record Aurum action ownership v1.9 live [skip ci]' || exit 0
           git pull --rebase origin main
           git push origin HEAD:main

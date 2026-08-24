@@ -15,9 +15,11 @@
   "offline_carrier_grants_write_authority": false,
   "preexecution_write_gate_visible": true,
   "remote_repair_completed_suppresses_flash": true,
+  "legacy_destructive_bypass_disabled": true,
+  "destructive_write_single_guarded_path": true,
   "physical_proof_inferred": false,
   "needs_work_owner": "aurum-system",
   "human_action_inference": false,
   "rollback_protected": true,
-  "verified_at_utc": "2026-08-24T20:50:54Z"
+  "verified_at_utc": "2026-08-24T20:53:59Z"
 }

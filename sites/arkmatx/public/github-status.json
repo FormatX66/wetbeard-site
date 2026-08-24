@@ -20,53 +20,53 @@
   ],
   "recent_commits": [
     {
-      "sha": "7c355c75",
-      "message": "Record cancelled-proof-aware workflow failsafe live [skip ci]",
-      "date": "2026-08-24T07:04:37Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/7c355c755ae7103a2f883b5adf45657b092ac13b"
+      "sha": "9613bf5f",
+      "message": "Record Aurum Future Branch v1.3 live [skip ci]",
+      "date": "2026-08-24T13:06:59Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/9613bf5f7697c51cbd09938e9a82397beefcf88f"
     },
     {
-      "sha": "032cdf7e",
-      "message": "Fix v1.6 private canonical projection verification",
-      "date": "2026-08-24T07:04:22Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/032cdf7e512be52436558a439d583d043ec91602"
+      "sha": "7212ab9a",
+      "message": "Publish Future Branch v1.3 uncertainty preparation truth",
+      "date": "2026-08-24T13:06:44Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/7212ab9a7bc3ddbe506ffdbab5a5b51871b91f85"
     },
     {
-      "sha": "1e2e31a1",
-      "message": "Deploy Aurum workflow failsafe v1.6",
-      "date": "2026-08-24T07:02:01Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/1e2e31a14e3a7478fc804e8fbf4ae1ba0e6da006"
+      "sha": "e8037951",
+      "message": "Record Aurum Tiny Seed media handoff v1.1 live [skip ci]",
+      "date": "2026-08-24T11:54:00Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/e8037951a6f5cd84a9f83093d9e144d3da07b784"
     },
     {
-      "sha": "2f68d0a3",
-      "message": "Record Aurum Future Branch v1.1 live [skip ci]",
-      "date": "2026-08-24T05:46:02Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/2f68d0a308268cde48ae1abcffafc1865b047846"
+      "sha": "e7579725",
+      "message": "Use one-shot authorization as current media write gate",
+      "date": "2026-08-24T11:53:40Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/e7579725c3660334e839ecd01639ec9ebb58c085"
     },
     {
-      "sha": "58307dd3",
-      "message": "Publish Future Branch v1.1 schema-rollforward truth",
-      "date": "2026-08-24T05:45:48Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/58307dd3dd0123c5da65b78188ffa040ad653345"
+      "sha": "0a14a73c",
+      "message": "Deploy authorized Tiny Seed handoff truth",
+      "date": "2026-08-24T11:51:54Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/0a14a73cc99363a0c52abcfd4ba0fd026f6d3bd8"
     },
     {
-      "sha": "ac415e4f",
-      "message": "Record Aurum Future Branch live [skip ci]",
-      "date": "2026-08-24T04:55:25Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/ac415e4f192b984e174297f850253ec7c91a8671"
+      "sha": "cf661d94",
+      "message": "Record Aurum Future Branch v1.2 live [skip ci]",
+      "date": "2026-08-24T10:52:37Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/cf661d946262079bf2494900ff72f0cfa92d5cc1"
     },
     {
-      "sha": "b07b993d",
-      "message": "Publish Future Branch command-center truth",
-      "date": "2026-08-24T04:55:11Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/b07b993d43af3ac81db3faaff4a92eec32a66bae"
+      "sha": "fc4b239d",
+      "message": "Publish Future Branch v1.2 cross-system integration",
+      "date": "2026-08-24T10:52:23Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/fc4b239ddfebfd7bf00365e6054a9015b158dd71"
     },
     {
-      "sha": "8cf1a7c8",
-      "message": "Record Aurum recovery guardian v1.5 live [skip ci]",
-      "date": "2026-08-24T03:55:28Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/8cf1a7c8ea64e0abd5159e8078a93692697bf9a0"
+      "sha": "06e802c3",
+      "message": "Record Aurum Tiny Seed media handoff live [skip ci]",
+      "date": "2026-08-24T09:55:15Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/06e802c3c6a5a99ed4050238004c35abc8110076"
     }
   ],
-  "updated_at": "2026-08-24T07:20:39Z"
+  "updated_at": "2026-08-24T13:13:01Z"
 }

@@ -43,6 +43,8 @@ jobs:
           grep -Fq 'Recovery Guardian release/handoff evidence' "$file"
           grep -Fq "r?.tinySeedReleaseState==='READY_TO_FLASH'" "$file"
           grep -Fq "r?.preflightRequiredBeforeDestructiveWrite===true" "$file"
+          grep -Fq 'Tiny Seed physical handoff — human-only steps: connect a disposable/test USB' "$file"
+          grep -Fq 'leave it connected for Aurum to enumerate and preflight' "$file"
           grep -Fq "window.addEventListener('aurum-recovery-guardian-state'" "$file"
           echo "file=$file" >> "$GITHUB_OUTPUT"
 
@@ -90,12 +92,12 @@ jobs:
           import re, sys
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./action-ownership\.js(?:\?v=[^"]+)?"></script>\s*','',text)
-          tag='<script src="./action-ownership.js?v=17"></script>'
+          tag='<script src="./action-ownership.js?v=171"></script>'
           if '</body>' not in text: raise SystemExit('dashboard missing body close')
           text=text.replace('</body>',tag+'\n</body>',1)
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './action-ownership.js?v=17' "$RUNNER_TEMP/index.html"
+          grep -Fq './action-ownership.js?v=171' "$RUNNER_TEMP/index.html"
 
       - name: Publish action ownership surface
         env:
@@ -117,8 +119,8 @@ jobs:
           set -euo pipefail
           page="$(mktemp)"; asset="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
-          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/action-ownership.js?rev=17' -o "$asset"
-          grep -Fq './action-ownership.js?v=17' "$page"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/action-ownership.js?rev=171' -o "$asset"
+          grep -Fq './action-ownership.js?v=171' "$page"
           grep -Fq 'AURUM_ACTION_OWNERSHIP_V1_7_CANONICAL' "$asset"
           grep -Fq '0 confirmed' "$asset"
           grep -Fq 'AURUM' "$asset"
@@ -127,7 +129,8 @@ jobs:
           grep -Fq 'Recovery Guardian release/handoff evidence' "$asset"
           grep -Fq "r?.tinySeedReleaseState==='READY_TO_FLASH'" "$asset"
           grep -Fq "r?.preflightRequiredBeforeDestructiveWrite===true" "$asset"
-          grep -Fq 'Tiny Seed physical handoff:' "$asset"
+          grep -Fq 'Tiny Seed physical handoff — human-only steps: connect a disposable/test USB' "$asset"
+          grep -Fq 'leave it connected for Aurum to enumerate and preflight' "$asset"
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
 
       - name: Roll back if verification fails
@@ -166,6 +169,7 @@ jobs:
             "unknown_never_creates_human_task": true,
             "voice_freshness_gate_preserved": true,
             "recovery_guardian_human_boundary_included": true,
+            "human_only_step_separated_from_system_preflight": true,
             "ready_to_flash_requires_target_identity": true,
             "preflight_before_destructive_write_required": true,
             "native_frontier_included": true,

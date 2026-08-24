@@ -20,6 +20,7 @@
   "signed_recovery_control_plane_visible": true,
   "protected_recovery_media_visible": true,
   "physical_media_selection_human_action_visible": true,
+  "human_only_step_separated_from_system_preflight": true,
   "preflight_before_destructive_write_visible": true,
   "tiny_seed_lane_failure_system_owned": true,
   "operator_completion_contract_visible": true,
@@ -35,5 +36,5 @@
   "expandable": true,
   "rollback_protected": true,
   "status": "verified-live",
-  "verified_at_utc": "2026-08-24T08:56:12Z"
+  "verified_at_utc": "2026-08-24T09:08:36Z"
 }

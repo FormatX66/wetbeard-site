@@ -5,7 +5,7 @@
   "canonical_component": "services/aurum-arkmatx/recovery-guardian-v1.js",
   "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/recovery-guardian-v1.js",
   "deployment_carrier": "FormatX66/wetbeard-site",
-  "recovery_guardian_revision": "1.4",
+  "recovery_guardian_revision": "1.5",
   "germ_evidence_visible": true,
   "guardian_software_evidence_visible": true,
   "boot_boundary_trial_safety_visible": true,
@@ -14,9 +14,15 @@
   "tiny_seed_substrate_visible": true,
   "tiny_seed_x86_lane_visible": true,
   "tiny_seed_pi_lane_visible": true,
+  "tiny_seed_handoff_visible": true,
+  "signed_recovery_control_plane_visible": true,
+  "protected_recovery_media_visible": true,
   "tiny_seed_lane_failure_system_owned": true,
   "operator_completion_contract_visible": true,
   "workflow_failure_can_create_human_action": false,
+  "ready_to_flash_can_create_human_action": false,
+  "physical_handoff_requires_separate_target_identity": true,
+  "signed_recovery_operational_proof_inferred": false,
   "software_survival_layer_present": true,
   "physical_recovery_proof_inferred": false,
   "full_recovery_implementation_evidence": "software-survival-layer-present-hardware-proof-pending",
@@ -25,5 +31,5 @@
   "expandable": true,
   "rollback_protected": true,
   "status": "verified-live",
-  "verified_at_utc": "2026-08-24T02:48:59Z"
+  "verified_at_utc": "2026-08-24T03:55:28Z"
 }

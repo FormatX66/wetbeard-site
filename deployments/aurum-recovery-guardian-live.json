@@ -5,7 +5,7 @@
   "canonical_component": "services/aurum-arkmatx/recovery-guardian-v1.js",
   "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/recovery-guardian-v1.js",
   "deployment_carrier": "FormatX66/wetbeard-site",
-  "recovery_guardian_revision": "1.5",
+  "recovery_guardian_revision": "1.6",
   "germ_evidence_visible": true,
   "guardian_software_evidence_visible": true,
   "boot_boundary_trial_safety_visible": true,
@@ -15,6 +15,9 @@
   "tiny_seed_x86_lane_visible": true,
   "tiny_seed_pi_lane_visible": true,
   "tiny_seed_handoff_visible": true,
+  "x86_prior_uefi_and_legacy_bios_smoke_visible": true,
+  "x86_payload_verifier_correction_visible": true,
+  "same_revision_build_publication_pending_visible": true,
   "signed_recovery_control_plane_visible": true,
   "protected_recovery_media_visible": true,
   "tiny_seed_lane_failure_system_owned": true,
@@ -31,5 +34,5 @@
   "expandable": true,
   "rollback_protected": true,
   "status": "verified-live",
-  "verified_at_utc": "2026-08-24T03:55:28Z"
+  "verified_at_utc": "2026-08-24T08:15:28Z"
 }

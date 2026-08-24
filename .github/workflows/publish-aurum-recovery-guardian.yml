@@ -60,6 +60,8 @@ jobs:
           grep -Fq "humanActionEvidence:ready?'ready-to-flash-next-gate-physical-media-selection-and-explicit-write-authority':'none'" "$src"
           grep -Fq 'physicalHandoffRequiresSeparateTargetIdentity:true' "$src"
           grep -Fq 'preflightRequiredBeforeDestructiveWrite:true' "$src"
+          grep -Fq 'Human-only step: connect a disposable/test USB' "$src"
+          grep -Fq 'Leave it connected so Aurum can enumerate the exact serial and run the guarded dry-run/preflight.' "$src"
           grep -Fq "fullRecoveryImplementationEvidence:'software-survival-layer-present-hardware-proof-pending'" "$src"
           grep -Fq 'physicalRecoveryProofInferred:false' "$src"
           grep -Fq "needsWorkOwner:'aurum-system'" "$src"
@@ -111,7 +113,7 @@ jobs:
           import re, sys
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./recovery-guardian\.js(?:\?v=[^"]+)?"></script>\s*','',text)
-          tag='<script src="./recovery-guardian.js?v=17"></script>'
+          tag='<script src="./recovery-guardian.js?v=171"></script>'
           marker=re.search(r'<script src="\./seed-lifecycle\.js(?:\?v=[^"]+)?"></script>',text)
           if marker:
               text=text[:marker.end()]+'\n'+tag+text[marker.end():]
@@ -121,7 +123,7 @@ jobs:
               raise SystemExit('dashboard missing injection point')
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './recovery-guardian.js?v=17' "$RUNNER_TEMP/index.html"
+          grep -Fq './recovery-guardian.js?v=171' "$RUNNER_TEMP/index.html"
 
       - name: Publish recovery guardian with bounded retries
         env:
@@ -146,8 +148,8 @@ jobs:
           page="$(mktemp)"; js="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' \
-            'https://arkmatx.com/aurum/dashboard/recovery-guardian.js?rev=17' -o "$js"
-          grep -Fq './recovery-guardian.js?v=17' "$page"
+            'https://arkmatx.com/aurum/dashboard/recovery-guardian.js?rev=171' -o "$js"
+          grep -Fq './recovery-guardian.js?v=171' "$page"
           grep -Fq 'AURUM_RECOVERY_GUARDIAN_V1_7_CANONICAL' "$js"
           grep -Fq "const TINY_X86_WORKFLOW='Aurum Tiny Seed x86'" "$js"
           grep -Fq "const TINY_PI_WORKFLOW='Aurum Tiny Seed Pi ARM64'" "$js"
@@ -171,6 +173,8 @@ jobs:
           grep -Fq "humanActionEvidence:ready?'ready-to-flash-next-gate-physical-media-selection-and-explicit-write-authority':'none'" "$js"
           grep -Fq 'physicalHandoffRequiresSeparateTargetIdentity:true' "$js"
           grep -Fq 'preflightRequiredBeforeDestructiveWrite:true' "$js"
+          grep -Fq 'Human-only step: connect a disposable/test USB' "$js"
+          grep -Fq 'Leave it connected so Aurum can enumerate the exact serial and run the guarded dry-run/preflight.' "$js"
           grep -Fq "guardianImplementationEvidence:state.guardianPresent?'ab-lkg-health-rollback-runtime-present':'not-verified'" "$js"
           grep -Fq "bootBoundaryTrialEvidence:state.bootBoundaryTrialPresent?'armed-without-live-switch-boot-preflight-activation':'not-verified'" "$js"
           grep -Fq "physicalX86PromotionGateEvidence:state.physicalX86GatePresent?'fresh-first-boot-desktop-input-required':'not-verified'" "$js"
@@ -226,6 +230,7 @@ jobs:
             "signed_recovery_control_plane_visible": true,
             "protected_recovery_media_visible": true,
             "physical_media_selection_human_action_visible": true,
+            "human_only_step_separated_from_system_preflight": true,
             "preflight_before_destructive_write_visible": true,
             "tiny_seed_lane_failure_system_owned": true,
             "operator_completion_contract_visible": true,

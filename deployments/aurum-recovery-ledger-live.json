@@ -1,0 +1,19 @@
+{
+  "site": "aurum-command-center",
+  "url": "https://arkmatx.com/aurum/dashboard/",
+  "canonical_website_repo": "FormatX66/ClusterSites",
+  "canonical_component": "services/aurum-arkmatx/recovery-ledger-v1.js",
+  "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/recovery-ledger-v1.js",
+  "deployment_carrier": "FormatX66/wetbeard-site",
+  "recovery_ledger_revision": "1.0",
+  "existing_recovery_card_augmented": true,
+  "new_dashboard_box_created": false,
+  "atomic_prechange_checkpoints_visible": true,
+  "hash_chained_journal_visible": true,
+  "journal_head_integrity_visible": true,
+  "physical_proof_inferred": false,
+  "needs_work_owner": "aurum-system",
+  "human_action_inference": false,
+  "rollback_protected": true,
+  "verified_at_utc": "2026-08-24T18:53:27Z"
+}

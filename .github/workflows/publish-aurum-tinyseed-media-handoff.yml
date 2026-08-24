@@ -1,0 +1,182 @@
+name: Publish Aurum Tiny Seed Media Handoff
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-aurum-tinyseed-media-handoff.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aurum-tinyseed-media-handoff-production
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch validated public projection
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          src="$RUNNER_TEMP/tinyseed-media-handoff-v1.js"
+          curl --fail-with-body --silent --show-error --location \
+            'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/tinyseed-media-handoff-v1.js' \
+            -o "$src"
+          test -s "$src"
+          node --check "$src"
+          grep -Fq 'AURUM_TINYSEED_MEDIA_HANDOFF_V1_CANONICAL' "$src"
+          grep -Fq "BusType -eq 'USB'" "$src"
+          grep -Fq 'SAFE_TO_PREFLIGHT_ONLY' "$src"
+          grep -Fq 'AMBIGUOUS_MULTIPLE_ELIGIBLE' "$src"
+          grep -Fq 'usbCandidateDiscoveryCanWrite:false' "$src"
+          grep -Fq 'usbCandidateDiscoveryCreatesHumanAction:false' "$src"
+          grep -Fq 'READY_FOR_EXPLICIT_WRITE' "$src"
+          echo "file=$src" >> "$GITHUB_OUTPUT"
+
+      - name: Configure Bluehost SSH with bounded retry
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+          BLUEHOST_SSH_PRIVATE_KEY: ${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$BLUEHOST_HOST"; test -n "$BLUEHOST_USERNAME"; test -n "$BLUEHOST_SSH_PRIVATE_KEY"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$BLUEHOST_SSH_PRIVATE_KEY" > "$HOME/.ssh/bluehost_deploy"
+          chmod 600 "$HOME/.ssh/bluehost_deploy"
+          : > "$HOME/.ssh/known_hosts"
+          for attempt in 1 2 3 4 5; do
+            ssh-keyscan -T 10 -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null && exit 0
+            [ "$attempt" -eq 5 ] && exit 1
+            sleep $((attempt * 5))
+          done
+
+      - name: Back up current dashboard
+        id: backup
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          retry_capture(){ local out="$1"; shift; local n=1 tmp; tmp="$(mktemp)"; while true; do if "$@" > "$tmp"; then mv "$tmp" "$out"; return 0; fi; [ "$n" -ge 5 ] && { rm -f "$tmp"; return 1; }; sleep $((n*5)); n=$((n+1)); done; }
+          remote='public_html/arkmatx/aurum/dashboard'
+          backup=".aurum-dashboard-backups/tinyseed-media-handoff-$GITHUB_RUN_ID"
+          retry_capture "$RUNNER_TEMP/index.html" \
+            ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "set -eu; mkdir -p '$remote' '$backup'; cp -p '$remote/index.html' '$backup/index.html'; if [ -f '$remote/tinyseed-media-handoff-v1.js' ]; then cp -p '$remote/tinyseed-media-handoff-v1.js' '$backup/tinyseed-media-handoff-v1.js'; else touch '$backup/.missing-tinyseed-media-handoff-v1.js'; fi; cat '$remote/index.html'"
+          test -s "$RUNNER_TEMP/index.html"
+          echo 'ready=true' >> "$GITHUB_OUTPUT"
+
+      - name: Inject cache-busted component
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - "$RUNNER_TEMP/index.html" <<'PY'
+          from pathlib import Path
+          import re,sys
+          p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
+          text=re.sub(r'<script src="\./tinyseed-media-handoff-v1\.js(?:\?v=[^"]+)?"></script>\s*','',text)
+          tag='<script src="./tinyseed-media-handoff-v1.js?v=101"></script>'
+          marker=re.search(r'<script src="\./recovery-guardian\.js(?:\?v=[^"]+)?"></script>',text)
+          if marker: text=text[:marker.end()]+'\n'+tag+text[marker.end():]
+          elif '</body>' in text: text=text.replace('</body>',tag+'\n</body>',1)
+          else: raise SystemExit('dashboard missing injection point')
+          p.write_text(text,encoding='utf-8')
+          PY
+          grep -Fq './tinyseed-media-handoff-v1.js?v=101' "$RUNNER_TEMP/index.html"
+
+      - name: Publish with bounded retries
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          retry(){ local n=1; while true; do "$@" && return 0; [ "$n" -ge 5 ] && return 1; sleep $((n*5)); n=$((n+1)); done; }
+          remote='public_html/arkmatx/aurum/dashboard'
+          retry scp -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -P 22 \
+            "$RUNNER_TEMP/index.html" "${{ steps.source.outputs.file }}" \
+            "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/"
+          retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "set -eu; chmod 644 '$remote/index.html' '$remote/tinyseed-media-handoff-v1.js'"
+
+      - name: Verify live component
+        id: verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          page="$(mktemp)"; js="$(mktemp)"
+          final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' \
+            'https://arkmatx.com/aurum/dashboard/tinyseed-media-handoff-v1.js?rev=101' -o "$js"
+          grep -Fq './tinyseed-media-handoff-v1.js?v=101' "$page"
+          grep -Fq 'AURUM_TINYSEED_MEDIA_HANDOFF_V1_CANONICAL' "$js"
+          grep -Fq 'SAFE_TO_PREFLIGHT_ONLY' "$js"
+          grep -Fq 'AMBIGUOUS_MULTIPLE_ELIGIBLE' "$js"
+          grep -Fq 'usbCandidateDiscoveryCanWrite:false' "$js"
+          grep -Fq 'usbCandidateDiscoveryCreatesHumanAction:false' "$js"
+          grep -Fq 'READY_FOR_EXPLICIT_WRITE' "$js"
+          echo "url=$final_url" >> "$GITHUB_OUTPUT"
+
+      - name: Roll back on verification failure
+        if: ${{ failure() && steps.backup.outputs.ready == 'true' }}
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          retry(){ local n=1; while true; do "$@" && return 0; [ "$n" -ge 5 ] && return 1; sleep $((n*5)); n=$((n+1)); done; }
+          remote='public_html/arkmatx/aurum/dashboard'; backup=".aurum-dashboard-backups/tinyseed-media-handoff-$GITHUB_RUN_ID"
+          retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "set -eu; cp -p '$backup/index.html' '$remote/index.html'; if [ -f '$backup/tinyseed-media-handoff-v1.js' ]; then cp -p '$backup/tinyseed-media-handoff-v1.js' '$remote/tinyseed-media-handoff-v1.js'; elif [ -f '$backup/.missing-tinyseed-media-handoff-v1.js' ]; then rm -f '$remote/tinyseed-media-handoff-v1.js'; fi"
+
+      - name: Record verified live receipt
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git checkout main
+          git reset --hard origin/main
+          mkdir -p deployments
+          verified_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          cat > deployments/aurum-tinyseed-media-handoff-live.json <<EOF
+          {
+            "site": "aurum-command-center",
+            "url": "${{ steps.verify.outputs.url }}",
+            "canonical_website_repo": "FormatX66/ClusterSites",
+            "canonical_component": "services/aurum-arkmatx/tinyseed-media-handoff-v1.js",
+            "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/tinyseed-media-handoff-v1.js",
+            "deployment_carrier": "FormatX66/wetbeard-site",
+            "revision": "1.0",
+            "read_only_usb_discovery_visible": true,
+            "serial_identity_required": true,
+            "boot_system_readonly_protected_media_fail_closed": true,
+            "ambiguous_multiple_eligible_fail_closed": true,
+            "discovery_can_write": false,
+            "discovery_can_create_human_action": false,
+            "explicit_write_requires_ready_for_explicit_write": true,
+            "physical_recovery_proof_inferred": false,
+            "expandable_recovery_card_preserved": true,
+            "rollback_protected": true,
+            "status": "verified-live",
+            "verified_at_utc": "$verified_at"
+          }
+          EOF
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add deployments/aurum-tinyseed-media-handoff-live.json
+          git commit -m 'Record Aurum Tiny Seed media handoff live [skip ci]' || exit 0
+          git pull --rebase origin main
+          git push origin HEAD:main

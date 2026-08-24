@@ -31,7 +31,7 @@ jobs:
             'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/recovery-guardian-v1.js' \
             -o "$src"
           test -s "$src"
-          grep -Fq 'AURUM_RECOVERY_GUARDIAN_V1_5_CANONICAL' "$src"
+          grep -Fq 'AURUM_RECOVERY_GUARDIAN_V1_6_CANONICAL' "$src"
           grep -Fq "const GERM_WORKFLOW='Aurum Reseed Germ'" "$src"
           grep -Fq "const TINY_X86_WORKFLOW='Aurum Tiny Seed x86'" "$src"
           grep -Fq "const TINY_PI_WORKFLOW='Aurum Tiny Seed Pi ARM64'" "$src"
@@ -42,6 +42,9 @@ jobs:
           grep -Fq "physicalX86PromotionGateEvidence:state.physicalX86GatePresent?'fresh-first-boot-desktop-input-required':'not-verified'" "$src"
           grep -Fq "tinySeedRepairSafetyEvidence:state.tinySeedRepairSafetyPresent?'repair-first-ambiguous-target-stops-without-write':'not-verified'" "$src"
           grep -Fq "tinySeedSubstrateEvidence:state.tinySeedPresent?'manifest-present':'not-verified'" "$src"
+          grep -Fq "x86PriorBootSmokeEvidence:x86PriorBootSmokePassed(state)?'uefi-and-legacy-bios-passed-prior-source-revision':'not-verified'" "$src"
+          grep -Fq "x86RecoveryPayloadVerifierEvidence:x86VerifierCorrected(state)?'squashfs-verifier-mismatch-corrected-reproof-required':'not-verified'" "$src"
+          grep -Fq 'sameRevisionBuildPublicationPending:sameRevisionProofPending(state)' "$src"
           grep -Fq 'tinySeedBuildLaneState:buildLaneState(state)' "$src"
           grep -Fq 'tinySeedBuildFailureCreatesHumanAction:false' "$src"
           grep -Fq 'operatorCompletionContractVisible:true' "$src"
@@ -102,7 +105,7 @@ jobs:
           import re, sys
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./recovery-guardian\.js(?:\?v=[^"]+)?"></script>\s*','',text)
-          tag='<script src="./recovery-guardian.js?v=15"></script>'
+          tag='<script src="./recovery-guardian.js?v=16"></script>'
           marker=re.search(r'<script src="\./seed-lifecycle\.js(?:\?v=[^"]+)?"></script>',text)
           if marker:
               text=text[:marker.end()]+'\n'+tag+text[marker.end():]
@@ -112,7 +115,7 @@ jobs:
               raise SystemExit('dashboard missing injection point')
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './recovery-guardian.js?v=15' "$RUNNER_TEMP/index.html"
+          grep -Fq './recovery-guardian.js?v=16' "$RUNNER_TEMP/index.html"
 
       - name: Publish recovery guardian with bounded retries
         env:
@@ -137,13 +140,16 @@ jobs:
           page="$(mktemp)"; js="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' \
-            'https://arkmatx.com/aurum/dashboard/recovery-guardian.js?rev=15' -o "$js"
-          grep -Fq './recovery-guardian.js?v=15' "$page"
-          grep -Fq 'AURUM_RECOVERY_GUARDIAN_V1_5_CANONICAL' "$js"
+            'https://arkmatx.com/aurum/dashboard/recovery-guardian.js?rev=16' -o "$js"
+          grep -Fq './recovery-guardian.js?v=16' "$page"
+          grep -Fq 'AURUM_RECOVERY_GUARDIAN_V1_6_CANONICAL' "$js"
           grep -Fq "const TINY_X86_WORKFLOW='Aurum Tiny Seed x86'" "$js"
           grep -Fq "const TINY_PI_WORKFLOW='Aurum Tiny Seed Pi ARM64'" "$js"
           grep -Fq "const HANDOFF_WORKFLOW='Aurum Tiny Seed Handoff'" "$js"
           grep -Fq "const FLASH_WORKFLOW='Aurum Tiny Seed Authorized USB Flash'" "$js"
+          grep -Fq "x86PriorBootSmokeEvidence:x86PriorBootSmokePassed(state)?'uefi-and-legacy-bios-passed-prior-source-revision':'not-verified'" "$js"
+          grep -Fq "x86RecoveryPayloadVerifierEvidence:x86VerifierCorrected(state)?'squashfs-verifier-mismatch-corrected-reproof-required':'not-verified'" "$js"
+          grep -Fq 'sameRevisionBuildPublicationPending:sameRevisionProofPending(state)' "$js"
           grep -Fq 'tinySeedBuildLaneState:buildLaneState(state)' "$js"
           grep -Fq 'tinySeedBuildFailureCreatesHumanAction:false' "$js"
           grep -Fq 'operatorCompletionContractVisible:true' "$js"
@@ -193,7 +199,7 @@ jobs:
             "canonical_component": "services/aurum-arkmatx/recovery-guardian-v1.js",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/recovery-guardian-v1.js",
             "deployment_carrier": "FormatX66/wetbeard-site",
-            "recovery_guardian_revision": "1.5",
+            "recovery_guardian_revision": "1.6",
             "germ_evidence_visible": true,
             "guardian_software_evidence_visible": true,
             "boot_boundary_trial_safety_visible": true,
@@ -203,6 +209,9 @@ jobs:
             "tiny_seed_x86_lane_visible": true,
             "tiny_seed_pi_lane_visible": true,
             "tiny_seed_handoff_visible": true,
+            "x86_prior_uefi_and_legacy_bios_smoke_visible": true,
+            "x86_payload_verifier_correction_visible": true,
+            "same_revision_build_publication_pending_visible": true,
             "signed_recovery_control_plane_visible": true,
             "protected_recovery_media_visible": true,
             "tiny_seed_lane_failure_system_owned": true,
@@ -225,6 +234,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-recovery-guardian-live.json
-          git commit -m 'Record Aurum recovery guardian v1.5 live [skip ci]' || exit 0
+          git commit -m 'Record Aurum recovery guardian v1.6 live [skip ci]' || exit 0
           git pull --rebase origin main
           git push origin HEAD:main

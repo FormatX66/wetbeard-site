@@ -5,14 +5,17 @@
   "canonical_component": "services/aurum-arkmatx/recovery-guardian-v1.js",
   "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/recovery-guardian-v1.js",
   "deployment_carrier": "FormatX66/wetbeard-site",
-  "recovery_guardian_revision": "1.1",
+  "recovery_guardian_revision": "1.2",
   "germ_evidence_visible": true,
-  "germ_proof_does_not_equal_full_recovery": true,
-  "full_recovery_implementation_evidence": "partial-germ-only",
+  "guardian_software_evidence_visible": true,
+  "tiny_seed_substrate_visible": true,
+  "software_survival_layer_present": true,
+  "physical_recovery_proof_inferred": false,
+  "full_recovery_implementation_evidence": "software-survival-layer-present-hardware-proof-pending",
   "needs_work_owner": "aurum-system",
   "human_action_inference": false,
   "expandable": true,
   "rollback_protected": true,
   "status": "verified-live",
-  "verified_at_utc": "2026-08-23T23:54:46Z"
+  "verified_at_utc": "2026-08-24T00:04:13Z"
 }

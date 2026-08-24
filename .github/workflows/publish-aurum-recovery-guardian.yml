@@ -31,13 +31,19 @@ jobs:
             'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/recovery-guardian-v1.js' \
             -o "$src"
           test -s "$src"
-          grep -Fq 'AURUM_RECOVERY_GUARDIAN_V1_3_CANONICAL' "$src"
+          grep -Fq 'AURUM_RECOVERY_GUARDIAN_V1_4_CANONICAL' "$src"
           grep -Fq "const GERM_WORKFLOW='Aurum Reseed Germ'" "$src"
+          grep -Fq "const TINY_X86_WORKFLOW='Aurum Tiny Seed x86'" "$src"
+          grep -Fq "const TINY_PI_WORKFLOW='Aurum Tiny Seed Pi ARM64'" "$src"
           grep -Fq "guardianImplementationEvidence:state.guardianPresent?'ab-lkg-health-rollback-runtime-present':'not-verified'" "$src"
           grep -Fq "bootBoundaryTrialEvidence:state.bootBoundaryTrialPresent?'armed-without-live-switch-boot-preflight-activation':'not-verified'" "$src"
           grep -Fq "physicalX86PromotionGateEvidence:state.physicalX86GatePresent?'fresh-first-boot-desktop-input-required':'not-verified'" "$src"
           grep -Fq "tinySeedRepairSafetyEvidence:state.tinySeedRepairSafetyPresent?'repair-first-ambiguous-target-stops-without-write':'not-verified'" "$src"
           grep -Fq "tinySeedSubstrateEvidence:state.tinySeedPresent?'manifest-present':'not-verified'" "$src"
+          grep -Fq 'tinySeedBuildLaneState:buildLaneState(state)' "$src"
+          grep -Fq 'tinySeedBuildFailureCreatesHumanAction:false' "$src"
+          grep -Fq 'operatorCompletionContractVisible:true' "$src"
+          grep -Fq "completionRule:'required-failing-queued-skipped-or-unverified-gates-are-not-done'" "$src"
           grep -Fq "fullRecoveryImplementationEvidence:'software-survival-layer-present-hardware-proof-pending'" "$src"
           grep -Fq 'physicalRecoveryProofInferred:false' "$src"
           grep -Fq "needsWorkOwner:'aurum-system'" "$src"
@@ -89,7 +95,7 @@ jobs:
           import re, sys
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./recovery-guardian\.js(?:\?v=[^"]+)?"></script>\s*','',text)
-          tag='<script src="./recovery-guardian.js?v=13"></script>'
+          tag='<script src="./recovery-guardian.js?v=14"></script>'
           marker=re.search(r'<script src="\./seed-lifecycle\.js(?:\?v=[^"]+)?"></script>',text)
           if marker:
               text=text[:marker.end()]+'\n'+tag+text[marker.end():]
@@ -99,7 +105,7 @@ jobs:
               raise SystemExit('dashboard missing injection point')
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './recovery-guardian.js?v=13' "$RUNNER_TEMP/index.html"
+          grep -Fq './recovery-guardian.js?v=14' "$RUNNER_TEMP/index.html"
 
       - name: Publish recovery guardian with bounded retries
         env:
@@ -124,9 +130,15 @@ jobs:
           page="$(mktemp)"; js="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' \
-            'https://arkmatx.com/aurum/dashboard/recovery-guardian.js?rev=13' -o "$js"
-          grep -Fq './recovery-guardian.js?v=13' "$page"
-          grep -Fq 'AURUM_RECOVERY_GUARDIAN_V1_3_CANONICAL' "$js"
+            'https://arkmatx.com/aurum/dashboard/recovery-guardian.js?rev=14' -o "$js"
+          grep -Fq './recovery-guardian.js?v=14' "$page"
+          grep -Fq 'AURUM_RECOVERY_GUARDIAN_V1_4_CANONICAL' "$js"
+          grep -Fq "const TINY_X86_WORKFLOW='Aurum Tiny Seed x86'" "$js"
+          grep -Fq "const TINY_PI_WORKFLOW='Aurum Tiny Seed Pi ARM64'" "$js"
+          grep -Fq 'tinySeedBuildLaneState:buildLaneState(state)' "$js"
+          grep -Fq 'tinySeedBuildFailureCreatesHumanAction:false' "$js"
+          grep -Fq 'operatorCompletionContractVisible:true' "$js"
+          grep -Fq "completionRule:'required-failing-queued-skipped-or-unverified-gates-are-not-done'" "$js"
           grep -Fq "guardianImplementationEvidence:state.guardianPresent?'ab-lkg-health-rollback-runtime-present':'not-verified'" "$js"
           grep -Fq "bootBoundaryTrialEvidence:state.bootBoundaryTrialPresent?'armed-without-live-switch-boot-preflight-activation':'not-verified'" "$js"
           grep -Fq "physicalX86PromotionGateEvidence:state.physicalX86GatePresent?'fresh-first-boot-desktop-input-required':'not-verified'" "$js"
@@ -167,13 +179,18 @@ jobs:
             "canonical_component": "services/aurum-arkmatx/recovery-guardian-v1.js",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/recovery-guardian-v1.js",
             "deployment_carrier": "FormatX66/wetbeard-site",
-            "recovery_guardian_revision": "1.3",
+            "recovery_guardian_revision": "1.4",
             "germ_evidence_visible": true,
             "guardian_software_evidence_visible": true,
             "boot_boundary_trial_safety_visible": true,
             "physical_x86_promotion_gate_visible": true,
             "tiny_seed_repair_safety_visible": true,
             "tiny_seed_substrate_visible": true,
+            "tiny_seed_x86_lane_visible": true,
+            "tiny_seed_pi_lane_visible": true,
+            "tiny_seed_lane_failure_system_owned": true,
+            "operator_completion_contract_visible": true,
+            "workflow_failure_can_create_human_action": false,
             "software_survival_layer_present": true,
             "physical_recovery_proof_inferred": false,
             "full_recovery_implementation_evidence": "software-survival-layer-present-hardware-proof-pending",
@@ -188,6 +205,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-recovery-guardian-live.json
-          git commit -m 'Record Aurum recovery guardian v1.3 live [skip ci]' || exit 0
+          git commit -m 'Record Aurum recovery guardian v1.4 live [skip ci]' || exit 0
           git pull --rebase origin main
           git push origin HEAD:main

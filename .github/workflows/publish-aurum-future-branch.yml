@@ -1,0 +1,200 @@
+name: Publish Aurum Future Branch
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-aurum-future-branch.yml'
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - Publish ClusterSites Aurum Dashboard
+    types: [completed]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aurum-future-branch-production
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch public projection of canonical ClusterSites Future Branch surface
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          src='https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/future-branch-v1.js'
+          out="$RUNNER_TEMP/future-branch.js"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 "$src" -o "$out"
+          test -s "$out"
+          grep -Fq 'AURUM_FUTURE_BRANCH_V1_CANONICAL' "$out"
+          grep -Fq 'Canonical website owner: FormatX66/ClusterSites.' "$out"
+          grep -Fq "operatingPrinciple:'core'" "$out"
+          grep -Fq "productionExecutionInferred:false" "$out"
+          grep -Fq "needsWorkOwner:'aurum-system'" "$out"
+          grep -Fq "humanActionInference:false" "$out"
+          grep -Fq 'Frontiers Advancing:' "$out"
+          grep -Fq 'Needs Work → Aurum/System:' "$out"
+          grep -Fq 'Your Actions:' "$out"
+          echo "file=$out" >> "$GITHUB_OUTPUT"
+
+      - name: Configure existing Bluehost SSH carrier with bounded retry
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+          BLUEHOST_SSH_PRIVATE_KEY: ${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$BLUEHOST_HOST"; test -n "$BLUEHOST_USERNAME"; test -n "$BLUEHOST_SSH_PRIVATE_KEY"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$BLUEHOST_SSH_PRIVATE_KEY" > "$HOME/.ssh/bluehost_deploy"
+          chmod 600 "$HOME/.ssh/bluehost_deploy"
+          : > "$HOME/.ssh/known_hosts"
+          for attempt in 1 2 3 4 5; do
+            if ssh-keyscan -T 10 -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null; then exit 0; fi
+            if [ "$attempt" -eq 5 ]; then echo "Bluehost SSH keyscan remained unavailable after $attempt bounded attempts" >&2; exit 1; fi
+            sleep $((attempt * 5))
+          done
+
+      - name: Back up and fetch current command center
+        id: backup
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          retry_capture() {
+            local outfile="$1"; shift; local attempt=1 rc=0 tmp; tmp="$(mktemp)"
+            while true; do
+              if "$@" > "$tmp"; then mv "$tmp" "$outfile"; return 0; fi
+              rc=$?; if [ "$attempt" -ge 5 ]; then rm -f "$tmp"; return "$rc"; fi
+              sleep $((attempt * 5)); attempt=$((attempt + 1))
+            done
+          }
+          remote='public_html/arkmatx/aurum/dashboard'
+          backup=".aurum-dashboard-backups/future-branch-$GITHUB_RUN_ID"
+          retry_capture "$RUNNER_TEMP/index.html" \
+            ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "set -eu; mkdir -p '$remote' '$backup'; cp -p '$remote/index.html' '$backup/index.html'; if [ -f '$remote/future-branch.js' ]; then cp -p '$remote/future-branch.js' '$backup/future-branch.js'; else touch '$backup/.missing-future-branch.js'; fi; cat '$remote/index.html'"
+          test -s "$RUNNER_TEMP/index.html"
+          grep -Fq 'Progress is proof, not activity.' "$RUNNER_TEMP/index.html"
+          grep -Fq './command-center.js?v=32' "$RUNNER_TEMP/index.html"
+          echo 'ready=true' >> "$GITHUB_OUTPUT"
+
+      - name: Inject Future Branch surface
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - "$RUNNER_TEMP/index.html" <<'PY'
+          from pathlib import Path
+          import re, sys
+          p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
+          text=re.sub(r'<script src="\./future-branch\.js(?:\?v=[^"]+)?"></script>\s*','',text)
+          if '</body>' not in text: raise SystemExit('dashboard missing body close')
+          text=text.replace('</body>','<script src="./future-branch.js?v=1"></script>\n</body>',1)
+          p.write_text(text,encoding='utf-8')
+          PY
+          grep -Fq './future-branch.js?v=1' "$RUNNER_TEMP/index.html"
+
+      - name: Publish Future Branch with bounded connection count
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          retry() { local attempt=1 rc=0; while true; do "$@" && return 0; rc=$?; if [ "$attempt" -ge 5 ]; then return "$rc"; fi; sleep $((attempt * 5)); attempt=$((attempt + 1)); done; }
+          remote='public_html/arkmatx/aurum/dashboard'
+          stage="$RUNNER_TEMP/aurum-future-branch-publish"; mkdir -p "$stage"
+          cp "$RUNNER_TEMP/index.html" "$stage/index.html"
+          cp "${{ steps.source.outputs.file }}" "$stage/future-branch.js"
+          retry scp -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -P 22 \
+            "$stage/index.html" "$stage/future-branch.js" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/"
+          retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "chmod 644 '$remote/index.html' '$remote/future-branch.js'"
+
+      - name: Verify live Future Branch surface
+        id: verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          page="$(mktemp)"; component="$(mktemp)"
+          final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/future-branch.js?rev=1' -o "$component"
+          grep -Fq 'Progress is proof, not activity.' "$page"
+          grep -Fq './command-center.js?v=32' "$page"
+          grep -Fq './future-branch.js?v=1' "$page"
+          grep -Fq 'AURUM_FUTURE_BRANCH_V1_CANONICAL' "$component"
+          grep -Fq 'Future Branch' "$component"
+          grep -Fq 'Frontiers Advancing:' "$component"
+          grep -Fq 'Needs Work → Aurum/System:' "$component"
+          grep -Fq 'Your Actions:' "$component"
+          grep -Fq "productionExecutionInferred:false" "$component"
+          grep -Fq "humanActionInference:false" "$component"
+          echo "url=$final_url" >> "$GITHUB_OUTPUT"
+
+      - name: Roll back if verification fails
+        if: ${{ failure() && steps.backup.outputs.ready == 'true' }}
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          retry() { local attempt=1 rc=0; while true; do "$@" && return 0; rc=$?; if [ "$attempt" -ge 5 ]; then return "$rc"; fi; sleep $((attempt * 5)); attempt=$((attempt + 1)); done; }
+          remote='public_html/arkmatx/aurum/dashboard'; backup=".aurum-dashboard-backups/future-branch-$GITHUB_RUN_ID"
+          retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "set -eu; cp -p '$backup/index.html' '$remote/index.html'; if [ -f '$backup/future-branch.js' ]; then cp -p '$backup/future-branch.js' '$remote/future-branch.js'; elif [ -f '$backup/.missing-future-branch.js' ]; then rm -f '$remote/future-branch.js'; fi"
+
+      - name: Record verified Future Branch receipt
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git checkout main
+          git reset --hard origin/main
+          mkdir -p deployments
+          verified_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          cat > deployments/aurum-future-branch-live.json <<EOF
+          {
+            "site": "aurum-command-center",
+            "url": "${{ steps.verify.outputs.url }}",
+            "canonical_website_repo": "FormatX66/ClusterSites",
+            "canonical_component": "services/aurum-arkmatx/future-branch-v1.js",
+            "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/future-branch-v1.js",
+            "deployment_carrier": "FormatX66/wetbeard-site",
+            "future_branch_revision": "1.0",
+            "expandable": true,
+            "core_operating_principle_visible": true,
+            "experimental_executable_model_visible": true,
+            "calibration_visible": true,
+            "natural_interaction_training_visible": true,
+            "observer_effect_guard_visible": true,
+            "adaptive_depth_visible": true,
+            "frontiers_advancing_visible": true,
+            "needs_work_system_owned": true,
+            "production_execution_inferred": false,
+            "human_action_inference": false,
+            "backup_before_publish": true,
+            "rollback_on_verify_failure": true,
+            "status": "verified-live",
+            "verified_at_utc": "$verified_at"
+          }
+          EOF
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add deployments/aurum-future-branch-live.json
+          git commit -m 'Record Aurum Future Branch live [skip ci]' || exit 0
+          git pull --rebase origin main
+          git push origin HEAD:main

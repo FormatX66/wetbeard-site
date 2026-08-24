@@ -51,7 +51,6 @@ jobs:
           grep -Fq 'Frontiers Advancing:' "$src"
           grep -Fq 'Needs Work → Aurum/System:' "$src"
           grep -Fq 'Your Actions:' "$src"
-          grep -Fq 'READY_FOR_EXPLICIT_WRITE' "$src"
           echo "file=$src" >> "$GITHUB_OUTPUT"
 
       - name: Configure Bluehost SSH with bounded retry

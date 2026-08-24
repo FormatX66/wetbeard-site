@@ -20,53 +20,53 @@
   ],
   "recent_commits": [
     {
-      "sha": "59504c8f",
-      "message": "Record Aurum autonomy controller live deployment [skip ci]",
-      "date": "2026-08-23T15:51:07Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/59504c8ffcd1e0d977954608cffcfa944d1f4dc5"
+      "sha": "6270788e",
+      "message": "Record Aurum recovery guardian v1.3 live [skip ci]",
+      "date": "2026-08-24T00:51:02Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/6270788e75fd4ae963f49108ac50c97966201a71"
     },
     {
-      "sha": "761faa75",
-      "message": "Deploy autonomy scheduler and edge checkpoint split",
-      "date": "2026-08-23T15:50:54Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/761faa75e08f2fc1931ef4cd56ef8b3c1bc65163"
+      "sha": "3a61d384",
+      "message": "Publish boot-safe Recovery Guardian v1.3",
+      "date": "2026-08-24T00:50:48Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/3a61d3845771f6a59d01a3b7c1b3d94ab92d71e2"
     },
     {
-      "sha": "f1b299d4",
-      "message": "Record hosted-mirror-aware Aurum evidence health live [skip ci]",
-      "date": "2026-08-23T13:53:59Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/f1b299d41bff589132d9b7ac0c5abebfaca3d1bf"
+      "sha": "9082c9f9",
+      "message": "Record Aurum Recovery Guardian trait v1.1 live [skip ci]",
+      "date": "2026-08-24T00:05:10Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/9082c9f9074c40bf71bc26a722c0c8a7f496c998"
     },
     {
-      "sha": "b6249f2b",
-      "message": "Deploy hosted-mirror-aware Aurum evidence health",
-      "date": "2026-08-23T13:53:45Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/b6249f2b4757c266dc38da4fd1e083ee362286c8"
+      "sha": "5b407e9e",
+      "message": "Publish Recovery Guardian software maturity v1.1",
+      "date": "2026-08-24T00:04:57Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/5b407e9e761b1bf40681602cb756cf40a5ac67e2"
     },
     {
-      "sha": "07734d91",
-      "message": "Refresh ArkmatX GitHub status [skip ci]",
-      "date": "2026-08-23T13:01:51Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/07734d91e1525a4226559ad4f2922a0475101804"
+      "sha": "c8b99ee4",
+      "message": "Record Aurum recovery guardian v1.2 live [skip ci]",
+      "date": "2026-08-24T00:04:13Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/c8b99ee4f0501cd1a9f057a359f5ef32f6b73f01"
     },
     {
-      "sha": "d4233ed6",
-      "message": "Record rerun-safe workflow failsafe live [skip ci]",
-      "date": "2026-08-23T12:51:01Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/d4233ed6a180da2931ae1a6545dd2ed1012b8bd5"
+      "sha": "42626eb2",
+      "message": "Publish implemented Recovery Guardian v1.2",
+      "date": "2026-08-24T00:03:59Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/42626eb23c0821239e42633bacb45aa78a9a952b"
     },
     {
-      "sha": "82fb1c60",
-      "message": "Deploy Aurum workflow failsafe v1.5",
-      "date": "2026-08-23T12:50:49Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/82fb1c60a60a9d641404d46bb79f84659206619f"
+      "sha": "b6e08a62",
+      "message": "Record Aurum seed lifecycle v1.1 live [skip ci]",
+      "date": "2026-08-23T23:57:28Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/b6e08a62093307ecc79d06d6ae49e39c95f0006f"
     },
     {
-      "sha": "f0e396f4",
-      "message": "Record Aurum Recovery Guardian trait live [skip ci]",
-      "date": "2026-08-23T10:44:11Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/f0e396f45cd992b91d2667cb41103ed857b03bc0"
+      "sha": "2e6f3873",
+      "message": "Match Seed Lifecycle deploy guard to current genetics architecture",
+      "date": "2026-08-23T23:57:14Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/2e6f38739068bf722e84a888e69f3b4d02566ae5"
     }
   ],
-  "updated_at": "2026-08-23T18:48:20Z"
+  "updated_at": "2026-08-24T01:57:43Z"
 }

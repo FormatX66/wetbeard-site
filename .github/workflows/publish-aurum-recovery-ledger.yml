@@ -32,7 +32,7 @@ jobs:
             -o "$src"
           test -s "$src"
           node --check "$src"
-          grep -Fq 'AURUM_RECOVERY_LEDGER_V1_CANONICAL' "$src"
+          grep -Fq 'AURUM_RECOVERY_LEDGER_V1_1_CANONICAL' "$src"
           grep -Fq 'Canonical website owner: FormatX66/ClusterSites.' "$src"
           grep -Fq '#systems [data-id="recovery"]' "$src"
           grep -Fq '.recovery-guide' "$src"
@@ -42,6 +42,12 @@ jobs:
           grep -Fq "checkpointLedgerImplementation:implemented?'atomic-prechange-checkpoints-present':'not-verified'" "$src"
           grep -Fq "journalImplementation:implemented?'hash-chained-prepared-and-committed-journal-present':'not-verified'" "$src"
           grep -Fq "journalHeadIntegrityValidation:implemented?'record-digest-validated-before-head-acceptance':'not-verified'" "$src"
+          grep -Fq "offlineRecoveryCarrierEvidence:offline.present?'verified-pinned-offline-phenotype-carrier-present':'not-verified'" "$src"
+          grep -Fq 'offlineCarrierLiveOverwriteAllowed:false' "$src"
+          grep -Fq 'offlineCarrierPromotionRequiresGuardianHealth:true' "$src"
+          grep -Fq "preExecutionRecoveryWriteGateEvidence:writeGate?'hard-fail-closed-before-destructive-write':'not-verified'" "$src"
+          grep -Fq 'preExecutionRecoveryReceiptRequired:true' "$src"
+          grep -Fq 'remoteRepairCompletedSuppressesFlash:true' "$src"
           grep -Fq 'repositoryImplementationIsPhysicalProof:false' "$src"
           grep -Fq "needsWorkOwner:'aurum-system'" "$src"
           grep -Fq 'humanActionRequired:false' "$src"
@@ -93,7 +99,7 @@ jobs:
           import re, sys
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./recovery-ledger\.js(?:\?v=[^"]+)?"></script>\s*','',text)
-          tag='<script src="./recovery-ledger.js?v=10"></script>'
+          tag='<script src="./recovery-ledger.js?v=11"></script>'
           marker=re.search(r'<script src="\./recovery-guardian\.js(?:\?v=[^"]+)?"></script>',text)
           if marker:
               text=text[:marker.end()]+'\n'+tag+text[marker.end():]
@@ -107,7 +113,7 @@ jobs:
                   raise SystemExit('dashboard missing injection point')
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './recovery-ledger.js?v=10' "$RUNNER_TEMP/index.html"
+          grep -Fq './recovery-ledger.js?v=11' "$RUNNER_TEMP/index.html"
 
       - name: Publish recovery ledger with bounded retries
         env:
@@ -132,9 +138,9 @@ jobs:
           page="$(mktemp)"; js="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' \
-            'https://arkmatx.com/aurum/dashboard/recovery-ledger.js?rev=10' -o "$js"
-          grep -Fq './recovery-ledger.js?v=10' "$page"
-          grep -Fq 'AURUM_RECOVERY_LEDGER_V1_CANONICAL' "$js"
+            'https://arkmatx.com/aurum/dashboard/recovery-ledger.js?rev=11' -o "$js"
+          grep -Fq './recovery-ledger.js?v=11' "$page"
+          grep -Fq 'AURUM_RECOVERY_LEDGER_V1_1_CANONICAL' "$js"
           grep -Fq 'Canonical website owner: FormatX66/ClusterSites.' "$js"
           grep -Fq 'Frontiers Advancing:' "$js"
           grep -Fq 'Needs Work → Aurum/System:' "$js"
@@ -142,6 +148,12 @@ jobs:
           grep -Fq "checkpointLedgerImplementation:implemented?'atomic-prechange-checkpoints-present':'not-verified'" "$js"
           grep -Fq "journalImplementation:implemented?'hash-chained-prepared-and-committed-journal-present':'not-verified'" "$js"
           grep -Fq "journalHeadIntegrityValidation:implemented?'record-digest-validated-before-head-acceptance':'not-verified'" "$js"
+          grep -Fq "offlineRecoveryCarrierEvidence:offline.present?'verified-pinned-offline-phenotype-carrier-present':'not-verified'" "$js"
+          grep -Fq 'offlineCarrierLiveOverwriteAllowed:false' "$js"
+          grep -Fq 'offlineCarrierPromotionRequiresGuardianHealth:true' "$js"
+          grep -Fq "preExecutionRecoveryWriteGateEvidence:writeGate?'hard-fail-closed-before-destructive-write':'not-verified'" "$js"
+          grep -Fq 'preExecutionRecoveryReceiptRequired:true' "$js"
+          grep -Fq 'remoteRepairCompletedSuppressesFlash:true' "$js"
           grep -Fq 'repositoryImplementationIsPhysicalProof:false' "$js"
           grep -Fq 'humanActionRequired:false' "$js"
           grep -Fq 'humanActionInference:false' "$js"
@@ -178,12 +190,16 @@ jobs:
             "canonical_component": "services/aurum-arkmatx/recovery-ledger-v1.js",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/recovery-ledger-v1.js",
             "deployment_carrier": "FormatX66/wetbeard-site",
-            "recovery_ledger_revision": "1.0",
+            "recovery_ledger_revision": "1.1",
             "existing_recovery_card_augmented": true,
             "new_dashboard_box_created": false,
             "atomic_prechange_checkpoints_visible": true,
             "hash_chained_journal_visible": true,
             "journal_head_integrity_visible": true,
+            "offline_recovery_carrier_visible": true,
+            "offline_carrier_grants_write_authority": false,
+            "preexecution_write_gate_visible": true,
+            "remote_repair_completed_suppresses_flash": true,
             "physical_proof_inferred": false,
             "needs_work_owner": "aurum-system",
             "human_action_inference": false,
@@ -192,5 +208,5 @@ jobs:
           }
           EOF
           git add deployments/aurum-recovery-ledger-live.json
-          git -c user.name='aurum-recovery-ledger[bot]' -c user.email='aurum-recovery-ledger@users.noreply.github.com' commit -m 'Record Aurum recovery ledger live verification [skip ci]'
+          git -c user.name='aurum-recovery-ledger[bot]' -c user.email='aurum-recovery-ledger@users.noreply.github.com' commit -m 'Record Aurum recovery ledger v1.1 live [skip ci]'
           git push origin main

@@ -31,9 +31,11 @@ jobs:
             'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/traits.js' \
             -o "$src"
           test -s "$src"
+          grep -Fq 'AURUM_TRAITS_RECOVERY_GUARDIAN_V1_1_CANONICAL' "$src"
           grep -Fq "name:'Recovery Guardian'" "$src"
-          grep -Fq 'A/B seed slots, Last Known Good, State Guardian' "$src"
-          grep -Fq 'Built requires implementation evidence' "$src"
+          grep -Fq 'protected germ slot guardian' "$src"
+          grep -Fq 'aurum reseed germ' "$src"
+          grep -Fq 'without claiming physical rollback verification' "$src"
           echo "file=$src" >> "$GITHUB_OUTPUT"
 
       - name: Configure Bluehost SSH with bounded retry
@@ -94,10 +96,12 @@ jobs:
           curl --fail-with-body --silent --show-error --location \
             --retry 5 --retry-all-errors --retry-delay 2 \
             -H 'Cache-Control: no-cache' \
-            'https://arkmatx.com/aurum/dashboard/traits.js?rev=recovery-guardian-v1' -o "$traits"
+            'https://arkmatx.com/aurum/dashboard/traits.js?rev=recovery-guardian-v11' -o "$traits"
+          grep -Fq 'AURUM_TRAITS_RECOVERY_GUARDIAN_V1_1_CANONICAL' "$traits"
           grep -Fq "name:'Recovery Guardian'" "$traits"
-          grep -Fq 'A/B seed slots, Last Known Good, State Guardian' "$traits"
-          grep -Fq 'Built requires implementation evidence' "$traits"
+          grep -Fq 'protected germ slot guardian' "$traits"
+          grep -Fq 'aurum reseed germ' "$traits"
+          grep -Fq 'without claiming physical rollback verification' "$traits"
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
 
       - name: Roll back on verification failure
@@ -132,9 +136,11 @@ jobs:
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/traits.js",
             "deployment_carrier": "FormatX66/wetbeard-site",
             "trait": "Recovery Guardian",
-            "defined_gate": "mandatory-architecture-locked",
-            "implementation_gate_requires_evidence": true,
-            "architecture_document_does_not_count_as_built": true,
+            "recovery_guardian_trait_revision": "1.1",
+            "software_implementation_can_advance_built": true,
+            "germ_lane_can_advance_lane": true,
+            "germ_ci_cannot_advance_physical_verified": true,
+            "physical_verified_requires_recovery_evidence": true,
             "expandable_via_existing_guidance": true,
             "human_action_inference": false,
             "rollback_protected": true,
@@ -145,6 +151,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-recovery-trait-live.json
-          git commit -m 'Record Aurum Recovery Guardian trait live [skip ci]' || exit 0
+          git commit -m 'Record Aurum Recovery Guardian trait v1.1 live [skip ci]' || exit 0
           git pull --rebase origin main
           git push origin HEAD:main

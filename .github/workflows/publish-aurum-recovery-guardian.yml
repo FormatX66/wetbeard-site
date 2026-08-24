@@ -31,9 +31,11 @@ jobs:
             'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/recovery-guardian-v1.js' \
             -o "$src"
           test -s "$src"
-          grep -Fq 'AURUM_RECOVERY_GUARDIAN_V1_1_CANONICAL' "$src"
+          grep -Fq 'AURUM_RECOVERY_GUARDIAN_V1_2_CANONICAL' "$src"
           grep -Fq "const GERM_WORKFLOW='Aurum Reseed Germ'" "$src"
-          grep -Fq "fullRecoveryImplementationEvidence:'partial-germ-only'" "$src"
+          grep -Fq "guardianImplementationEvidence:state.guardianPresent?'ab-lkg-health-rollback-runtime-present':'not-verified'" "$src"
+          grep -Fq "tinySeedSubstrateEvidence:state.tinySeedPresent?'manifest-present':'not-verified'" "$src"
+          grep -Fq "fullRecoveryImplementationEvidence:'software-survival-layer-present-hardware-proof-pending'" "$src"
           grep -Fq "needsWorkOwner:'aurum-system'" "$src"
           grep -Fq 'humanActionInference:false' "$src"
           echo "file=$src" >> "$GITHUB_OUTPUT"
@@ -83,7 +85,7 @@ jobs:
           import re, sys
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./recovery-guardian\.js(?:\?v=[^"]+)?"></script>\s*','',text)
-          tag='<script src="./recovery-guardian.js?v=11"></script>'
+          tag='<script src="./recovery-guardian.js?v=12"></script>'
           marker=re.search(r'<script src="\./seed-lifecycle\.js(?:\?v=[^"]+)?"></script>',text)
           if marker:
               text=text[:marker.end()]+'\n'+tag+text[marker.end():]
@@ -93,7 +95,7 @@ jobs:
               raise SystemExit('dashboard missing injection point')
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './recovery-guardian.js?v=11' "$RUNNER_TEMP/index.html"
+          grep -Fq './recovery-guardian.js?v=12' "$RUNNER_TEMP/index.html"
 
       - name: Publish recovery guardian with bounded retries
         env:
@@ -118,11 +120,12 @@ jobs:
           page="$(mktemp)"; js="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' \
-            'https://arkmatx.com/aurum/dashboard/recovery-guardian.js?rev=11' -o "$js"
-          grep -Fq './recovery-guardian.js?v=11' "$page"
-          grep -Fq 'AURUM_RECOVERY_GUARDIAN_V1_1_CANONICAL' "$js"
-          grep -Fq "const GERM_WORKFLOW='Aurum Reseed Germ'" "$js"
-          grep -Fq "fullRecoveryImplementationEvidence:'partial-germ-only'" "$js"
+            'https://arkmatx.com/aurum/dashboard/recovery-guardian.js?rev=12' -o "$js"
+          grep -Fq './recovery-guardian.js?v=12' "$page"
+          grep -Fq 'AURUM_RECOVERY_GUARDIAN_V1_2_CANONICAL' "$js"
+          grep -Fq "guardianImplementationEvidence:state.guardianPresent?'ab-lkg-health-rollback-runtime-present':'not-verified'" "$js"
+          grep -Fq "tinySeedSubstrateEvidence:state.tinySeedPresent?'manifest-present':'not-verified'" "$js"
+          grep -Fq "fullRecoveryImplementationEvidence:'software-survival-layer-present-hardware-proof-pending'" "$js"
           grep -Fq 'humanActionInference:false' "$js"
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
 
@@ -157,10 +160,13 @@ jobs:
             "canonical_component": "services/aurum-arkmatx/recovery-guardian-v1.js",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/recovery-guardian-v1.js",
             "deployment_carrier": "FormatX66/wetbeard-site",
-            "recovery_guardian_revision": "1.1",
+            "recovery_guardian_revision": "1.2",
             "germ_evidence_visible": true,
-            "germ_proof_does_not_equal_full_recovery": true,
-            "full_recovery_implementation_evidence": "partial-germ-only",
+            "guardian_software_evidence_visible": true,
+            "tiny_seed_substrate_visible": true,
+            "software_survival_layer_present": true,
+            "physical_recovery_proof_inferred": false,
+            "full_recovery_implementation_evidence": "software-survival-layer-present-hardware-proof-pending",
             "needs_work_owner": "aurum-system",
             "human_action_inference": false,
             "expandable": true,
@@ -172,6 +178,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-recovery-guardian-live.json
-          git commit -m 'Record Aurum recovery guardian v1.1 live [skip ci]' || exit 0
+          git commit -m 'Record Aurum recovery guardian v1.2 live [skip ci]' || exit 0
           git pull --rebase origin main
           git push origin HEAD:main

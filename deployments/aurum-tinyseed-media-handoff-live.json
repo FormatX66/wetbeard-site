@@ -1,0 +1,21 @@
+{
+  "site": "aurum-command-center",
+  "url": "https://arkmatx.com/aurum/dashboard/",
+  "canonical_website_repo": "FormatX66/ClusterSites",
+  "canonical_component": "services/aurum-arkmatx/tinyseed-media-handoff-v1.js",
+  "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/tinyseed-media-handoff-v1.js",
+  "deployment_carrier": "FormatX66/wetbeard-site",
+  "revision": "1.0",
+  "read_only_usb_discovery_visible": true,
+  "serial_identity_required": true,
+  "boot_system_readonly_protected_media_fail_closed": true,
+  "ambiguous_multiple_eligible_fail_closed": true,
+  "discovery_can_write": false,
+  "discovery_can_create_human_action": false,
+  "explicit_write_requires_ready_for_explicit_write": true,
+  "physical_recovery_proof_inferred": false,
+  "expandable_recovery_card_preserved": true,
+  "rollback_protected": true,
+  "status": "verified-live",
+  "verified_at_utc": "2026-08-24T09:55:15Z"
+}

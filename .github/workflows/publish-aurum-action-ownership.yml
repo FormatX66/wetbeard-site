@@ -35,11 +35,15 @@ jobs:
           file="$RUNNER_TEMP/action-ownership.js"
           curl --fail-with-body --silent --show-error --location "$src" -o "$file"
           test -s "$file"
-          grep -Fq 'AURUM_ACTION_OWNERSHIP_V1_1_CANONICAL' "$file"
+          grep -Fq 'AURUM_ACTION_OWNERSHIP_V1_7_CANONICAL' "$file"
           grep -Fq 'Unknown or unavailable evidence never creates a human task.' "$file"
           grep -Fq 'Human-capability boot proof' "$file"
           grep -Fq 'Native self-build generation' "$file"
           grep -Fq 'BoxBrain → Hopper control-route proof' "$file"
+          grep -Fq 'Recovery Guardian release/handoff evidence' "$file"
+          grep -Fq "r?.tinySeedReleaseState==='READY_TO_FLASH'" "$file"
+          grep -Fq "r?.preflightRequiredBeforeDestructiveWrite===true" "$file"
+          grep -Fq "window.addEventListener('aurum-recovery-guardian-state'" "$file"
           echo "file=$file" >> "$GITHUB_OUTPUT"
 
       - name: Configure existing Bluehost SSH carrier
@@ -54,7 +58,12 @@ jobs:
           install -m 700 -d "$HOME/.ssh"
           printf '%s\n' "$BLUEHOST_SSH_PRIVATE_KEY" > "$HOME/.ssh/bluehost_deploy"
           chmod 600 "$HOME/.ssh/bluehost_deploy"
-          ssh-keyscan -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts"
+          : > "$HOME/.ssh/known_hosts"
+          for attempt in 1 2 3 4 5; do
+            if ssh-keyscan -T 10 -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null; then exit 0; fi
+            if [ "$attempt" -eq 5 ]; then exit 1; fi
+            sleep $((attempt * 5))
+          done
 
       - name: Back up current command center
         id: backup
@@ -64,11 +73,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          retry() { local n=1; while true; do "$@" && return 0; if [ "$n" -ge 5 ]; then return 1; fi; sleep $((n * 5)); n=$((n+1)); done; }
           remote='public_html/arkmatx/aurum/dashboard'
           backup=".aurum-dashboard-backups/action-ownership-$GITHUB_RUN_ID"
-          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+          retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
             "set -eu; mkdir -p '$remote' '$backup'; cp -p '$remote/index.html' '$backup/index.html'; if [ -f '$remote/action-ownership.js' ]; then cp -p '$remote/action-ownership.js' '$backup/action-ownership.js'; else touch '$backup/.missing-action-ownership.js'; fi"
-          scp -i "$HOME/.ssh/bluehost_deploy" -P 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/index.html" "$RUNNER_TEMP/index.html"
+          retry scp -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -P 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/index.html" "$RUNNER_TEMP/index.html"
           echo 'ready=true' >> "$GITHUB_OUTPUT"
 
       - name: Inject action ownership surface
@@ -77,15 +87,15 @@ jobs:
           set -euo pipefail
           python3 - "$RUNNER_TEMP/index.html" <<'PY'
           from pathlib import Path
-          import sys
+          import re, sys
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
-          tag='<script src="./action-ownership.js?v=1"></script>'
-          if tag not in text:
-              if '</body>' not in text: raise SystemExit('dashboard missing body close')
-              text=text.replace('</body>',tag+'\n</body>',1)
+          text=re.sub(r'<script src="\./action-ownership\.js(?:\?v=[^"]+)?"></script>\s*','',text)
+          tag='<script src="./action-ownership.js?v=17"></script>'
+          if '</body>' not in text: raise SystemExit('dashboard missing body close')
+          text=text.replace('</body>',tag+'\n</body>',1)
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './action-ownership.js?v=1' "$RUNNER_TEMP/index.html"
+          grep -Fq './action-ownership.js?v=17' "$RUNNER_TEMP/index.html"
 
       - name: Publish action ownership surface
         env:
@@ -94,10 +104,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          retry() { local n=1; while true; do "$@" && return 0; if [ "$n" -ge 5 ]; then return 1; fi; sleep $((n * 5)); n=$((n+1)); done; }
           remote='public_html/arkmatx/aurum/dashboard'
-          scp -i "$HOME/.ssh/bluehost_deploy" -P 22 "$RUNNER_TEMP/index.html" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/index.html"
-          scp -i "$HOME/.ssh/bluehost_deploy" -P 22 "${{ steps.source.outputs.file }}" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/action-ownership.js"
-          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" "chmod 644 '$remote/index.html' '$remote/action-ownership.js'"
+          retry scp -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -P 22 "$RUNNER_TEMP/index.html" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/index.html"
+          retry scp -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -P 22 "${{ steps.source.outputs.file }}" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/action-ownership.js"
+          retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" "chmod 644 '$remote/index.html' '$remote/action-ownership.js'"
 
       - name: Verify live action ownership
         id: verify
@@ -106,13 +117,17 @@ jobs:
           set -euo pipefail
           page="$(mktemp)"; asset="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
-          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/action-ownership.js?rev=11' -o "$asset"
-          grep -Fq './action-ownership.js?v=1' "$page"
-          grep -Fq 'AURUM_ACTION_OWNERSHIP_V1_1_CANONICAL' "$asset"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/action-ownership.js?rev=17' -o "$asset"
+          grep -Fq './action-ownership.js?v=17' "$page"
+          grep -Fq 'AURUM_ACTION_OWNERSHIP_V1_7_CANONICAL' "$asset"
           grep -Fq '0 confirmed' "$asset"
           grep -Fq 'AURUM' "$asset"
           grep -Fq 'Unknown evidence never becomes your task.' "$asset"
           grep -Fq 'BoxBrain → Hopper control-route proof' "$asset"
+          grep -Fq 'Recovery Guardian release/handoff evidence' "$asset"
+          grep -Fq "r?.tinySeedReleaseState==='READY_TO_FLASH'" "$asset"
+          grep -Fq "r?.preflightRequiredBeforeDestructiveWrite===true" "$asset"
+          grep -Fq 'Tiny Seed physical handoff:' "$asset"
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
 
       - name: Roll back if verification fails
@@ -123,8 +138,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          retry() { local n=1; while true; do "$@" && return 0; if [ "$n" -ge 5 ]; then return 1; fi; sleep $((n * 5)); n=$((n+1)); done; }
           remote='public_html/arkmatx/aurum/dashboard'; backup=".aurum-dashboard-backups/action-ownership-$GITHUB_RUN_ID"
-          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+          retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
             "set -eu; cp -p '$backup/index.html' '$remote/index.html'; if [ -f '$backup/action-ownership.js' ]; then cp -p '$backup/action-ownership.js' '$remote/action-ownership.js'; elif [ -f '$backup/.missing-action-ownership.js' ]; then rm -f '$remote/action-ownership.js'; fi"
 
       - name: Record verified action-ownership receipt
@@ -145,11 +161,18 @@ jobs:
             "canonical_component": "services/aurum-arkmatx/action-ownership-v1.js",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/action-ownership-v1.js",
             "credential_carrier_repo": "FormatX66/wetbeard-site",
+            "action_ownership_revision": "1.7",
             "human_and_system_work_separated": true,
             "unknown_never_creates_human_task": true,
+            "voice_freshness_gate_preserved": true,
+            "recovery_guardian_human_boundary_included": true,
+            "ready_to_flash_requires_target_identity": true,
+            "preflight_before_destructive_write_required": true,
             "native_frontier_included": true,
             "human_capability_boot_frontier_included": true,
             "control_route_included": true,
+            "expandable_dashboard_preserved": true,
+            "rollback_protected": true,
             "status": "verified-live",
             "verified_at_utc": "$verified_at"
           }
@@ -157,6 +180,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-action-ownership-live.json
-          git commit -m 'Record Aurum action ownership live deployment [skip ci]' || exit 0
+          git commit -m 'Record Aurum action ownership v1.7 live [skip ci]' || exit 0
           git pull --rebase origin main
           git push origin HEAD:main

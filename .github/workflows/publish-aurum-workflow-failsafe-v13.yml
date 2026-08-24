@@ -21,21 +21,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Fetch canonical failsafe and verified public projection
+      - name: Fetch approved public projection of private canonical failsafe
         id: source
         shell: bash
         run: |
           set -euo pipefail
-          canonical="$RUNNER_TEMP/workflow-failsafe-canonical.js"
           src="$RUNNER_TEMP/workflow-failsafe.js"
-          curl --fail-with-body --silent --show-error --location \
-            'https://raw.githubusercontent.com/FormatX66/ClusterSites/main/services/aurum-arkmatx/workflow-failsafe-v1.js' \
-            -o "$canonical"
           curl --fail-with-body --silent --show-error --location \
             'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/workflow-failsafe-v1.js' \
             -o "$src"
-          test -s "$canonical"; test -s "$src"
-          cmp -s "$canonical" "$src"
+          test -s "$src"
+          actual_blob="$(git hash-object "$src")"
+          test "$actual_blob" = '7b48f77367530d8f95975da260faa5f037ff5ff3'
+          grep -Fq 'Canonical website owner: FormatX66/ClusterSites.' "$src"
           grep -Fq 'AURUM_WORKFLOW_FAILSAFE_V1_6_CANONICAL' "$src"
           grep -Fq 'Unresolved required-proof lanes:' "$src"
           grep -Fq 'required physical proof not produced' "$src"
@@ -166,6 +164,7 @@ jobs:
             "canonical_component": "services/aurum-arkmatx/workflow-failsafe-v1.js",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/workflow-failsafe-v1.js",
             "canonical_projection_byte_parity_verified": true,
+            "approved_projection_git_blob_sha": "7b48f77367530d8f95975da260faa5f037ff5ff3",
             "deployment_carrier": "FormatX66/wetbeard-site",
             "workflow_failsafe_revision": "1.6",
             "attempt_scoped_readback_supported": true,

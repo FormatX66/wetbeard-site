@@ -5,11 +5,18 @@
   "canonical_component": "services/aurum-arkmatx/action-ownership-v1.js",
   "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/action-ownership-v1.js",
   "credential_carrier_repo": "FormatX66/wetbeard-site",
+  "action_ownership_revision": "1.7",
   "human_and_system_work_separated": true,
   "unknown_never_creates_human_task": true,
+  "voice_freshness_gate_preserved": true,
+  "recovery_guardian_human_boundary_included": true,
+  "ready_to_flash_requires_target_identity": true,
+  "preflight_before_destructive_write_required": true,
   "native_frontier_included": true,
   "human_capability_boot_frontier_included": true,
   "control_route_included": true,
+  "expandable_dashboard_preserved": true,
+  "rollback_protected": true,
   "status": "verified-live",
-  "verified_at_utc": "2026-08-22T03:54:51Z"
+  "verified_at_utc": "2026-08-24T09:01:20Z"
 }

@@ -1,0 +1,196 @@
+name: Publish Aurum Recovery Ledger
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-aurum-recovery-ledger.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aurum-recovery-ledger-production
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch validated public projection of canonical recovery ledger
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          src="$RUNNER_TEMP/recovery-ledger.js"
+          curl --fail-with-body --silent --show-error --location \
+            'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/recovery-ledger-v1.js' \
+            -o "$src"
+          test -s "$src"
+          node --check "$src"
+          grep -Fq 'AURUM_RECOVERY_LEDGER_V1_CANONICAL' "$src"
+          grep -Fq 'Canonical website owner: FormatX66/ClusterSites.' "$src"
+          grep -Fq '#systems [data-id="recovery"]' "$src"
+          grep -Fq '.recovery-guide' "$src"
+          grep -Fq 'Frontiers Advancing:' "$src"
+          grep -Fq 'Needs Work → Aurum/System:' "$src"
+          grep -Fq 'Your Actions:' "$src"
+          grep -Fq "checkpointLedgerImplementation:implemented?'atomic-prechange-checkpoints-present':'not-verified'" "$src"
+          grep -Fq "journalImplementation:implemented?'hash-chained-prepared-and-committed-journal-present':'not-verified'" "$src"
+          grep -Fq "journalHeadIntegrityValidation:implemented?'record-digest-validated-before-head-acceptance':'not-verified'" "$src"
+          grep -Fq 'repositoryImplementationIsPhysicalProof:false' "$src"
+          grep -Fq "needsWorkOwner:'aurum-system'" "$src"
+          grep -Fq 'humanActionRequired:false' "$src"
+          grep -Fq 'humanActionInference:false' "$src"
+          echo "file=$src" >> "$GITHUB_OUTPUT"
+
+      - name: Configure Bluehost SSH with bounded retry
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+          BLUEHOST_SSH_PRIVATE_KEY: ${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$BLUEHOST_HOST"; test -n "$BLUEHOST_USERNAME"; test -n "$BLUEHOST_SSH_PRIVATE_KEY"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$BLUEHOST_SSH_PRIVATE_KEY" > "$HOME/.ssh/bluehost_deploy"
+          chmod 600 "$HOME/.ssh/bluehost_deploy"
+          : > "$HOME/.ssh/known_hosts"
+          for attempt in 1 2 3 4 5; do
+            if ssh-keyscan -T 10 -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null; then exit 0; fi
+            if [ "$attempt" -eq 5 ]; then exit 1; fi
+            sleep $((attempt * 5))
+          done
+
+      - name: Back up current dashboard and fetch index
+        id: backup
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          retry_capture() { local out="$1"; shift; local n=1 tmp; tmp="$(mktemp)"; while true; do if "$@" > "$tmp"; then mv "$tmp" "$out"; return 0; fi; if [ "$n" -ge 5 ]; then rm -f "$tmp"; return 1; fi; sleep $((n * 5)); n=$((n+1)); done; }
+          remote='public_html/arkmatx/aurum/dashboard'
+          backup=".aurum-dashboard-backups/recovery-ledger-$GITHUB_RUN_ID"
+          retry_capture "$RUNNER_TEMP/index.html" \
+            ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "set -eu; mkdir -p '$remote' '$backup'; cp -p '$remote/index.html' '$backup/index.html'; if [ -f '$remote/recovery-ledger.js' ]; then cp -p '$remote/recovery-ledger.js' '$backup/recovery-ledger.js'; else touch '$backup/.missing-recovery-ledger.js'; fi; cat '$remote/index.html'"
+          test -s "$RUNNER_TEMP/index.html"
+          echo 'ready=true' >> "$GITHUB_OUTPUT"
+
+      - name: Inject cache-busted recovery ledger overlay
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - "$RUNNER_TEMP/index.html" <<'PY'
+          from pathlib import Path
+          import re, sys
+          p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
+          text=re.sub(r'<script src="\./recovery-ledger\.js(?:\?v=[^"]+)?"></script>\s*','',text)
+          tag='<script src="./recovery-ledger.js?v=10"></script>'
+          marker=re.search(r'<script src="\./recovery-guardian\.js(?:\?v=[^"]+)?"></script>',text)
+          if marker:
+              text=text[:marker.end()]+'\n'+tag+text[marker.end():]
+          else:
+              marker=re.search(r'<script src="\./tinyseed-media-handoff\.js(?:\?v=[^"]+)?"></script>',text)
+              if marker:
+                  text=text[:marker.start()]+tag+'\n'+text[marker.start():]
+              elif '</body>' in text:
+                  text=text.replace('</body>',tag+'\n</body>',1)
+              else:
+                  raise SystemExit('dashboard missing injection point')
+          p.write_text(text,encoding='utf-8')
+          PY
+          grep -Fq './recovery-ledger.js?v=10' "$RUNNER_TEMP/index.html"
+
+      - name: Publish recovery ledger with bounded retries
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          retry() { local n=1; while true; do "$@" && return 0; if [ "$n" -ge 5 ]; then return 1; fi; sleep $((n * 5)); n=$((n+1)); done; }
+          remote='public_html/arkmatx/aurum/dashboard'
+          retry scp -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -P 22 \
+            "$RUNNER_TEMP/index.html" "${{ steps.source.outputs.file }}" \
+            "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/"
+          retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "set -eu; chmod 644 '$remote/index.html' '$remote/recovery-ledger.js'"
+
+      - name: Verify live recovery ledger
+        id: verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          page="$(mktemp)"; js="$(mktemp)"
+          final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' \
+            'https://arkmatx.com/aurum/dashboard/recovery-ledger.js?rev=10' -o "$js"
+          grep -Fq './recovery-ledger.js?v=10' "$page"
+          grep -Fq 'AURUM_RECOVERY_LEDGER_V1_CANONICAL' "$js"
+          grep -Fq 'Canonical website owner: FormatX66/ClusterSites.' "$js"
+          grep -Fq 'Frontiers Advancing:' "$js"
+          grep -Fq 'Needs Work → Aurum/System:' "$js"
+          grep -Fq 'Your Actions:' "$js"
+          grep -Fq "checkpointLedgerImplementation:implemented?'atomic-prechange-checkpoints-present':'not-verified'" "$js"
+          grep -Fq "journalImplementation:implemented?'hash-chained-prepared-and-committed-journal-present':'not-verified'" "$js"
+          grep -Fq "journalHeadIntegrityValidation:implemented?'record-digest-validated-before-head-acceptance':'not-verified'" "$js"
+          grep -Fq 'repositoryImplementationIsPhysicalProof:false' "$js"
+          grep -Fq 'humanActionRequired:false' "$js"
+          grep -Fq 'humanActionInference:false' "$js"
+          echo "url=$final_url" >> "$GITHUB_OUTPUT"
+
+      - name: Roll back on verification failure
+        if: ${{ failure() && steps.backup.outputs.ready == 'true' }}
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          retry() { local n=1; while true; do "$@" && return 0; if [ "$n" -ge 5 ]; then return 1; fi; sleep $((n * 5)); n=$((n+1)); done; }
+          remote='public_html/arkmatx/aurum/dashboard'; backup=".aurum-dashboard-backups/recovery-ledger-$GITHUB_RUN_ID"
+          retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "set -eu; cp -p '$backup/index.html' '$remote/index.html'; if [ -f '$backup/recovery-ledger.js' ]; then cp -p '$backup/recovery-ledger.js' '$remote/recovery-ledger.js'; elif [ -f '$backup/.missing-recovery-ledger.js' ]; then rm -f '$remote/recovery-ledger.js'; fi"
+
+      - name: Record verified live receipt
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git checkout main
+          git reset --hard origin/main
+          mkdir -p deployments
+          verified_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          cat > deployments/aurum-recovery-ledger-live.json <<EOF
+          {
+            "site": "aurum-command-center",
+            "url": "${{ steps.verify.outputs.url }}",
+            "canonical_website_repo": "FormatX66/ClusterSites",
+            "canonical_component": "services/aurum-arkmatx/recovery-ledger-v1.js",
+            "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/recovery-ledger-v1.js",
+            "deployment_carrier": "FormatX66/wetbeard-site",
+            "recovery_ledger_revision": "1.0",
+            "existing_recovery_card_augmented": true,
+            "new_dashboard_box_created": false,
+            "atomic_prechange_checkpoints_visible": true,
+            "hash_chained_journal_visible": true,
+            "journal_head_integrity_visible": true,
+            "physical_proof_inferred": false,
+            "needs_work_owner": "aurum-system",
+            "human_action_inference": false,
+            "rollback_protected": true,
+            "verified_at_utc": "$verified_at"
+          }
+          EOF
+          git add deployments/aurum-recovery-ledger-live.json
+          git -c user.name='aurum-recovery-ledger[bot]' -c user.email='aurum-recovery-ledger@users.noreply.github.com' commit -m 'Record Aurum recovery ledger live verification [skip ci]'
+          git push origin main

@@ -5,7 +5,7 @@
   "canonical_component": "services/aurum-arkmatx/pi3-physical-evidence-v1.js",
   "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/pi3-physical-evidence-v1.js",
   "deployment_carrier": "FormatX66/wetbeard-site",
-  "pi3_physical_evidence_revision": "1.0",
+  "pi3_physical_evidence_revision": "1.1",
   "expandable": true,
   "read_only_request_visible": true,
   "self_hosted_probe_lane_visible": true,
@@ -13,6 +13,7 @@
   "adaptive_kernel_arch_gate_visible": true,
   "future_branch_next_state_visible": true,
   "physical_receipt_separate_from_repository_proof": true,
+  "canonical_projection_parity_republished": true,
   "mutation_authority": false,
   "promotion_authority": false,
   "write_authority": false,
@@ -22,5 +23,5 @@
   "backup_before_publish": true,
   "rollback_on_verify_failure": true,
   "status": "verified-live",
-  "verified_at_utc": "2026-08-24T15:53:50Z"
+  "verified_at_utc": "2026-08-24T15:58:42Z"
 }

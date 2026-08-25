@@ -31,27 +31,52 @@ jobs:
             'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/seed-lifecycle-v1.js' \
             -o "$src"
           test -s "$src"
-          grep -Fq 'AURUM_SEED_LIFECYCLE_V1_1_CANONICAL' "$src"
+          node --check "$src"
+          grep -Fq 'AURUM_SEED_LIFECYCLE_V1_2_CANONICAL' "$src"
           grep -Fq 'Git stores the genetics. Seeds carry the germ. Machines regrow the phenotype.' "$src"
           grep -Fq "normal_generation:'genetics-regrowth'" "$src"
           grep -Fq 'candidate_only_staging:true' "$src"
           grep -Fq 'human_action_requires_separate_current_evidence:true' "$src"
+          grep -Fq "release_identity_authority:'tinyseed-handoff'" "$src"
+          grep -Fq 'completion_plan_sync_grants_physical_proof:false' "$src"
+          grep -Fq 'completion_plan_sync_grants_human_authority:false' "$src"
+          grep -Fq 'Frontiers Advancing:' "$src"
+          grep -Fq 'Needs Work → Aurum/System:' "$src"
+          grep -Fq 'Your Actions:' "$src"
           echo "file=$src" >> "$GITHUB_OUTPUT"
 
-      - name: Verify source against current Aurum genetics architecture
+      - name: Verify source against current Aurum genetics and release truth
         shell: bash
         run: |
           set -euo pipefail
           genetics="$RUNNER_TEMP/RESEED_GENETICS_ARCHITECTURE.md"
           recovery="$RUNNER_TEMP/SEED_RECOVERY_ARCHITECTURE.md"
+          plan="$RUNNER_TEMP/completion-plan.json"
+          handoff="$RUNNER_TEMP/latest-tinyseed-handoff.json"
           curl --fail-with-body --silent --show-error --location \
             'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/docs/architecture/RESEED_GENETICS_ARCHITECTURE.md' -o "$genetics"
           curl --fail-with-body --silent --show-error --location \
             'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/docs/architecture/SEED_RECOVERY_ARCHITECTURE.md' -o "$recovery"
+          curl --fail-with-body --silent --show-error --location \
+            'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Projects/Aurum/completion-plan.json' -o "$plan"
+          curl --fail-with-body --silent --show-error --location \
+            'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Projects/Aurum/Release/latest-tinyseed-handoff.json' -o "$handoff"
           grep -Fq 'Git stores the genetics. Seeds carry the germ.' "$genetics"
           grep -Fq 'never overwrite the active organism during staging' "$genetics"
           grep -Fq 'require health evidence before promotion' "$genetics"
           grep -Fq 'Any viable germ-bearing seed must be able to regrow directly into the current trusted genetics' "$recovery"
+          python3 - "$plan" "$handoff" <<'PY'
+          import json, sys
+          plan=json.load(open(sys.argv[1],encoding='utf-8-sig'))
+          handoff=json.load(open(sys.argv[2],encoding='utf-8-sig'))
+          assert plan.get('schema') == 'aurum-completion-plan-v1'
+          assert handoff.get('schema') == 'aurum-tinyseed-handoff-v1'
+          assert plan.get('latest_release_source_commit') == handoff.get('source_commit')
+          assert plan.get('release_state') == handoff.get('state')
+          assert handoff.get('gates',{}).get('physical_boot') != 'passed'
+          assert handoff.get('gates',{}).get('guardian_forced_rollback') != 'passed'
+          print('AURUM_RELEASE_IDENTITY_SYNC_OK source=%s state=%s physical_proof=false' % (handoff['source_commit'],handoff['state']))
+          PY
 
       - name: Configure Bluehost SSH with bounded retry
         env:
@@ -98,7 +123,7 @@ jobs:
           import re, sys
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./seed-lifecycle\.js(?:\?v=[^"]+)?"></script>\s*','',text)
-          tag='<script src="./seed-lifecycle.js?v=11"></script>'
+          tag='<script src="./seed-lifecycle.js?v=12"></script>'
           markers=[
               r'<script src="\./recovery-guardian\.js(?:\?v=[^"]+)?"></script>',
               r'<script src="\./guidance\.js(?:\?v=[^"]+)?"></script>',
@@ -114,7 +139,7 @@ jobs:
               raise SystemExit('dashboard missing seed lifecycle injection point')
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './seed-lifecycle.js?v=11' "$RUNNER_TEMP/index.html"
+          grep -Fq './seed-lifecycle.js?v=12' "$RUNNER_TEMP/index.html"
 
       - name: Publish seed lifecycle component with bounded retries
         env:
@@ -139,12 +164,18 @@ jobs:
           page="$(mktemp)"; js="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' \
-            'https://arkmatx.com/aurum/dashboard/seed-lifecycle.js?rev=11' -o "$js"
-          grep -Fq './seed-lifecycle.js?v=11' "$page"
-          grep -Fq 'AURUM_SEED_LIFECYCLE_V1_1_CANONICAL' "$js"
+            'https://arkmatx.com/aurum/dashboard/seed-lifecycle.js?rev=12' -o "$js"
+          grep -Fq './seed-lifecycle.js?v=12' "$page"
+          grep -Fq 'AURUM_SEED_LIFECYCLE_V1_2_CANONICAL' "$js"
           grep -Fq 'Git stores the genetics. Seeds carry the germ. Machines regrow the phenotype.' "$js"
           grep -Fq "normal_generation:'genetics-regrowth'" "$js"
           grep -Fq 'human_action_requires_separate_current_evidence:true' "$js"
+          grep -Fq "release_identity_authority:'tinyseed-handoff'" "$js"
+          grep -Fq 'completion_plan_sync_grants_physical_proof:false' "$js"
+          grep -Fq 'completion_plan_sync_grants_human_authority:false' "$js"
+          grep -Fq 'Frontiers Advancing:' "$js"
+          grep -Fq 'Needs Work → Aurum/System:' "$js"
+          grep -Fq 'Your Actions:' "$js"
           grep -Fq './recovery-guardian.js?v=11' "$page"
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
 
@@ -179,13 +210,16 @@ jobs:
             "canonical_component": "services/aurum-arkmatx/seed-lifecycle-v1.js",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/seed-lifecycle-v1.js",
             "deployment_carrier": "FormatX66/wetbeard-site",
-            "seed_lifecycle_revision": "1.1",
+            "seed_lifecycle_revision": "1.2",
             "canonical_law": "Boot once. Grow continuously.",
             "genetics_law": "Git stores the genetics. Seeds carry the germ. Machines regrow the phenotype.",
             "normal_generation_path": "genetics-regrowth",
             "candidate_only_staging": true,
             "live_overwrite_allowed": false,
             "promotion_requires_health_evidence": true,
+            "release_identity_authority": "tinyseed-handoff",
+            "completion_plan_sync_grants_physical_proof": false,
+            "completion_plan_sync_grants_human_authority": false,
             "boot_media_scope": "first-seed-or-external-germ-recovery",
             "normal_generation_reflash": false,
             "human_action_requires_separate_current_evidence": true,
@@ -197,6 +231,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-seed-lifecycle-live.json
-          git commit -m 'Record Aurum seed lifecycle v1.1 live [skip ci]' || exit 0
+          git commit -m 'Record Aurum seed lifecycle v1.2 live [skip ci]' || exit 0
           git pull --rebase origin main
           git push origin HEAD:main

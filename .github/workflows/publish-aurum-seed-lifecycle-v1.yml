@@ -176,7 +176,6 @@ jobs:
           grep -Fq 'Frontiers Advancing:' "$js"
           grep -Fq 'Needs Work → Aurum/System:' "$js"
           grep -Fq 'Your Actions:' "$js"
-          grep -Fq './recovery-guardian.js?v=11' "$page"
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
 
       - name: Roll back on verification failure

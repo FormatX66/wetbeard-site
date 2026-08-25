@@ -5,7 +5,7 @@
   "canonical_component": "services/aurum-arkmatx/recovery-ledger-v1.js",
   "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/recovery-ledger-v1.js",
   "deployment_carrier": "FormatX66/wetbeard-site",
-  "recovery_ledger_revision": "1.2",
+  "recovery_ledger_revision": "1.3",
   "existing_recovery_card_augmented": true,
   "new_dashboard_box_created": false,
   "atomic_prechange_checkpoints_visible": true,
@@ -13,6 +13,12 @@
   "journal_head_integrity_visible": true,
   "offline_recovery_carrier_visible": true,
   "offline_carrier_grants_write_authority": false,
+  "fallback_canonical_provenance_visible": true,
+  "fallback_matrix_virtual_boot_visible": true,
+  "fallback_published_artifact_visible": true,
+  "fallback_physical_compatibility_inferred": false,
+  "fallback_grants_write_authority": false,
+  "fallback_grants_promotion_authority": false,
   "preexecution_write_gate_visible": true,
   "remote_repair_completed_suppresses_flash": true,
   "legacy_destructive_bypass_disabled": true,
@@ -24,5 +30,5 @@
   "needs_work_owner": "aurum-system",
   "human_action_inference": false,
   "rollback_protected": true,
-  "verified_at_utc": "2026-08-25T09:11:27Z"
+  "verified_at_utc": "2026-08-25T09:46:45Z"
 }

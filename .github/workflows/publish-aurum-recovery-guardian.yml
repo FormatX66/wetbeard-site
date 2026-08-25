@@ -31,37 +31,22 @@ jobs:
             'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/recovery-guardian-v1.js' \
             -o "$src"
           test -s "$src"
-          grep -Fq 'AURUM_RECOVERY_GUARDIAN_V1_7_CANONICAL' "$src"
+          grep -Fq 'AURUM_RECOVERY_GUARDIAN_V1_8_CANONICAL' "$src"
           grep -Fq "const GERM_WORKFLOW='Aurum Reseed Germ'" "$src"
           grep -Fq "const TINY_X86_WORKFLOW='Aurum Tiny Seed x86'" "$src"
           grep -Fq "const TINY_PI_WORKFLOW='Aurum Tiny Seed Pi ARM64'" "$src"
           grep -Fq "const HANDOFF_WORKFLOW='Aurum Tiny Seed Handoff'" "$src"
           grep -Fq "const FLASH_WORKFLOW='Aurum Tiny Seed Windows Flash'" "$src"
           grep -Fq "const AUTHORIZED_FLASH_WORKFLOW='Aurum Tiny Seed Authorized USB Flash'" "$src"
-          grep -Fq "guardianImplementationEvidence:state.guardianPresent?'ab-lkg-health-rollback-runtime-present':'not-verified'" "$src"
-          grep -Fq "bootBoundaryTrialEvidence:state.bootBoundaryTrialPresent?'armed-without-live-switch-boot-preflight-activation':'not-verified'" "$src"
-          grep -Fq "physicalX86PromotionGateEvidence:state.physicalX86GatePresent?'fresh-first-boot-desktop-input-required':'not-verified'" "$src"
-          grep -Fq "tinySeedRepairSafetyEvidence:state.tinySeedRepairSafetyPresent?'repair-first-ambiguous-target-stops-without-write':'not-verified'" "$src"
-          grep -Fq "tinySeedSubstrateEvidence:state.tinySeedPresent?'manifest-present':'not-verified'" "$src"
-          grep -Fq "x86PriorBootSmokeEvidence:x86PriorBootSmokePassed(state)?'uefi-and-legacy-bios-passed-prior-source-revision':'not-verified'" "$src"
-          grep -Fq "x86RecoveryPayloadVerifierEvidence:x86VerifierCorrected(state)?'squashfs-verifier-mismatch-corrected-current-release-reproof-tracked':'not-verified'" "$src"
-          grep -Fq 'sameRevisionBuildPublicationPending:sameRevisionProofPending(state)' "$src"
-          grep -Fq 'tinySeedBuildLaneState:buildLaneState(state)' "$src"
-          grep -Fq 'tinySeedBuildFailureCreatesHumanAction:false' "$src"
-          grep -Fq 'operatorCompletionContractVisible:true' "$src"
-          grep -Fq "completionRule:'required-failing-queued-skipped-or-unverified-gates-are-not-done'" "$src"
-          grep -Fq 'remoteRecoveryControlPlaneEvidence:remoteRecoveryState(state)' "$src"
-          grep -Fq 'tinySeedHandoffState:handoffState(state)' "$src"
-          grep -Fq "tinySeedReleaseState:state.release?.state||'not-verified'" "$src"
-          grep -Fq 'tinySeedReleaseSourceCommit:state.release?.source_commit||null' "$src"
-          grep -Fq 'protectedRecoveryMediaVisible:true' "$src"
-          grep -Fq 'readyToFlashCreatesHumanAction:ready' "$src"
-          grep -Fq 'humanActionRequired:ready' "$src"
-          grep -Fq "humanActionEvidence:ready?'ready-to-flash-next-gate-physical-media-selection-and-explicit-write-authority':'none'" "$src"
+          grep -Fq "componentRevision:'1.8'" "$src"
+          grep -Fq 'remoteRecoverySoftwareCiPassed:remoteRecoveryCiPassed(state)' "$src"
+          grep -Fq 'remoteRecoverySoftwareProof:remoteRecoveryPlan(state)?.proof||null' "$src"
+          grep -Fq 'remoteRecoveryPhysicalProofPending:true' "$src"
+          grep -Fq "humanAuthorityOwner:'action-ownership-v1.9'" "$src"
+          grep -Fq 'recoveryGuardianAssignsHumanAction:false' "$src"
+          grep -Fq 'preExecutionRecoveryGate:preExec(state)' "$src"
           grep -Fq 'physicalHandoffRequiresSeparateTargetIdentity:true' "$src"
           grep -Fq 'preflightRequiredBeforeDestructiveWrite:true' "$src"
-          grep -Fq 'Human-only step: connect a disposable/test USB' "$src"
-          grep -Fq 'Leave it connected so Aurum can enumerate the exact serial and run the guarded dry-run/preflight.' "$src"
           grep -Fq "fullRecoveryImplementationEvidence:'software-survival-layer-present-hardware-proof-pending'" "$src"
           grep -Fq 'physicalRecoveryProofInferred:false' "$src"
           grep -Fq "needsWorkOwner:'aurum-system'" "$src"
@@ -76,13 +61,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -n "$BLUEHOST_HOST"; test -n "$BLUEHOST_USERNAME"; test -n "$BLUEHOST_SSH_PRIVATE_KEY"
+          test -n "$BLUEHOST_HOST"
+          test -n "$BLUEHOST_USERNAME"
+          test -n "$BLUEHOST_SSH_PRIVATE_KEY"
           install -m 700 -d "$HOME/.ssh"
           printf '%s\n' "$BLUEHOST_SSH_PRIVATE_KEY" > "$HOME/.ssh/bluehost_deploy"
           chmod 600 "$HOME/.ssh/bluehost_deploy"
           : > "$HOME/.ssh/known_hosts"
           for attempt in 1 2 3 4 5; do
-            if ssh-keyscan -T 10 -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null; then exit 0; fi
+            if ssh-keyscan -T 10 -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null; then
+              exit 0
+            fi
             if [ "$attempt" -eq 5 ]; then exit 1; fi
             sleep $((attempt * 5))
           done
@@ -95,7 +84,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          retry_capture() { local out="$1"; shift; local n=1 tmp; tmp="$(mktemp)"; while true; do if "$@" > "$tmp"; then mv "$tmp" "$out"; return 0; fi; if [ "$n" -ge 5 ]; then rm -f "$tmp"; return 1; fi; sleep $((n * 5)); n=$((n+1)); done; }
+          retry_capture() {
+            local out="$1"; shift
+            local n=1 tmp
+            tmp="$(mktemp)"
+            while true; do
+              if "$@" > "$tmp"; then mv "$tmp" "$out"; return 0; fi
+              if [ "$n" -ge 5 ]; then rm -f "$tmp"; return 1; fi
+              sleep $((n * 5)); n=$((n+1))
+            done
+          }
           remote='public_html/arkmatx/aurum/dashboard'
           backup=".aurum-dashboard-backups/recovery-guardian-$GITHUB_RUN_ID"
           retry_capture "$RUNNER_TEMP/index.html" \
@@ -113,7 +111,7 @@ jobs:
           import re, sys
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./recovery-guardian\.js(?:\?v=[^"]+)?"></script>\s*','',text)
-          tag='<script src="./recovery-guardian.js?v=171"></script>'
+          tag='<script src="./recovery-guardian.js?v=180"></script>'
           marker=re.search(r'<script src="\./seed-lifecycle\.js(?:\?v=[^"]+)?"></script>',text)
           if marker:
               text=text[:marker.end()]+'\n'+tag+text[marker.end():]
@@ -123,7 +121,7 @@ jobs:
               raise SystemExit('dashboard missing injection point')
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './recovery-guardian.js?v=171' "$RUNNER_TEMP/index.html"
+          grep -Fq './recovery-guardian.js?v=180' "$RUNNER_TEMP/index.html"
 
       - name: Publish recovery guardian with bounded retries
         env:
@@ -132,7 +130,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          retry() { local n=1; while true; do "$@" && return 0; if [ "$n" -ge 5 ]; then return 1; fi; sleep $((n * 5)); n=$((n+1)); done; }
+          retry() {
+            local n=1
+            while true; do
+              "$@" && return 0
+              if [ "$n" -ge 5 ]; then return 1; fi
+              sleep $((n * 5)); n=$((n+1))
+            done
+          }
           remote='public_html/arkmatx/aurum/dashboard'
           retry scp -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -P 22 \
             "$RUNNER_TEMP/index.html" "${{ steps.source.outputs.file }}" \
@@ -148,39 +153,21 @@ jobs:
           page="$(mktemp)"; js="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' \
-            'https://arkmatx.com/aurum/dashboard/recovery-guardian.js?rev=171' -o "$js"
-          grep -Fq './recovery-guardian.js?v=171' "$page"
-          grep -Fq 'AURUM_RECOVERY_GUARDIAN_V1_7_CANONICAL' "$js"
-          grep -Fq "const TINY_X86_WORKFLOW='Aurum Tiny Seed x86'" "$js"
-          grep -Fq "const TINY_PI_WORKFLOW='Aurum Tiny Seed Pi ARM64'" "$js"
-          grep -Fq "const HANDOFF_WORKFLOW='Aurum Tiny Seed Handoff'" "$js"
-          grep -Fq "const FLASH_WORKFLOW='Aurum Tiny Seed Windows Flash'" "$js"
-          grep -Fq "const AUTHORIZED_FLASH_WORKFLOW='Aurum Tiny Seed Authorized USB Flash'" "$js"
-          grep -Fq "x86PriorBootSmokeEvidence:x86PriorBootSmokePassed(state)?'uefi-and-legacy-bios-passed-prior-source-revision':'not-verified'" "$js"
-          grep -Fq "x86RecoveryPayloadVerifierEvidence:x86VerifierCorrected(state)?'squashfs-verifier-mismatch-corrected-current-release-reproof-tracked':'not-verified'" "$js"
-          grep -Fq 'sameRevisionBuildPublicationPending:sameRevisionProofPending(state)' "$js"
-          grep -Fq 'tinySeedBuildLaneState:buildLaneState(state)' "$js"
-          grep -Fq 'tinySeedBuildFailureCreatesHumanAction:false' "$js"
-          grep -Fq 'operatorCompletionContractVisible:true' "$js"
-          grep -Fq "completionRule:'required-failing-queued-skipped-or-unverified-gates-are-not-done'" "$js"
-          grep -Fq 'remoteRecoveryControlPlaneEvidence:remoteRecoveryState(state)' "$js"
-          grep -Fq 'tinySeedHandoffState:handoffState(state)' "$js"
-          grep -Fq "tinySeedReleaseState:state.release?.state||'not-verified'" "$js"
-          grep -Fq 'tinySeedReleaseSourceCommit:state.release?.source_commit||null' "$js"
-          grep -Fq 'protectedRecoveryMediaVisible:true' "$js"
-          grep -Fq 'readyToFlashCreatesHumanAction:ready' "$js"
-          grep -Fq 'humanActionRequired:ready' "$js"
-          grep -Fq "humanActionEvidence:ready?'ready-to-flash-next-gate-physical-media-selection-and-explicit-write-authority':'none'" "$js"
+            'https://arkmatx.com/aurum/dashboard/recovery-guardian.js?rev=180' -o "$js"
+          grep -Fq './recovery-guardian.js?v=180' "$page"
+          grep -Fq 'AURUM_RECOVERY_GUARDIAN_V1_8_CANONICAL' "$js"
+          grep -Fq "componentRevision:'1.8'" "$js"
+          grep -Fq 'remoteRecoverySoftwareCiPassed:remoteRecoveryCiPassed(state)' "$js"
+          grep -Fq 'remoteRecoverySoftwareProof:remoteRecoveryPlan(state)?.proof||null' "$js"
+          grep -Fq 'remoteRecoveryPhysicalProofPending:true' "$js"
+          grep -Fq "humanAuthorityOwner:'action-ownership-v1.9'" "$js"
+          grep -Fq 'recoveryGuardianAssignsHumanAction:false' "$js"
+          grep -Fq 'preExecutionRecoveryGate:preExec(state)' "$js"
           grep -Fq 'physicalHandoffRequiresSeparateTargetIdentity:true' "$js"
           grep -Fq 'preflightRequiredBeforeDestructiveWrite:true' "$js"
-          grep -Fq 'Human-only step: connect a disposable/test USB' "$js"
-          grep -Fq 'Leave it connected so Aurum can enumerate the exact serial and run the guarded dry-run/preflight.' "$js"
-          grep -Fq "guardianImplementationEvidence:state.guardianPresent?'ab-lkg-health-rollback-runtime-present':'not-verified'" "$js"
-          grep -Fq "bootBoundaryTrialEvidence:state.bootBoundaryTrialPresent?'armed-without-live-switch-boot-preflight-activation':'not-verified'" "$js"
-          grep -Fq "physicalX86PromotionGateEvidence:state.physicalX86GatePresent?'fresh-first-boot-desktop-input-required':'not-verified'" "$js"
-          grep -Fq "tinySeedRepairSafetyEvidence:state.tinySeedRepairSafetyPresent?'repair-first-ambiguous-target-stops-without-write':'not-verified'" "$js"
           grep -Fq "fullRecoveryImplementationEvidence:'software-survival-layer-present-hardware-proof-pending'" "$js"
           grep -Fq 'physicalRecoveryProofInferred:false' "$js"
+          grep -Fq "needsWorkOwner:'aurum-system'" "$js"
           grep -Fq 'humanActionInference:false' "$js"
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
 
@@ -192,8 +179,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          retry() { local n=1; while true; do "$@" && return 0; if [ "$n" -ge 5 ]; then return 1; fi; sleep $((n * 5)); n=$((n+1)); done; }
-          remote='public_html/arkmatx/aurum/dashboard'; backup=".aurum-dashboard-backups/recovery-guardian-$GITHUB_RUN_ID"
+          retry() {
+            local n=1
+            while true; do
+              "$@" && return 0
+              if [ "$n" -ge 5 ]; then return 1; fi
+              sleep $((n * 5)); n=$((n+1))
+            done
+          }
+          remote='public_html/arkmatx/aurum/dashboard'
+          backup=".aurum-dashboard-backups/recovery-guardian-$GITHUB_RUN_ID"
           retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
             "set -eu; cp -p '$backup/index.html' '$remote/index.html'; if [ -f '$backup/recovery-guardian.js' ]; then cp -p '$backup/recovery-guardian.js' '$remote/recovery-guardian.js'; elif [ -f '$backup/.missing-recovery-guardian.js' ]; then rm -f '$remote/recovery-guardian.js'; fi"
 
@@ -215,30 +210,16 @@ jobs:
             "canonical_component": "services/aurum-arkmatx/recovery-guardian-v1.js",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/recovery-guardian-v1.js",
             "deployment_carrier": "FormatX66/wetbeard-site",
-            "recovery_guardian_revision": "1.7",
-            "germ_evidence_visible": true,
-            "guardian_software_evidence_visible": true,
-            "boot_boundary_trial_safety_visible": true,
-            "physical_x86_promotion_gate_visible": true,
-            "tiny_seed_repair_safety_visible": true,
-            "tiny_seed_substrate_visible": true,
-            "tiny_seed_x86_lane_visible": true,
-            "tiny_seed_pi_lane_visible": true,
+            "recovery_guardian_revision": "1.8",
+            "remote_recovery_software_ci_passed_visible": true,
+            "remote_recovery_physical_proof_pending_visible": true,
+            "ab_lkg_software_evidence_visible": true,
             "tiny_seed_handoff_visible": true,
-            "tiny_seed_release_ready_to_flash_visible": true,
-            "same_revision_build_publication_resolved_visible": true,
-            "signed_recovery_control_plane_visible": true,
-            "protected_recovery_media_visible": true,
-            "physical_media_selection_human_action_visible": true,
-            "human_only_step_separated_from_system_preflight": true,
-            "preflight_before_destructive_write_visible": true,
-            "tiny_seed_lane_failure_system_owned": true,
-            "operator_completion_contract_visible": true,
-            "workflow_failure_can_create_human_action": false,
-            "ready_to_flash_can_create_human_action": true,
+            "pre_execution_recovery_gate_visible": true,
+            "human_authority_owner": "action-ownership-v1.9",
+            "recovery_guardian_assigns_human_action": false,
             "physical_handoff_requires_separate_target_identity": true,
-            "signed_recovery_operational_proof_inferred": false,
-            "software_survival_layer_present": true,
+            "preflight_before_destructive_write_visible": true,
             "physical_recovery_proof_inferred": false,
             "full_recovery_implementation_evidence": "software-survival-layer-present-hardware-proof-pending",
             "needs_work_owner": "aurum-system",
@@ -252,6 +233,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-recovery-guardian-live.json
-          git commit -m 'Record Aurum recovery guardian v1.7 live [skip ci]' || exit 0
+          git commit -m 'Record Aurum recovery guardian v1.8 live [skip ci]' || exit 0
           git pull --rebase origin main
           git push origin HEAD:main

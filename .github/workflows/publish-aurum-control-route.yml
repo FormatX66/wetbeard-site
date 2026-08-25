@@ -59,13 +59,13 @@ jobs:
           grep -Fq 'self-hosted Pi runner / workflow dispatch needs Aurum system attention' "$observer"
           grep -Fq 'AURUM_SEED_DELIVERY_V1_2_CANONICAL' "$seed"
           grep -Fq 'reachabilitySuperseded' "$seed"
-          grep -Fq 'AURUM_WORKFLOW_FAILSAFE_V1_2_CANONICAL' "$failsafe"
-          grep -Fq 'live-checks any non-completed run IDs before calling them stalled' "$failsafe"
-          grep -Fq 'enriches recent completed failures with live failed job/step names from GitHub Actions' "$failsafe"
-          grep -Fq 'stale readback cannot hide a verified failure' "$failsafe"
+          grep -Fq 'AURUM_WORKFLOW_FAILSAFE_V1_6_CANONICAL' "$failsafe"
+          grep -Fq 'rerun-safe' "$failsafe"
+          grep -Fq 'live-checks non-completed run IDs before calling them stalled' "$failsafe"
           grep -Fq 'Workflow state alone never creates a human task.' "$failsafe"
-          grep -Fq 'AURUM_ACTION_OWNERSHIP_V1_5_CANONICAL' "$action"
-          grep -Fq 'BBPI4 LAN route rediscovered; SSH path unstable' "$action"
+          grep -Fq 'AURUM_ACTION_OWNERSHIP_V1_9_CANONICAL' "$action"
+          grep -Fq 'Future Branch pre-execution recovery gate' "$action"
+          grep -Fq 'Unknown evidence never becomes your task.' "$action"
           echo "route=$route" >> "$GITHUB_OUTPUT"
           echo "reach=$reach" >> "$GITHUB_OUTPUT"
           echo "observer=$observer" >> "$GITHUB_OUTPUT"
@@ -129,8 +129,8 @@ jobs:
             ('pi4-reachability.js','11'),
             ('pi-hopper-observer.js','1'),
             ('seed-delivery.js','12'),
-            ('workflow-failsafe.js','12'),
-            ('action-ownership.js','15'),
+            ('workflow-failsafe.js','16'),
+            ('action-ownership.js','19'),
           ]
           for name,_ in specs:
               text=re.sub(r'<script src="\./'+re.escape(name)+r'\?v=[^"]+"></script>\s*','',text)
@@ -144,8 +144,8 @@ jobs:
           grep -Fq './pi4-reachability.js?v=11' "$RUNNER_TEMP/index.html"
           grep -Fq './pi-hopper-observer.js?v=1' "$RUNNER_TEMP/index.html"
           grep -Fq './seed-delivery.js?v=12' "$RUNNER_TEMP/index.html"
-          grep -Fq './workflow-failsafe.js?v=12' "$RUNNER_TEMP/index.html"
-          grep -Fq './action-ownership.js?v=15' "$RUNNER_TEMP/index.html"
+          grep -Fq './workflow-failsafe.js?v=16' "$RUNNER_TEMP/index.html"
+          grep -Fq './action-ownership.js?v=19' "$RUNNER_TEMP/index.html"
 
       - name: Publish all command surfaces with bounded connection count
         env:
@@ -181,14 +181,14 @@ jobs:
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/pi4-reachability.js?rev=11' -o "$reach"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/pi-hopper-observer.js?rev=1' -o "$observer"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/seed-delivery.js?rev=12' -o "$seed"
-          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/workflow-failsafe.js?rev=12' -o "$failsafe"
-          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/action-ownership.js?rev=15' -o "$action"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/workflow-failsafe.js?rev=16' -o "$failsafe"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/action-ownership.js?rev=19' -o "$action"
           grep -Fq './control-route.js?v=13' "$page"
           grep -Fq './pi4-reachability.js?v=11' "$page"
           grep -Fq './pi-hopper-observer.js?v=1' "$page"
           grep -Fq './seed-delivery.js?v=12' "$page"
-          grep -Fq './workflow-failsafe.js?v=12' "$page"
-          grep -Fq './action-ownership.js?v=15' "$page"
+          grep -Fq './workflow-failsafe.js?v=16' "$page"
+          grep -Fq './action-ownership.js?v=19' "$page"
           grep -Fq 'AURUM_CONTROL_ROUTE_V1_3_CANONICAL' "$route"
           grep -Fq 'AURUM_PI4_REACHABILITY_V1_1_CANONICAL' "$reach"
           grep -Fq 'workflowSuccessDoesNotImplySeedSuccess:true' "$reach"
@@ -199,13 +199,13 @@ jobs:
           grep -Fq 'self-hosted Pi runner / workflow dispatch needs Aurum system attention' "$observer"
           grep -Fq 'AURUM_SEED_DELIVERY_V1_2_CANONICAL' "$seed"
           grep -Fq 'reachabilitySuperseded' "$seed"
-          grep -Fq 'AURUM_WORKFLOW_FAILSAFE_V1_2_CANONICAL' "$failsafe"
-          grep -Fq 'live-checks any non-completed run IDs before calling them stalled' "$failsafe"
-          grep -Fq 'enriches recent completed failures with live failed job/step names from GitHub Actions' "$failsafe"
-          grep -Fq 'stale readback cannot hide a verified failure' "$failsafe"
+          grep -Fq 'AURUM_WORKFLOW_FAILSAFE_V1_6_CANONICAL' "$failsafe"
+          grep -Fq 'rerun-safe' "$failsafe"
+          grep -Fq 'live-checks non-completed run IDs before calling them stalled' "$failsafe"
           grep -Fq 'Workflow state alone never creates a human task.' "$failsafe"
-          grep -Fq 'AURUM_ACTION_OWNERSHIP_V1_5_CANONICAL' "$action"
-          grep -Fq 'BBPI4 LAN route rediscovered; SSH path unstable' "$action"
+          grep -Fq 'AURUM_ACTION_OWNERSHIP_V1_9_CANONICAL' "$action"
+          grep -Fq 'Future Branch pre-execution recovery gate' "$action"
+          grep -Fq 'Unknown evidence never becomes your task.' "$action"
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
 
       - name: Roll back if verification fails
@@ -248,8 +248,8 @@ jobs:
             "pi4_reachability_revision": "1.1",
             "pi_hopper_observer_revision": "1.0",
             "seed_delivery_revision": "1.2",
-            "workflow_failsafe_revision": "1.2",
-            "action_ownership_revision": "1.5",
+            "workflow_failsafe_revision": "1.6",
+            "action_ownership_revision": "1.9",
             "deployment_resilience_revision": "1.3",
             "ssh_retry_attempts": 5,
             "ssh_retry_policy": "bounded-linear-backoff",

@@ -34,24 +34,53 @@ jobs:
           # ClusterSites is canonical. The deploy carrier cannot anonymously read that
           # repository, so it accepts the public BoxBrain projection only when its Git
           # blob hash exactly matches the approved ClusterSites canonical blob.
-          expected_canonical_blob='e60db89d4f05bda05f7b3ee484bf3a290f432116'
+          expected_canonical_blob='84013e53ceb86a5502189b59361dab8a6e3a4f25'
           projection='https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/autonomy-controller-v1.js'
           out="$RUNNER_TEMP/autonomy-controller.js"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 "$projection" -o "$out"
           test -s "$out"
           actual_blob="$(git hash-object "$out")"
           test "$actual_blob" = "$expected_canonical_blob"
-          grep -Fq 'AURUM_AUTONOMY_CONTROLLER_V1_5_CANONICAL' "$out"
+          grep -Fq 'AURUM_AUTONOMY_CONTROLLER_V1_6_CANONICAL' "$out"
           grep -Fq 'Canonical website owner: FormatX66/ClusterSites' "$out"
+          grep -Fq 'FARMER_PROOF_URL' "$out"
           grep -Fq 'Aurum Farmer' "$out"
-          grep -Fq 'Hosted Windows install/service proof' "$out"
+          grep -Fq 'Self-hosted deployed runtime' "$out"
+          grep -Fq 'Production local operational-state authority' "$out"
           grep -Fq 'Frontiers Advancing:' "$out"
           grep -Fq 'Needs Work → Aurum/System:' "$out"
           grep -Fq 'Your Actions:' "$out"
-          grep -Fq 'hosted installer smoke, or ephemeral hosted-task health as deployed long-lived runtime proof.' "$out"
+          grep -Fq 'zero-authority compatibility/reconstruction projection' "$out"
           grep -Fq 'this surface never creates a human task from controller state alone.' "$out"
           echo "file=$out" >> "$GITHUB_OUTPUT"
           echo "canonical_blob=$actual_blob" >> "$GITHUB_OUTPUT"
+
+      - name: Verify deployed Farmer proof contract before publish
+        shell: bash
+        run: |
+          set -euo pipefail
+          proof="$RUNNER_TEMP/latest-windows-runtime-proof.json"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 \
+            'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Projects/AurumFarmer/Deploy/latest-windows-runtime-proof.json' \
+            -o "$proof"
+          python3 - "$proof" <<'PY'
+          import json, sys
+          with open(sys.argv[1], encoding='utf-8-sig') as f:
+              p=json.load(f)
+          assert p.get('schema') == 'aurum.farmer.windows-runtime-proof.v1', p
+          assert p.get('runner_name') == 'AURUM-LAPTOP-EBD8CG8P', p
+          assert p.get('source_commit') == 'fd243eb4da45b19f413ffe055c71202e20fa92ca', p
+          assert p.get('task_state') == 'Running', p
+          assert p.get('initial_health_verified') is True, p
+          assert p.get('post_restart_health_verified') is True, p
+          assert p.get('event_chain_valid') is True, p
+          assert p.get('queued_while_supervisor_stopped') is True, p
+          assert p.get('restart_resume_job_state') == 'SUCCEEDED', p
+          assert p.get('destructive_action_allowed') is False, p
+          assert p.get('lkg_mutation_inferred') is False, p
+          assert p.get('physical_proof_inferred') is False, p
+          print('FARMER_DEPLOYED_RUNTIME_PROOF_OK')
+          PY
 
       - name: Configure existing Bluehost SSH carrier with bounded retry
         env:
@@ -97,10 +126,10 @@ jobs:
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./autonomy-controller\.js(?:\?v=[^"]+)?"></script>\s*','',text)
           if '</body>' not in text: raise SystemExit('dashboard missing body close')
-          text=text.replace('</body>','<script src="./autonomy-controller.js?v=1.5"></script>\n</body>',1)
+          text=text.replace('</body>','<script src="./autonomy-controller.js?v=1.6"></script>\n</body>',1)
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './autonomy-controller.js?v=1.5' "$RUNNER_TEMP/index.html"
+          grep -Fq './autonomy-controller.js?v=1.6' "$RUNNER_TEMP/index.html"
 
       - name: Publish autonomy controller with bounded connection count
         env:
@@ -124,16 +153,15 @@ jobs:
           set -euo pipefail
           page="$(mktemp)"; component="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
-          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/autonomy-controller.js?rev=1.5' -o "$component"
-          grep -Fq './autonomy-controller.js?v=1.5' "$page"
-          grep -Fq 'AURUM_AUTONOMY_CONTROLLER_V1_5_CANONICAL' "$component"
-          grep -Fq 'Aurum Farmer' "$component"
-          grep -Fq 'Hosted Windows install/service proof' "$component"
-          grep -Fq 'Long-lived deployed Farmer runtime' "$component"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/autonomy-controller.js?rev=1.6' -o "$component"
+          grep -Fq './autonomy-controller.js?v=1.6' "$page"
+          grep -Fq 'AURUM_AUTONOMY_CONTROLLER_V1_6_CANONICAL' "$component"
+          grep -Fq 'FARMER_PROOF_URL' "$component"
+          grep -Fq 'Self-hosted deployed runtime' "$component"
+          grep -Fq 'Production local operational-state authority' "$component"
           grep -Fq 'Frontiers Advancing:' "$component"
           grep -Fq 'Needs Work → Aurum/System:' "$component"
           grep -Fq 'Your Actions:' "$component"
-          grep -Fq 'hosted installer smoke, or ephemeral hosted-task health as deployed long-lived runtime proof.' "$component"
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
 
       - name: Roll back if verification fails
@@ -165,7 +193,7 @@ jobs:
             "canonical_website_repo": "FormatX66/ClusterSites",
             "public_projection_repo": "FormatX66/BoxBrain",
             "component": "autonomy-controller-v1.js",
-            "revision": "1.5",
+            "revision": "1.6",
             "canonical_blob": "${{ steps.source.outputs.canonical_blob }}",
             "canonical_projection_byte_identical": true,
             "farmer_repository_contract_proven": true,
@@ -173,9 +201,17 @@ jobs:
             "farmer_hosted_windows_install_proof": true,
             "farmer_hosted_windows_install_run": 32878837340,
             "farmer_hosted_windows_install_commit": "da4239ab301c5fb2d6748145dae75b03e3589bed",
-            "farmer_live_runtime_proof": false,
+            "farmer_self_hosted_windows_runtime_proof": true,
+            "farmer_self_hosted_windows_runtime_run": 32887137300,
+            "farmer_self_hosted_windows_source_commit": "fd243eb4da45b19f413ffe055c71202e20fa92ca",
+            "farmer_self_hosted_windows_runner": "AURUM-LAPTOP-EBD8CG8P",
+            "farmer_restart_resume_proven": true,
+            "farmer_production_local_operational_state_authority": true,
+            "generic_runtime_checkpoint_peer_authority": false,
             "hosted_windows_install_does_not_imply_long_lived_runtime": true,
-            "live_restart_proof_pending": true,
+            "farmer_live_restart_proof_pending": false,
+            "edge_controller_restart_proof_separate": true,
+            "unrelated_physical_proof_inferred": false,
             "expandable": true,
             "needs_work_owner": "Aurum/System",
             "human_action_inference": false,

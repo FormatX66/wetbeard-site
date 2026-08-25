@@ -44,7 +44,7 @@ jobs:
           grep -Fq 'Needs Work → Aurum/System:' "$out"
           grep -Fq 'Your Actions:' "$out"
           grep -Fq 'code/CI do not prove that a real controller process has restarted and restored correctly' "$out"
-          grep -Fq 'This surface never creates a human task from controller state alone.' "$out"
+          grep -Fq 'this surface never creates a human task from controller state alone.' "$out"
           grep -Fq 'Split Evidence' "$out"
           grep -Fq 'Autonomy Controller' "$out"
           echo "file=$out" >> "$GITHUB_OUTPUT"
@@ -145,7 +145,7 @@ jobs:
           grep -Fq 'Your Actions:' "$component"
           grep -Fq 'fresh successful Continuous Controller workflow proves the autonomous build scheduler executed' "$component"
           grep -Fq 'code/CI do not prove that a real controller process has restarted and restored correctly' "$component"
-          grep -Fq 'This surface never creates a human task from controller state alone.' "$component"
+          grep -Fq 'this surface never creates a human task from controller state alone.' "$component"
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
 
       - name: Roll back if verification fails

@@ -39,8 +39,18 @@ jobs:
           grep -Fq 'Canonical website owner: FormatX66/ClusterSites.' "$out"
           grep -Fq 'Schema roll-forward is intentional' "$out"
           grep -Fq 'Preparation-stack evidence is repository/runtime evidence only' "$out"
-          grep -Fq "schema:'aurum-command-center-future-branch-v1.3'" "$out"
+          grep -Fq 'Human-facing and diagnostic adaptation evidence is experimental advisory evidence only' "$out"
+          grep -Fq "schema:'aurum-command-center-future-branch-v1.4'" "$out"
           grep -Fq 'Project consumers' "$out"
+          grep -Fq 'Diagnostic planner' "$out"
+          grep -Fq 'Human-facing adaptation' "$out"
+          grep -Fq 'Adaptation CI boundary' "$out"
+          grep -Fq 'diagnosticPlannerVisible:' "$out"
+          grep -Fq 'humanFacingAdaptationVisible:' "$out"
+          grep -Fq 'adaptationCiPassed:' "$out"
+          grep -Fq 'diagnosticPlannerGrantsAuthority:false' "$out"
+          grep -Fq 'identityPredictionCanRaisePrivilege:false' "$out"
+          grep -Fq 'preferenceSingleObservationCanSwitch:false' "$out"
           grep -Fq 'Execution-route layer' "$out"
           grep -Fq 'Human availability' "$out"
           grep -Fq 'Surprise reserve' "$out"
@@ -133,10 +143,10 @@ jobs:
           text=re.sub(r'<script src="\./future-branch\.js(?:\?v=[^"]+)?"></script>\s*','',text)
           if '</body>' not in text:
               raise SystemExit('dashboard missing body close')
-          text=text.replace('</body>','<script src="./future-branch.js?v=4"></script>\n</body>',1)
+          text=text.replace('</body>','<script src="./future-branch.js?v=5"></script>\n</body>',1)
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './future-branch.js?v=4' "$RUNNER_TEMP/index.html"
+          grep -Fq './future-branch.js?v=5' "$RUNNER_TEMP/index.html"
 
       - name: Publish Future Branch with bounded connection count
         env:
@@ -174,19 +184,29 @@ jobs:
           component="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' \
-            'https://arkmatx.com/aurum/dashboard/future-branch.js?rev=4' -o "$component"
+            'https://arkmatx.com/aurum/dashboard/future-branch.js?rev=5' -o "$component"
           grep -Fq 'Progress is proof, not activity.' "$page"
           grep -Fq './command-center.js?v=32' "$page"
-          grep -Fq './future-branch.js?v=4' "$page"
+          grep -Fq './future-branch.js?v=5' "$page"
           grep -Fq 'AURUM_FUTURE_BRANCH_V1_CANONICAL' "$component"
           grep -Fq 'Schema roll-forward is intentional' "$component"
           grep -Fq 'Preparation-stack evidence is repository/runtime evidence only' "$component"
-          grep -Fq "schema:'aurum-command-center-future-branch-v1.3'" "$component"
+          grep -Fq 'Human-facing and diagnostic adaptation evidence is experimental advisory evidence only' "$component"
+          grep -Fq "schema:'aurum-command-center-future-branch-v1.4'" "$component"
           grep -Fq 'Project consumers' "$component"
           grep -Fq 'consumerIntegrationCiPassed:integrated' "$component"
           grep -Fq 'stateweave-adaptive-kernel-combined-ci-passed' "$component"
           grep -Fq 'experimental-cross-system-ci-passed' "$component"
           grep -Fq 'Method/carrier pivot' "$component"
+          grep -Fq 'Diagnostic planner' "$component"
+          grep -Fq 'Human-facing adaptation' "$component"
+          grep -Fq 'Adaptation CI boundary' "$component"
+          grep -Fq 'diagnosticPlannerVisible:' "$component"
+          grep -Fq 'humanFacingAdaptationVisible:' "$component"
+          grep -Fq 'adaptationCiPassed:' "$component"
+          grep -Fq 'diagnosticPlannerGrantsAuthority:false' "$component"
+          grep -Fq 'identityPredictionCanRaisePrivilege:false' "$component"
+          grep -Fq 'preferenceSingleObservationCanSwitch:false' "$component"
           grep -Fq 'Execution-route layer' "$component"
           grep -Fq 'Human availability' "$component"
           grep -Fq 'Surprise reserve' "$component"
@@ -249,7 +269,7 @@ jobs:
             "canonical_component": "services/aurum-arkmatx/future-branch-v1.js",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/future-branch-v1.js",
             "deployment_carrier": "FormatX66/wetbeard-site",
-            "future_branch_revision": "1.3",
+            "future_branch_revision": "1.4",
             "expandable": true,
             "core_operating_principle_visible": true,
             "experimental_executable_model_visible": true,
@@ -259,6 +279,12 @@ jobs:
             "combined_bridge_consumer_visible": true,
             "schema_rollforward_visible": true,
             "method_carrier_pivot_visible": true,
+            "diagnostic_planner_visible": true,
+            "human_facing_adaptation_visible": true,
+            "adaptation_ci_boundary_visible": true,
+            "diagnostic_planner_grants_authority": false,
+            "identity_prediction_can_raise_privilege": false,
+            "single_preference_observation_can_switch": false,
             "execution_route_layer_visible": true,
             "human_availability_soft_prior_visible": true,
             "surprise_reserve_visible": true,
@@ -284,6 +310,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-future-branch-live.json
-          git commit -m 'Record Aurum Future Branch v1.3 live [skip ci]' || exit 0
+          git commit -m 'Record Aurum Future Branch v1.4 live [skip ci]' || exit 0
           git pull --rebase origin main
           git push origin HEAD:main

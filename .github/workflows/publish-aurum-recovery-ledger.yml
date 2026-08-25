@@ -52,9 +52,13 @@ jobs:
           grep -Fq 'destructiveWriteHasSingleGuardedPath:legacyDisabled&&writeGate' "$src"
           grep -Fq 'Admin/validate_repository.py' "$src"
           grep -Fq 'repositoryAuthorityFirewallPresent' "$src"
-          grep -Fq "repositoryAuthorityFirewallEvidence:authorityFirewall?'repo-wide-static-destructive-authority-rejected':'not-verified'" "$src"
+          grep -Fq 'def destructive_workflow_policy_errors' "$src"
+          grep -Fq 'static_authorization_pattern' "$src"
+          grep -Fq 'raw_media_write_markers' "$src"
+          grep -Fq 'workflow combines persistent static authorization with raw-media io' "$src"
+          grep -Fq "repositoryAuthorityFirewallEvidence:authorityFirewall?'repo-wide-destructive-authority-policy-fail-closed':'not-verified'" "$src"
           grep -Fq 'persistentAuthorityInDestructiveWorkflowAllowed:false' "$src"
-          grep -Fq 'Repository validation now rejects any workflow that combines a destructive-write primitive with persistent/static authority.' "$src"
+          grep -Fq 'Repository validation now fails closed if retired raw-media workflows regain destructive behavior or a workflow combines persistent static AURUM authorization with raw-media I/O.' "$src"
           grep -Fq 'repositoryImplementationIsPhysicalProof:false' "$src"
           grep -Fq "needsWorkOwner:'aurum-system'" "$src"
           grep -Fq 'humanActionRequired:false' "$src"
@@ -106,7 +110,7 @@ jobs:
           import re, sys
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./recovery-ledger\.js(?:\?v=[^"]+)?"></script>\s*','',text)
-          tag='<script src="./recovery-ledger.js?v=13"></script>'
+          tag='<script src="./recovery-ledger.js?v=14"></script>'
           marker=re.search(r'<script src="\./recovery-guardian\.js(?:\?v=[^"]+)?"></script>',text)
           if marker:
               text=text[:marker.end()]+'\n'+tag+text[marker.end():]
@@ -120,7 +124,7 @@ jobs:
                   raise SystemExit('dashboard missing injection point')
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './recovery-ledger.js?v=13' "$RUNNER_TEMP/index.html"
+          grep -Fq './recovery-ledger.js?v=14' "$RUNNER_TEMP/index.html"
 
       - name: Publish recovery ledger with bounded retries
         env:
@@ -145,8 +149,8 @@ jobs:
           page="$(mktemp)"; js="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' \
-            'https://arkmatx.com/aurum/dashboard/recovery-ledger.js?rev=13' -o "$js"
-          grep -Fq './recovery-ledger.js?v=13' "$page"
+            'https://arkmatx.com/aurum/dashboard/recovery-ledger.js?rev=14' -o "$js"
+          grep -Fq './recovery-ledger.js?v=14' "$page"
           grep -Fq 'AURUM_RECOVERY_LEDGER_V1_2_CANONICAL' "$js"
           grep -Fq 'Canonical website owner: FormatX66/ClusterSites.' "$js"
           grep -Fq 'Frontiers Advancing:' "$js"
@@ -165,9 +169,13 @@ jobs:
           grep -Fq 'destructiveWriteHasSingleGuardedPath:legacyDisabled&&writeGate' "$js"
           grep -Fq 'Admin/validate_repository.py' "$js"
           grep -Fq 'repositoryAuthorityFirewallPresent' "$js"
-          grep -Fq "repositoryAuthorityFirewallEvidence:authorityFirewall?'repo-wide-static-destructive-authority-rejected':'not-verified'" "$js"
+          grep -Fq 'def destructive_workflow_policy_errors' "$js"
+          grep -Fq 'static_authorization_pattern' "$js"
+          grep -Fq 'raw_media_write_markers' "$js"
+          grep -Fq 'workflow combines persistent static authorization with raw-media io' "$js"
+          grep -Fq "repositoryAuthorityFirewallEvidence:authorityFirewall?'repo-wide-destructive-authority-policy-fail-closed':'not-verified'" "$js"
           grep -Fq 'persistentAuthorityInDestructiveWorkflowAllowed:false' "$js"
-          grep -Fq 'Repository validation now rejects any workflow that combines a destructive-write primitive with persistent/static authority.' "$js"
+          grep -Fq 'Repository validation now fails closed if retired raw-media workflows regain destructive behavior or a workflow combines persistent static AURUM authorization with raw-media I/O.' "$js"
           grep -Fq 'repositoryImplementationIsPhysicalProof:false' "$js"
           grep -Fq 'humanActionRequired:false' "$js"
           grep -Fq 'humanActionInference:false' "$js"
@@ -217,6 +225,7 @@ jobs:
             "legacy_destructive_bypass_disabled": true,
             "destructive_write_single_guarded_path": true,
             "repository_authority_firewall_visible": true,
+            "authority_policy_detector_aligned": true,
             "persistent_authority_in_destructive_workflow_allowed": false,
             "physical_proof_inferred": false,
             "needs_work_owner": "aurum-system",

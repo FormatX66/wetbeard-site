@@ -31,20 +31,27 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          src='https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/autonomy-controller-v1.js'
+          canonical='https://raw.githubusercontent.com/FormatX66/ClusterSites/main/services/aurum-arkmatx/autonomy-controller-v1.js'
+          projection='https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/autonomy-controller-v1.js'
           out="$RUNNER_TEMP/autonomy-controller.js"
-          curl --fail-with-body --silent --show-error --location "$src" -o "$out"
-          test -s "$out"
+          projection_out="$RUNNER_TEMP/autonomy-controller-projection.js"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 "$canonical" -o "$out"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 "$projection" -o "$projection_out"
+          test -s "$out"; test -s "$projection_out"
+          cmp -s "$out" "$projection_out"
           grep -Fq 'AURUM_AUTONOMY_CONTROLLER_V1_CANONICAL' "$out"
           grep -Fq 'AURUM_AUTONOMY_CONTROLLER_V1_1_CANONICAL' "$out"
           grep -Fq 'AURUM_AUTONOMY_CONTROLLER_V1_2_CANONICAL' "$out"
           grep -Fq 'AURUM_AUTONOMY_CONTROLLER_V1_3_CANONICAL' "$out"
           grep -Fq 'AURUM_AUTONOMY_CONTROLLER_V1_4_CANONICAL' "$out"
+          grep -Fq 'AURUM_AUTONOMY_CONTROLLER_V1_5_CANONICAL' "$out"
           grep -Fq 'Canonical website owner: FormatX66/ClusterSites' "$out"
           grep -Fq 'Runtime continuity' "$out"
           grep -Fq 'Aurum Farmer' "$out"
           grep -Fq "Farmer v1's persistent orchestration contract" "$out"
-          grep -Fq 'Do not count Farmer CI as live Farmer runtime proof.' "$out"
+          grep -Fq 'Hosted Windows install/service proof' "$out"
+          grep -Fq 'hosted Windows run ${esc(FARMER.windowsInstallRun)} now proves the real installer' "$out"
+          grep -Fq 'hosted installer smoke, or ephemeral hosted-task health as deployed long-lived runtime proof.' "$out"
           grep -Fq 'Frontiers Advancing:' "$out"
           grep -Fq 'Needs Work → Aurum/System:' "$out"
           grep -Fq 'Your Actions:' "$out"
@@ -99,10 +106,10 @@ jobs:
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./autonomy-controller\.js(?:\?v=[^"]+)?"></script>\s*','',text)
           if '</body>' not in text: raise SystemExit('dashboard missing body close')
-          text=text.replace('</body>','<script src="./autonomy-controller.js?v=1.4"></script>\n</body>',1)
+          text=text.replace('</body>','<script src="./autonomy-controller.js?v=1.5"></script>\n</body>',1)
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './autonomy-controller.js?v=1.4' "$RUNNER_TEMP/index.html"
+          grep -Fq './autonomy-controller.js?v=1.5' "$RUNNER_TEMP/index.html"
 
       - name: Publish autonomy controller with bounded connection count
         env:
@@ -126,19 +133,19 @@ jobs:
           set -euo pipefail
           page="$(mktemp)"; component="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
-          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/autonomy-controller.js?rev=1.4' -o "$component"
-          grep -Fq './autonomy-controller.js?v=1.4' "$page"
-          grep -Fq 'AURUM_AUTONOMY_CONTROLLER_V1_4_CANONICAL' "$component"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/autonomy-controller.js?rev=1.5' -o "$component"
+          grep -Fq './autonomy-controller.js?v=1.5' "$page"
+          grep -Fq 'AURUM_AUTONOMY_CONTROLLER_V1_5_CANONICAL' "$component"
           grep -Fq 'Autonomy Controller' "$component"
           grep -Fq 'Aurum Farmer' "$component"
-          grep -Fq 'Farmer repository contract proven' "$component"
-          grep -Fq 'deployed Farmer runtime' "$component"
+          grep -Fq 'hosted Windows install/service contract proven' "$component"
+          grep -Fq 'Long-lived deployed Farmer runtime' "$component"
           grep -Fq 'Split Evidence' "$component"
           grep -Fq 'Runtime continuity' "$component"
           grep -Fq 'Frontiers Advancing:' "$component"
           grep -Fq 'Needs Work → Aurum/System:' "$component"
           grep -Fq 'Your Actions:' "$component"
-          grep -Fq 'Do not count Farmer CI as live Farmer runtime proof.' "$component"
+          grep -Fq 'hosted installer smoke, or ephemeral hosted-task health as deployed long-lived runtime proof.' "$component"
           grep -Fq 'this surface never creates a human task from controller state alone.' "$component"
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
 
@@ -171,7 +178,7 @@ jobs:
             "canonical_website_repo": "FormatX66/ClusterSites",
             "public_projection_repo": "FormatX66/BoxBrain",
             "component": "autonomy-controller-v1.js",
-            "revision": "1.4",
+            "revision": "1.5",
             "controller_cycle_surface": true,
             "scheduler_edge_evidence_split": true,
             "runtime_continuity_surface": true,
@@ -181,8 +188,13 @@ jobs:
             "farmer_repository_contract_proven": true,
             "farmer_ci_run": 32874824671,
             "farmer_merge_commit": "dc41ae072b1f94a81fb9bc427f2cea4ef7b3c6f7",
+            "farmer_hosted_windows_install_proof": true,
+            "farmer_hosted_windows_install_run": 32878837340,
+            "farmer_hosted_windows_install_commit": "da4239ab301c5fb2d6748145dae75b03e3589bed",
             "farmer_live_runtime_proof": false,
             "farmer_ci_does_not_imply_live_runtime": true,
+            "hosted_windows_install_does_not_imply_long_lived_runtime": true,
+            "canonical_projection_byte_identical": true,
             "live_restart_proof_pending": true,
             "expandable": true,
             "needs_work_owner": "Aurum/System",

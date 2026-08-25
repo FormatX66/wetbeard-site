@@ -20,53 +20,53 @@
   ],
   "recent_commits": [
     {
-      "sha": "70051347",
-      "message": "Record Aurum seed lifecycle v1.2 live [skip ci]",
-      "date": "2026-08-25T00:46:28Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/700513470133d484bfb19677b3e453a4f8985c1b"
+      "sha": "0a8ac73b",
+      "message": "Record Aurum Tiny Seed media handoff v1.6 live [skip ci]",
+      "date": "2026-08-25T06:59:55Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/0a8ac73b202d4766aefec700a83234c1c7077735"
     },
     {
-      "sha": "bcc3e13a",
-      "message": "Decouple Seed Lifecycle verification from unrelated cache versions",
-      "date": "2026-08-25T00:46:11Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/bcc3e13aaa0477d0d767d28621d777230296156a"
+      "sha": "a67dadb9",
+      "message": "Deploy Tiny Seed media handoff v1.6 system discovery guard",
+      "date": "2026-08-25T06:59:41Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/a67dadb9df12bbb51b6dc690a3cf4d12e543803f"
     },
     {
-      "sha": "345c3023",
-      "message": "Publish Seed Lifecycle v1.2 release identity truth",
-      "date": "2026-08-25T00:45:05Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/345c302340dbea51fe122fc8050c4fb032d5c2e4"
+      "sha": "594e3815",
+      "message": "Record Aurum Tiny Seed media handoff v1.5 live [skip ci]",
+      "date": "2026-08-25T06:05:53Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/594e3815d4447591634165effe5ab5378158e2ae"
     },
     {
-      "sha": "141e3d76",
-      "message": "Record Aurum recovery ledger v1.1 live [skip ci]",
-      "date": "2026-08-24T20:53:59Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/141e3d7637ea12eefe86e3453800a31b5cf8e6c8"
+      "sha": "91f9dff8",
+      "message": "Publish Tiny Seed media handoff v1.5 schema roll-forward",
+      "date": "2026-08-25T06:05:38Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/91f9dff83af3412b326c9e315ea1704446a505ba"
     },
     {
-      "sha": "efab40f8",
-      "message": "Publish legacy-bypass lockout in recovery safety truth",
-      "date": "2026-08-24T20:53:42Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/efab40f813bc4b41cbed74bee8de90fccb6f98bf"
+      "sha": "4f461f41",
+      "message": "Record Aurum control route live deployment [skip ci]",
+      "date": "2026-08-25T04:03:41Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/4f461f410131db9eef89608a235f8ac4fdb07315"
     },
     {
-      "sha": "b0b660a8",
-      "message": "Record Aurum recovery ledger v1.1 live [skip ci]",
-      "date": "2026-08-24T20:50:54Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/b0b660a8e14c55071b0a24556a43c86269481478"
+      "sha": "f299d211",
+      "message": "Align Aurum control-route carrier with current dashboard contracts",
+      "date": "2026-08-25T04:03:23Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/f299d21129626c3b9a8d34718cbc8742f30f3149"
     },
     {
-      "sha": "eaefb766",
-      "message": "Publish recovery ledger v1.1 safety truth",
-      "date": "2026-08-24T20:50:37Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/eaefb7660f00654e2da548bea7e083296c347a2a"
+      "sha": "ffc3c584",
+      "message": "Deploy BBPI4 seed/recovery truth through safe carrier",
+      "date": "2026-08-25T04:01:01Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/ffc3c584599b8b43a593da82db52348999fb24de"
     },
     {
-      "sha": "5ba50c64",
-      "message": "Record Aurum action ownership v1.9 live [skip ci]",
-      "date": "2026-08-24T20:00:30Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/5ba50c64250b9669b06f25b9c63aca78c9813401"
+      "sha": "1bf74fc8",
+      "message": "Record Aurum recovery guardian v1.8 live [skip ci]",
+      "date": "2026-08-25T02:09:55Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/1bf74fc873ea14a8be8e1d449d53282414701bf2"
     }
   ],
-  "updated_at": "2026-08-25T01:52:33Z"
+  "updated_at": "2026-08-25T07:08:21Z"
 }

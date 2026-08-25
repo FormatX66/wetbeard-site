@@ -50,8 +50,11 @@ jobs:
           test -s "$route"; test -s "$reach"; test -s "$observer"; test -s "$seed"; test -s "$failsafe"; test -s "$action"
           grep -Fq 'AURUM_CONTROL_ROUTE_V1_3_CANONICAL' "$route"
           grep -Fq 'SSH attempts:' "$route"
-          grep -Fq 'AURUM_PI4_REACHABILITY_V1_CANONICAL' "$reach"
-          grep -Fq 'transport reachability, not proof of SSH identity' "$reach"
+          grep -Fq 'AURUM_PI4_REACHABILITY_V1_1_CANONICAL' "$reach"
+          grep -Fq 'workflowSuccessDoesNotImplySeedSuccess:true' "$reach"
+          grep -Fq 'Frontiers Advancing' "$reach"
+          grep -Fq 'Needs Work → Aurum/System' "$reach"
+          grep -Fq 'Your Actions' "$reach"
           grep -Fq 'AURUM_PI_HOPPER_OBSERVER_V1_CANONICAL' "$observer"
           grep -Fq 'self-hosted Pi runner / workflow dispatch needs Aurum system attention' "$observer"
           grep -Fq 'AURUM_SEED_DELIVERY_V1_2_CANONICAL' "$seed"
@@ -123,7 +126,7 @@ jobs:
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           specs=[
             ('control-route.js','13'),
-            ('pi4-reachability.js','1'),
+            ('pi4-reachability.js','11'),
             ('pi-hopper-observer.js','1'),
             ('seed-delivery.js','12'),
             ('workflow-failsafe.js','12'),
@@ -138,7 +141,7 @@ jobs:
           p.write_text(text,encoding='utf-8')
           PY
           grep -Fq './control-route.js?v=13' "$RUNNER_TEMP/index.html"
-          grep -Fq './pi4-reachability.js?v=1' "$RUNNER_TEMP/index.html"
+          grep -Fq './pi4-reachability.js?v=11' "$RUNNER_TEMP/index.html"
           grep -Fq './pi-hopper-observer.js?v=1' "$RUNNER_TEMP/index.html"
           grep -Fq './seed-delivery.js?v=12' "$RUNNER_TEMP/index.html"
           grep -Fq './workflow-failsafe.js?v=12' "$RUNNER_TEMP/index.html"
@@ -175,20 +178,23 @@ jobs:
           page="$(mktemp)"; route="$(mktemp)"; reach="$(mktemp)"; observer="$(mktemp)"; seed="$(mktemp)"; failsafe="$(mktemp)"; action="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/control-route.js?rev=13' -o "$route"
-          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/pi4-reachability.js?rev=1' -o "$reach"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/pi4-reachability.js?rev=11' -o "$reach"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/pi-hopper-observer.js?rev=1' -o "$observer"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/seed-delivery.js?rev=12' -o "$seed"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/workflow-failsafe.js?rev=12' -o "$failsafe"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/action-ownership.js?rev=15' -o "$action"
           grep -Fq './control-route.js?v=13' "$page"
-          grep -Fq './pi4-reachability.js?v=1' "$page"
+          grep -Fq './pi4-reachability.js?v=11' "$page"
           grep -Fq './pi-hopper-observer.js?v=1' "$page"
           grep -Fq './seed-delivery.js?v=12' "$page"
           grep -Fq './workflow-failsafe.js?v=12' "$page"
           grep -Fq './action-ownership.js?v=15' "$page"
           grep -Fq 'AURUM_CONTROL_ROUTE_V1_3_CANONICAL' "$route"
-          grep -Fq 'AURUM_PI4_REACHABILITY_V1_CANONICAL' "$reach"
-          grep -Fq 'transport reachability, not proof of SSH identity' "$reach"
+          grep -Fq 'AURUM_PI4_REACHABILITY_V1_1_CANONICAL' "$reach"
+          grep -Fq 'workflowSuccessDoesNotImplySeedSuccess:true' "$reach"
+          grep -Fq 'Frontiers Advancing' "$reach"
+          grep -Fq 'Needs Work → Aurum/System' "$reach"
+          grep -Fq 'Your Actions' "$reach"
           grep -Fq 'AURUM_PI_HOPPER_OBSERVER_V1_CANONICAL' "$observer"
           grep -Fq 'self-hosted Pi runner / workflow dispatch needs Aurum system attention' "$observer"
           grep -Fq 'AURUM_SEED_DELIVERY_V1_2_CANONICAL' "$seed"
@@ -239,7 +245,7 @@ jobs:
             "canonical_action_component": "services/aurum-arkmatx/action-ownership-v1.js",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx",
             "component_revision": "1.3",
-            "pi4_reachability_revision": "1.0",
+            "pi4_reachability_revision": "1.1",
             "pi_hopper_observer_revision": "1.0",
             "seed_delivery_revision": "1.2",
             "workflow_failsafe_revision": "1.2",
@@ -249,6 +255,10 @@ jobs:
             "ssh_retry_policy": "bounded-linear-backoff",
             "ssh_connection_batching": true,
             "layered_reachability_evidence": true,
+            "pi4_seed_receipt_tracking": true,
+            "pi4_seed_waiting_owned_by_system": true,
+            "future_branch_pre_mutation_guard_visible": true,
+            "workflow_success_distinct_from_seed_success": true,
             "pi_hopper_observer_tracking": true,
             "observer_stall_owned_by_system": true,
             "workflow_failsafe_tracking": true,

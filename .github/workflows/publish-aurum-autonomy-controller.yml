@@ -37,7 +37,13 @@ jobs:
           test -s "$out"
           grep -Fq 'AURUM_AUTONOMY_CONTROLLER_V1_CANONICAL' "$out"
           grep -Fq 'AURUM_AUTONOMY_CONTROLLER_V1_1_CANONICAL' "$out"
+          grep -Fq 'AURUM_AUTONOMY_CONTROLLER_V1_2_CANONICAL' "$out"
           grep -Fq 'Canonical website owner: FormatX66/ClusterSites' "$out"
+          grep -Fq 'Runtime continuity' "$out"
+          grep -Fq 'Frontiers Advancing:' "$out"
+          grep -Fq 'Needs Work → Aurum/System:' "$out"
+          grep -Fq 'Your Actions:' "$out"
+          grep -Fq 'code/CI do not prove that a real controller process has restarted and restored correctly' "$out"
           grep -Fq 'This surface never creates a human task from controller state alone.' "$out"
           grep -Fq 'Split Evidence' "$out"
           grep -Fq 'Autonomy Controller' "$out"
@@ -96,10 +102,10 @@ jobs:
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./autonomy-controller\.js(?:\?v=[^"]+)?"></script>\s*','',text)
           if '</body>' not in text: raise SystemExit('dashboard missing body close')
-          text=text.replace('</body>','<script src="./autonomy-controller.js?v=1.1"></script>\n</body>',1)
+          text=text.replace('</body>','<script src="./autonomy-controller.js?v=1.2"></script>\n</body>',1)
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './autonomy-controller.js?v=1.1' "$RUNNER_TEMP/index.html"
+          grep -Fq './autonomy-controller.js?v=1.2' "$RUNNER_TEMP/index.html"
 
       - name: Publish autonomy controller with bounded connection count
         env:
@@ -125,14 +131,20 @@ jobs:
           set -euo pipefail
           page="$(mktemp)"; component="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
-          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/autonomy-controller.js?rev=1.1' -o "$component"
-          grep -Fq './autonomy-controller.js?v=1.1' "$page"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/autonomy-controller.js?rev=1.2' -o "$component"
+          grep -Fq './autonomy-controller.js?v=1.2' "$page"
           grep -Fq 'AURUM_AUTONOMY_CONTROLLER_V1_CANONICAL' "$component"
           grep -Fq 'AURUM_AUTONOMY_CONTROLLER_V1_1_CANONICAL' "$component"
+          grep -Fq 'AURUM_AUTONOMY_CONTROLLER_V1_2_CANONICAL' "$component"
           grep -Fq 'Autonomy Controller' "$component"
           grep -Fq 'edge carrier healthy' "$component"
           grep -Fq 'Split Evidence' "$component"
+          grep -Fq 'Runtime continuity' "$component"
+          grep -Fq 'Frontiers Advancing:' "$component"
+          grep -Fq 'Needs Work → Aurum/System:' "$component"
+          grep -Fq 'Your Actions:' "$component"
           grep -Fq 'fresh successful Continuous Controller workflow proves the autonomous build scheduler executed' "$component"
+          grep -Fq 'code/CI do not prove that a real controller process has restarted and restored correctly' "$component"
           grep -Fq 'This surface never creates a human task from controller state alone.' "$component"
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
 
@@ -166,15 +178,20 @@ jobs:
             "canonical_website_repo": "FormatX66/ClusterSites",
             "public_projection_repo": "FormatX66/BoxBrain",
             "component": "autonomy-controller-v1.js",
-            "revision": "1.1",
+            "revision": "1.2",
             "controller_cycle_surface": true,
             "carrier_health_surface": true,
             "scheduler_liveness_surface": true,
             "scheduler_edge_evidence_split": true,
             "fresh_scheduler_does_not_reprove_edge_checkpoint": true,
+            "runtime_continuity_surface": true,
+            "runtime_checkpoint_distinct_from_edge_checkpoint": true,
+            "implementation_ci_does_not_imply_live_restart": true,
+            "live_restart_proof_pending": true,
             "enrollment_frontier_surface": true,
             "expandable": true,
             "needs_work_integration": true,
+            "needs_work_owner": "Aurum/System",
             "human_action_inference": false,
             "backup_before_publish": true,
             "rollback_on_verify_failure": true,

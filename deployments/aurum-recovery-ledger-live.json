@@ -18,10 +18,11 @@
   "legacy_destructive_bypass_disabled": true,
   "destructive_write_single_guarded_path": true,
   "repository_authority_firewall_visible": true,
+  "authority_policy_detector_aligned": true,
   "persistent_authority_in_destructive_workflow_allowed": false,
   "physical_proof_inferred": false,
   "needs_work_owner": "aurum-system",
   "human_action_inference": false,
   "rollback_protected": true,
-  "verified_at_utc": "2026-08-25T09:07:27Z"
+  "verified_at_utc": "2026-08-25T09:11:27Z"
 }

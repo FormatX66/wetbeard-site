@@ -20,53 +20,53 @@
   ],
   "recent_commits": [
     {
-      "sha": "6a73c048",
-      "message": "Record Aurum recovery ledger live verification [skip ci]",
-      "date": "2026-08-24T18:53:27Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/6a73c0489c0c60d5c74dc4ef961752b2de3998d0"
+      "sha": "70051347",
+      "message": "Record Aurum seed lifecycle v1.2 live [skip ci]",
+      "date": "2026-08-25T00:46:28Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/700513470133d484bfb19677b3e453a4f8985c1b"
     },
     {
-      "sha": "20173aa2",
-      "message": "Add safe Recovery Guardian ledger deployment carrier",
-      "date": "2026-08-24T18:53:12Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/20173aa270132184556489fce17ccf8c49846d43"
+      "sha": "bcc3e13a",
+      "message": "Decouple Seed Lifecycle verification from unrelated cache versions",
+      "date": "2026-08-25T00:46:11Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/bcc3e13aaa0477d0d767d28621d777230296156a"
     },
     {
-      "sha": "664223b1",
-      "message": "Record Aurum Pi3 physical evidence v1.3 live [skip ci]",
-      "date": "2026-08-24T17:59:17Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/664223b18ce39a6b5f310bfcbaddaacfc973ef81"
+      "sha": "345c3023",
+      "message": "Publish Seed Lifecycle v1.2 release identity truth",
+      "date": "2026-08-25T00:45:05Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/345c302340dbea51fe122fc8050c4fb032d5c2e4"
     },
     {
-      "sha": "0b30d3fb",
-      "message": "Publish Pi3 v1.3 attached-runner evidence safely",
-      "date": "2026-08-24T17:59:03Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/0b30d3fb039d3a75fe2ca881e64b2dc826562b28"
+      "sha": "141e3d76",
+      "message": "Record Aurum recovery ledger v1.1 live [skip ci]",
+      "date": "2026-08-24T20:53:59Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/141e3d7637ea12eefe86e3453800a31b5cf8e6c8"
     },
     {
-      "sha": "a730e717",
-      "message": "Record Aurum Pi3 physical evidence v1.2 live [skip ci]",
-      "date": "2026-08-24T17:10:59Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/a730e7174b5809d76b05675f44bf5a42ef65da04"
+      "sha": "efab40f8",
+      "message": "Publish legacy-bypass lockout in recovery safety truth",
+      "date": "2026-08-24T20:53:42Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/efab40f813bc4b41cbed74bee8de90fccb6f98bf"
     },
     {
-      "sha": "4415197c",
-      "message": "Publish Pi3 no-reachable evidence truth",
-      "date": "2026-08-24T17:10:44Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/4415197c7b7d64d56c7ee2aefa909026630203a4"
+      "sha": "b0b660a8",
+      "message": "Record Aurum recovery ledger v1.1 live [skip ci]",
+      "date": "2026-08-24T20:50:54Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/b0b660a8e14c55071b0a24556a43c86269481478"
     },
     {
-      "sha": "8a9ee2bd",
-      "message": "Record Aurum Tiny Seed media handoff v1.4 live [skip ci]",
-      "date": "2026-08-24T17:02:02Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/8a9ee2bdedbdaf01af967e08cf4910df1c8c325b"
+      "sha": "eaefb766",
+      "message": "Publish recovery ledger v1.1 safety truth",
+      "date": "2026-08-24T20:50:37Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/eaefb7660f00654e2da548bea7e083296c347a2a"
     },
     {
-      "sha": "4262ad10",
-      "message": "Publish completed Tiny Seed flash receipt truth",
-      "date": "2026-08-24T17:01:44Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/4262ad10793a668f7048e8b4c3ba96db3157880f"
+      "sha": "5ba50c64",
+      "message": "Record Aurum action ownership v1.9 live [skip ci]",
+      "date": "2026-08-24T20:00:30Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/5ba50c64250b9669b06f25b9c63aca78c9813401"
     }
   ],
-  "updated_at": "2026-08-24T18:59:21Z"
+  "updated_at": "2026-08-25T01:52:33Z"
 }

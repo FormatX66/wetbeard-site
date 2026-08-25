@@ -32,7 +32,7 @@ jobs:
             -o "$src"
           test -s "$src"
           node --check "$src"
-          grep -Fq 'AURUM_TINYSEED_MEDIA_HANDOFF_V1_4_CANONICAL' "$src"
+          grep -Fq 'AURUM_TINYSEED_MEDIA_HANDOFF_V1_5_CANONICAL' "$src"
           grep -Fq "BusType -eq 'USB'" "$src"
           grep -Fq 'SAFE_TO_PREFLIGHT_ONLY' "$src"
           grep -Fq 'AMBIGUOUS_MULTIPLE_ELIGIBLE' "$src"
@@ -47,6 +47,7 @@ jobs:
           grep -Fq 'AUTHORIZED_FLASH_PENDING' "$src"
           grep -Fq 'READY_TO_BOOT' "$src"
           grep -Fq 'recoverySchemaCompatible' "$src"
+          grep -Fq 'physicalPreflightSchemaCompatible' "$src"
           grep -Fq 'receiptMatchesPreflight' "$src"
           grep -Fq 'receiptSupersedesAuthorizationCarrier' "$src"
           grep -Fq 'completionReceiptRequiresCurrentPreflightMatch:true' "$src"
@@ -113,14 +114,14 @@ jobs:
           import re,sys
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./tinyseed-media-handoff-v1\.js(?:\?v=[^"]+)?"></script>\s*','',text)
-          tag='<script src="./tinyseed-media-handoff-v1.js?v=105"></script>'
+          tag='<script src="./tinyseed-media-handoff-v1.js?v=106"></script>'
           marker=re.search(r'<script src="\./recovery-guardian\.js(?:\?v=[^"]+)?"></script>',text)
           if marker: text=text[:marker.end()]+'\n'+tag+text[marker.end():]
           elif '</body>' in text: text=text.replace('</body>',tag+'\n</body>',1)
           else: raise SystemExit('dashboard missing injection point')
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './tinyseed-media-handoff-v1.js?v=105' "$RUNNER_TEMP/index.html"
+          grep -Fq './tinyseed-media-handoff-v1.js?v=106' "$RUNNER_TEMP/index.html"
 
       - name: Publish with bounded retries
         env:
@@ -145,15 +146,16 @@ jobs:
           page="$(mktemp)"; js="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' \
-            'https://arkmatx.com/aurum/dashboard/tinyseed-media-handoff-v1.js?rev=105' -o "$js"
-          grep -Fq './tinyseed-media-handoff-v1.js?v=105' "$page"
-          grep -Fq 'AURUM_TINYSEED_MEDIA_HANDOFF_V1_4_CANONICAL' "$js"
+            'https://arkmatx.com/aurum/dashboard/tinyseed-media-handoff-v1.js?rev=106' -o "$js"
+          grep -Fq './tinyseed-media-handoff-v1.js?v=106' "$page"
+          grep -Fq 'AURUM_TINYSEED_MEDIA_HANDOFF_V1_5_CANONICAL' "$js"
           grep -Fq 'UNIQUE_SAFE_TO_PREFLIGHT_ONLY' "$js"
           grep -Fq 'AUTHORIZED_ONCE' "$js"
           grep -Fq 'WAITING_FOR_EXPLICIT_WRITE_AUTHORITY' "$js"
           grep -Fq 'AUTHORIZED_FLASH_PENDING' "$js"
           grep -Fq 'READY_TO_BOOT' "$js"
           grep -Fq 'recoverySchemaCompatible' "$js"
+          grep -Fq 'physicalPreflightSchemaCompatible' "$js"
           grep -Fq 'receiptMatchesPreflight' "$js"
           grep -Fq 'receiptSupersedesAuthorizationCarrier' "$js"
           grep -Fq 'completionReceiptRequiresCurrentPreflightMatch:true' "$js"
@@ -206,9 +208,10 @@ jobs:
             "canonical_component": "services/aurum-arkmatx/tinyseed-media-handoff-v1.js",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/tinyseed-media-handoff-v1.js",
             "deployment_carrier": "FormatX66/wetbeard-site",
-            "revision": "1.4",
+            "revision": "1.5",
             "read_only_usb_discovery_visible": true,
             "exact_physical_preflight_visible": true,
+            "physical_preflight_schema_roll_forward_compatible": true,
             "verified_flash_receipt_can_retire_old_authorization_carrier": true,
             "completion_receipt_requires_current_preflight_match": true,
             "end_to_end_network_regrow_gate_visible": true,
@@ -236,6 +239,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-tinyseed-media-handoff-live.json
-          git commit -m 'Record Aurum Tiny Seed media handoff v1.4 live [skip ci]' || exit 0
+          git commit -m 'Record Aurum Tiny Seed media handoff v1.5 live [skip ci]' || exit 0
           git pull --rebase origin main
           git push origin HEAD:main

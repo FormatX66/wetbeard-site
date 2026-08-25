@@ -5,10 +5,13 @@
   "canonical_component": "services/aurum-arkmatx/tinyseed-media-handoff-v1.js",
   "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/tinyseed-media-handoff-v1.js",
   "deployment_carrier": "FormatX66/wetbeard-site",
-  "revision": "1.5",
+  "revision": "1.6",
   "read_only_usb_discovery_visible": true,
   "exact_physical_preflight_visible": true,
   "physical_preflight_schema_roll_forward_compatible": true,
+  "current_release_discovery_refresh_visibility": true,
+  "current_release_discovery_refresh_is_system_work": true,
+  "current_release_discovery_refresh_can_create_human_action": false,
   "verified_flash_receipt_can_retire_old_authorization_carrier": true,
   "completion_receipt_requires_current_preflight_match": true,
   "end_to_end_network_regrow_gate_visible": true,
@@ -30,5 +33,5 @@
   "expandable_recovery_card_preserved": true,
   "rollback_protected": true,
   "status": "verified-live",
-  "verified_at_utc": "2026-08-25T06:05:53Z"
+  "verified_at_utc": "2026-08-25T06:59:55Z"
 }

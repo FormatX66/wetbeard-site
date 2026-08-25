@@ -5,17 +5,20 @@
   "canonical_component": "services/aurum-arkmatx/seed-lifecycle-v1.js",
   "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/seed-lifecycle-v1.js",
   "deployment_carrier": "FormatX66/wetbeard-site",
-  "seed_lifecycle_revision": "1.1",
+  "seed_lifecycle_revision": "1.2",
   "canonical_law": "Boot once. Grow continuously.",
   "genetics_law": "Git stores the genetics. Seeds carry the germ. Machines regrow the phenotype.",
   "normal_generation_path": "genetics-regrowth",
   "candidate_only_staging": true,
   "live_overwrite_allowed": false,
   "promotion_requires_health_evidence": true,
+  "release_identity_authority": "tinyseed-handoff",
+  "completion_plan_sync_grants_physical_proof": false,
+  "completion_plan_sync_grants_human_authority": false,
   "boot_media_scope": "first-seed-or-external-germ-recovery",
   "normal_generation_reflash": false,
   "human_action_requires_separate_current_evidence": true,
   "rollback_protected": true,
   "status": "verified-live",
-  "verified_at_utc": "2026-08-23T23:57:28Z"
+  "verified_at_utc": "2026-08-25T00:46:28Z"
 }

@@ -3,7 +3,7 @@
   "url":"https://arkmatx.com/aurum/dashboard/",
   "canonical_website_repo":"FormatX66/ClusterSites",
   "canonical_component":"services/aurum-arkmatx/pi3-physical-evidence-v1.js",
-  "approved_projection_commit":"7178e04215bdec9086c099cf0e3666cf39e55408",
+  "approved_projection_commit":"0b5035e948e5c4a79cc0c7cc7f50c4b24414956d",
   "public_projection":"FormatX66/BoxBrain:Web/Aurum-Arkmatx/pi3-physical-evidence-v1.js",
   "deployment_carrier":"FormatX66/wetbeard-site",
   "pi3_physical_evidence_revision":"1.5",
@@ -23,5 +23,5 @@
   "backup_before_publish":true,
   "rollback_on_verify_failure":true,
   "status":"verified-live",
-  "verified_at_utc":"2026-08-26T04:04:28Z"
+  "verified_at_utc":"2026-08-26T04:10:10Z"
 }

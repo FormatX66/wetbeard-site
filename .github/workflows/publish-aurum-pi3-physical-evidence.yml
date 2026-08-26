@@ -31,43 +31,36 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          src='https://raw.githubusercontent.com/FormatX66/BoxBrain/abcc1f431a4173328dd51ad406b817fcfe1203b0/Web/Aurum-Arkmatx/pi3-physical-evidence-v1.js'
+          src='https://raw.githubusercontent.com/FormatX66/BoxBrain/f2c302eec950953900498109e069745384e84387/Web/Aurum-Arkmatx/pi3-physical-evidence-v1.js'
           out="$RUNNER_TEMP/pi3-physical-evidence.js"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 "$src" -o "$out"
           test -s "$out"
           node --check "$out"
           require_marker() { grep -Fq "$1" "$out" || { echo "Missing approved Pi3 marker: $1" >&2; exit 1; }; }
-          require_marker 'AURUM_PI3_PHYSICAL_EVIDENCE_V1_7_CANONICAL'
-          require_marker 'AURUM_PI3_PHYSICAL_EVIDENCE_V1_6_CANONICAL compatibility marker.'
+          require_marker 'AURUM_PI3_PHYSICAL_EVIDENCE_V1_8_CANONICAL'
+          require_marker 'AURUM_PI3_PHYSICAL_EVIDENCE_V1_7_CANONICAL compatibility marker.'
           require_marker 'Canonical website owner: FormatX66/ClusterSites.'
-          require_marker "schema:'aurum-command-center-pi3-physical-evidence-v1.7'"
-          require_marker 'CURRENT_STATE.json'
-          require_marker 'events.jsonl'
-          require_marker 'kernelCanaryCompilePrereqsProven:'
+          require_marker "schema:'aurum-command-center-pi3-physical-evidence-v1.8'"
+          require_marker 'overnightLaboratorySucceeded:'
+          require_marker 'overnightAllAuthorizedStagesPassed:'
+          require_marker 'overnightHeldStages:'
+          require_marker 'overnightQuarantinedStages:'
+          require_marker 'overnightActualDurationSeconds:'
+          require_marker 'overnightMaxTemperatureC:'
+          require_marker 'overnightBootIdUnchanged:'
+          require_marker 'overnightRootSourceUnchanged:'
+          require_marker 'overnightKernelUnchanged:'
+          require_marker 'overnightReferenceDriverHashUnchanged:'
+          require_marker 'overnightRxChecksummingRestored:'
+          require_marker 'overnightNoPersistentKernelOrDriverChange:'
+          require_marker 'terminalOvernightSuccessDoesNotGrantBroaderMutationAuthority:true'
+          require_marker 'outOfBandWatchdogRequiredForBroaderMutation:true'
           require_marker 'kernelCanaryWatchdogProven:'
-          require_marker 'kernelCanaryPreflightModuleLoaded:false'
-          require_marker 'exactHeaderModuleCanaryPassed'
-          require_marker 'driverFeatureCanaryPassed'
-          require_marker "p.feature==='rx-checksumming'"
-          require_marker "p.restored==='on'"
-          require_marker 'overnightLaboratoryRunning:'
-          require_marker "r?.status==='in_progress'"
-          require_marker 'shared state pending reconciliation'
-          require_marker 'overnightExactHeaderModuleCanaryPassed:'
-          require_marker 'overnightInertModuleTransientLoadProven:'
-          require_marker 'overnightDriverFeatureCanaryPassed:'
-          require_marker 'overnightDriverFeatureRestored:'
-          require_marker 'overnightRollbackTimerPresentAfter:'
-          require_marker 'overnightHistoricalThrottleSeen:'
+          require_marker 'kernelDriverMutationAuthority:false'
+          require_marker 'replacementKernelAuthority:false'
           require_marker 'Frontiers Advancing:'
           require_marker 'Needs Work → Aurum/System:'
           require_marker 'Your Actions:'
-          require_marker 'kernelDriverMutationAuthority:false'
-          require_marker 'replacementKernelAuthority:false'
-          require_marker 'rootCauseInferred:false'
-          require_marker 'mutationAllowed:false'
-          require_marker 'promotionAllowed:false'
-          require_marker 'writeAuthority:false'
           require_marker "needsWorkOwner:'aurum-system'"
           require_marker 'humanActionInference:false'
           echo "file=$out" >> "$GITHUB_OUTPUT"
@@ -87,7 +80,7 @@ jobs:
           : > "$HOME/.ssh/known_hosts"
           for attempt in 1 2 3 4 5; do
             ssh-keyscan -T 10 -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null && exit 0
-            [ "$attempt" -eq 5 ] && { echo "Bluehost SSH keyscan unavailable after bounded attempts" >&2; exit 1; }
+            [ "$attempt" -eq 5 ] && { echo 'Bluehost SSH keyscan unavailable after bounded attempts' >&2; exit 1; }
             sleep $((attempt * 5))
           done
 
@@ -118,9 +111,9 @@ jobs:
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./pi3-physical-evidence\.js(?:\?v=[^"]+)?"></script>\s*','',text)
           if '</body>' not in text: raise SystemExit('dashboard missing body close')
-          p.write_text(text.replace('</body>','<script src="./pi3-physical-evidence.js?v=9"></script>\n</body>',1),encoding='utf-8')
+          p.write_text(text.replace('</body>','<script src="./pi3-physical-evidence.js?v=10"></script>\n</body>',1),encoding='utf-8')
           PY
-          grep -Fq './pi3-physical-evidence.js?v=9' "$RUNNER_TEMP/index.html"
+          grep -Fq './pi3-physical-evidence.js?v=10' "$RUNNER_TEMP/index.html"
 
       - name: Publish with bounded connection count
         env:
@@ -130,23 +123,23 @@ jobs:
         run: |
           set -euo pipefail
           retry(){ local n=1; while true; do "$@" && return 0; [ "$n" -ge 5 ] && return 1; sleep $((n*5)); n=$((n+1)); done; }
-          remote='public_html/arkmatx/aurum/dashboard'; stage="$RUNNER_TEMP/pi3-v17-publish"; mkdir -p "$stage"
+          remote='public_html/arkmatx/aurum/dashboard'; stage="$RUNNER_TEMP/pi3-v18-publish"; mkdir -p "$stage"
           cp "$RUNNER_TEMP/index.html" "$stage/index.html"; cp "${{ steps.source.outputs.file }}" "$stage/pi3-physical-evidence.js"
           retry scp -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -P 22 "$stage/index.html" "$stage/pi3-physical-evidence.js" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/"
           retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" "chmod 644 '$remote/index.html' '$remote/pi3-physical-evidence.js'"
 
-      - name: Verify live Pi3 v1.7 surface
+      - name: Verify live Pi3 v1.8 surface
         id: verify
         shell: bash
         run: |
           set -euo pipefail
           page="$(mktemp)"; component="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
-          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/pi3-physical-evidence.js?rev=9' -o "$component"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/pi3-physical-evidence.js?rev=10' -o "$component"
           grep -Fq 'Progress is proof, not activity.' "$page"
           grep -Fq './command-center.js?v=32' "$page"
-          grep -Fq './pi3-physical-evidence.js?v=9' "$page"
-          for marker in 'AURUM_PI3_PHYSICAL_EVIDENCE_V1_7_CANONICAL' "schema:'aurum-command-center-pi3-physical-evidence-v1.7'" 'events.jsonl' 'kernelCanaryCompilePrereqsProven:' 'kernelCanaryWatchdogProven:' 'kernelCanaryPreflightModuleLoaded:false' 'exactHeaderModuleCanaryPassed' 'driverFeatureCanaryPassed' 'overnightLaboratoryRunning:' 'overnightExactHeaderModuleCanaryPassed:' 'overnightInertModuleTransientLoadProven:' 'overnightDriverFeatureCanaryPassed:' 'overnightDriverFeatureRestored:' 'replacementKernelAuthority:false' 'Frontiers Advancing:' 'Needs Work → Aurum/System:' 'Your Actions:' 'kernelDriverMutationAuthority:false' 'humanActionInference:false'; do grep -Fq "$marker" "$component" || { echo "Missing live Pi3 marker: $marker" >&2; exit 1; }; done
+          grep -Fq './pi3-physical-evidence.js?v=10' "$page"
+          for marker in 'AURUM_PI3_PHYSICAL_EVIDENCE_V1_8_CANONICAL' "schema:'aurum-command-center-pi3-physical-evidence-v1.8'" 'overnightLaboratorySucceeded:' 'overnightAllAuthorizedStagesPassed:' 'overnightHeldStages:' 'overnightQuarantinedStages:' 'overnightActualDurationSeconds:' 'overnightMaxTemperatureC:' 'overnightBootIdUnchanged:' 'overnightRootSourceUnchanged:' 'overnightKernelUnchanged:' 'overnightReferenceDriverHashUnchanged:' 'overnightRxChecksummingRestored:' 'overnightNoPersistentKernelOrDriverChange:' 'terminalOvernightSuccessDoesNotGrantBroaderMutationAuthority:true' 'outOfBandWatchdogRequiredForBroaderMutation:true' 'Frontiers Advancing:' 'Needs Work → Aurum/System:' 'Your Actions:' 'kernelDriverMutationAuthority:false' 'replacementKernelAuthority:false' 'humanActionInference:false'; do grep -Fq "$marker" "$component" || { echo "Missing live Pi3 marker: $marker" >&2; exit 1; }; done
           cmp -s "${{ steps.source.outputs.file }}" "$component"
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
 
@@ -163,7 +156,7 @@ jobs:
           retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
             "set -eu; cp -p '$backup/index.html' '$remote/index.html'; if [ -f '$backup/pi3-physical-evidence.js' ]; then cp -p '$backup/pi3-physical-evidence.js' '$remote/pi3-physical-evidence.js'; elif [ -f '$backup/.missing-pi3-physical-evidence.js' ]; then rm -f '$remote/pi3-physical-evidence.js'; fi"
 
-      - name: Record verified Pi3 v1.7 receipt
+      - name: Record verified Pi3 v1.8 receipt
         if: success()
         shell: bash
         run: |
@@ -176,30 +169,29 @@ jobs:
             "url":"${{ steps.verify.outputs.url }}",
             "canonical_website_repo":"FormatX66/ClusterSites",
             "canonical_component":"services/aurum-arkmatx/pi3-physical-evidence-v1.js",
-            "approved_projection_commit":"abcc1f431a4173328dd51ad406b817fcfe1203b0",
+            "approved_projection_commit":"f2c302eec950953900498109e069745384e84387",
             "public_projection":"FormatX66/BoxBrain:Web/Aurum-Arkmatx/pi3-physical-evidence-v1.js",
             "deployment_carrier":"FormatX66/wetbeard-site",
-            "pi3_physical_evidence_revision":"1.7",
+            "pi3_physical_evidence_revision":"1.8",
             "expandable":true,
             "generation2_physical_userspace_proof_visible":true,
             "kernel_shared_state_visible":true,
             "kernel_event_history_visible":true,
-            "kernel_canary_compile_prerequisite_surface":true,
-            "kernel_preflight_module_loaded":false,
             "exact_header_inert_module_canary_visible":true,
-            "transient_kernel_module_load_unload_proven":true,
-            "prior_stage_proof_retained_after_stage_advance":true,
             "smsc95xx_feature_canary_visible":true,
-            "rx_checksum_toggle_restore_proven":true,
-            "feature_rollback_timer_cleared":true,
-            "feature_carrier_retained":true,
-            "feature_errors_and_drops_zero":true,
-            "feature_current_throttle_fault":false,
+            "overnight_terminal_success_visible":true,
+            "overnight_all_five_authorized_stages_visible":true,
+            "overnight_held_stages_zero":true,
+            "overnight_quarantined_stages_zero":true,
+            "overnight_boot_root_kernel_unchanged_visible":true,
+            "overnight_reference_driver_hash_unchanged_visible":true,
+            "overnight_rx_checksum_restore_visible":true,
+            "overnight_final_network_counters_clean_visible":true,
+            "overnight_no_persistent_kernel_or_driver_change_visible":true,
             "out_of_band_watchdog_proven":false,
+            "terminal_success_grants_broader_kernel_authority":false,
             "driver_binding_authority":false,
             "replacement_kernel_authority":false,
-            "broader_kernel_mutation_proof_inferred":false,
-            "overnight_laboratory_surface":true,
             "mutation_authority":false,
             "promotion_authority":false,
             "write_authority":false,
@@ -214,5 +206,5 @@ jobs:
           EOF
           git config user.name 'github-actions[bot]'; git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-pi3-physical-evidence-live.json
-          git commit -m 'Record Aurum Pi3 physical evidence v1.7 live [skip ci]' || exit 0
+          git commit -m 'Record Aurum Pi3 physical evidence v1.8 live [skip ci]' || exit 0
           git pull --rebase origin main; git push origin HEAD:main

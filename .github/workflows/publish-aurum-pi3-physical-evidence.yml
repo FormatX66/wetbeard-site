@@ -26,47 +26,45 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Fetch public projection of canonical ClusterSites Pi3 evidence surface
+      - name: Fetch approved public projection of canonical ClusterSites Pi3 evidence surface
         id: source
         shell: bash
         run: |
           set -euo pipefail
-          src='https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/pi3-physical-evidence-v1.js'
+          src='https://raw.githubusercontent.com/FormatX66/BoxBrain/1a8066a95645a03769651f2a332b1ea09087ea65/Web/Aurum-Arkmatx/pi3-physical-evidence-v1.js'
           out="$RUNNER_TEMP/pi3-physical-evidence.js"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 "$src" -o "$out"
           test -s "$out"
           node --check "$out"
-          grep -Fq 'AURUM_PI3_PHYSICAL_EVIDENCE_V1_3_CANONICAL' "$out"
-          grep -Fq 'Canonical website owner: FormatX66/ClusterSites.' "$out"
-          grep -Fq "schema:'aurum-command-center-pi3-physical-evidence-v1.3'" "$out"
-          grep -Fq 'Pi3 Physical Evidence' "$out"
-          grep -Fq 'Aurum Pi3 Attached-Runner Read-Only Probe' "$out"
-          grep -Fq "const ATTACHED_RUNNER='GLOBAL-FAMILY-DESKTOP'" "$out"
-          grep -Fq 'REACHABLE_IDENTITY_UNVERIFIED' "$out"
-          grep -Fq 'NO_REACHABLE_PASSIVE_USB_ENDPOINT' "$out"
-          grep -Fq 'NO_REACHABLE_PI3_RECEIPT' "$out"
-          grep -Fq 'attachedRunnerRequestSafeReadOnly:' "$out"
-          grep -Fq 'attachedRunnerWorkflowGuarded:' "$out"
-          grep -Fq 'attachedRunnerReceiptState:' "$out"
-          grep -Fq 'activeNetworkScanAllowed:false' "$out"
-          grep -Fq 'persistentTrustChangeAllowed:false' "$out"
-          grep -Fq 'noReachableReceiptObserved:' "$out"
-          grep -Fq 'reachabilityReceiptState:' "$out"
-          grep -Fq 'knownTargetsTried:' "$out"
-          grep -Fq 'tcp22ReachableCount:' "$out"
-          grep -Fq 'rootCauseInferred:false' "$out"
-          grep -Fq 'Frontiers Advancing:' "$out"
-          grep -Fq 'Needs Work → Aurum/System:' "$out"
-          grep -Fq 'Your Actions:' "$out"
-          grep -Fq 'probeWorkflowGuarded:' "$out"
-          grep -Fq 'parallelExperimentGatePresent:' "$out"
-          grep -Fq 'physicalReceiptCaptured:' "$out"
-          grep -Fq 'stateWeaveHardwareBinding:' "$out"
-          grep -Fq 'mutationAllowed:false' "$out"
-          grep -Fq 'promotionAllowed:false' "$out"
-          grep -Fq 'writeAuthority:false' "$out"
-          grep -Fq "needsWorkOwner:'aurum-system'" "$out"
-          grep -Fq 'humanActionInference:false' "$out"
+          require_marker() { grep -Fq "$1" "$out" || { echo "Missing approved Pi3 marker: $1" >&2; exit 1; }; }
+          require_marker 'AURUM_PI3_PHYSICAL_EVIDENCE_V1_4_CANONICAL'
+          require_marker 'Canonical website owner: FormatX66/ClusterSites.'
+          require_marker "schema:'aurum-command-center-pi3-physical-evidence-v1.4'"
+          require_marker 'Pi3 Physical Evidence'
+          require_marker 'pi3-generation2-physical.json'
+          require_marker 'Aurum Pi3 Kernel Canary Preflight'
+          require_marker 'generation2PhysicalUserspaceProof:'
+          require_marker 'generation2FaultInjectionQuarantined:'
+          require_marker 'generation2LkgMetadataPreserved:'
+          require_marker 'generation2MetadataRollbackPassed:'
+          require_marker 'kernelCanaryPreflightRequestSafe:'
+          require_marker 'kernelCanaryPreflightWorkflowGuarded:'
+          require_marker 'kernelModuleLoaded:false'
+          require_marker 'kernelDriverMutationAuthority:false'
+          require_marker 'Aurum Pi3 Attached-Runner Read-Only Probe'
+          require_marker 'activeNetworkScanAllowed:false'
+          require_marker 'persistentTrustChangeAllowed:false'
+          require_marker 'rootCauseInferred:false'
+          require_marker 'Frontiers Advancing:'
+          require_marker 'Needs Work → Aurum/System:'
+          require_marker 'Your Actions:'
+          require_marker 'physicalReceiptCaptured:'
+          require_marker 'stateWeaveHardwareBinding:'
+          require_marker 'mutationAllowed:false'
+          require_marker 'promotionAllowed:false'
+          require_marker 'writeAuthority:false'
+          require_marker "needsWorkOwner:'aurum-system'"
+          require_marker 'humanActionInference:false'
           echo "file=$out" >> "$GITHUB_OUTPUT"
 
       - name: Configure existing Bluehost SSH carrier with bounded retry
@@ -135,10 +133,10 @@ jobs:
           text=re.sub(r'<script src="\./pi3-physical-evidence\.js(?:\?v=[^"]+)?"></script>\s*','',text)
           if '</body>' not in text:
               raise SystemExit('dashboard missing body close')
-          text=text.replace('</body>','<script src="./pi3-physical-evidence.js?v=4"></script>\n</body>',1)
+          text=text.replace('</body>','<script src="./pi3-physical-evidence.js?v=5"></script>\n</body>',1)
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './pi3-physical-evidence.js?v=4' "$RUNNER_TEMP/index.html"
+          grep -Fq './pi3-physical-evidence.js?v=5' "$RUNNER_TEMP/index.html"
 
       - name: Publish Pi3 physical evidence with bounded connection count
         env:
@@ -176,34 +174,32 @@ jobs:
           component="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' \
-            'https://arkmatx.com/aurum/dashboard/pi3-physical-evidence.js?rev=4' -o "$component"
+            'https://arkmatx.com/aurum/dashboard/pi3-physical-evidence.js?rev=5' -o "$component"
           grep -Fq 'Progress is proof, not activity.' "$page"
           grep -Fq './command-center.js?v=32' "$page"
-          grep -Fq './pi3-physical-evidence.js?v=4' "$page"
-          grep -Fq 'AURUM_PI3_PHYSICAL_EVIDENCE_V1_3_CANONICAL' "$component"
-          grep -Fq "schema:'aurum-command-center-pi3-physical-evidence-v1.3'" "$component"
-          grep -Fq 'Pi3 Physical Evidence' "$component"
-          grep -Fq 'Aurum Pi3 Attached-Runner Read-Only Probe' "$component"
-          grep -Fq "const ATTACHED_RUNNER='GLOBAL-FAMILY-DESKTOP'" "$component"
-          grep -Fq 'REACHABLE_IDENTITY_UNVERIFIED' "$component"
-          grep -Fq 'NO_REACHABLE_PASSIVE_USB_ENDPOINT' "$component"
-          grep -Fq 'attachedRunnerRequestSafeReadOnly:' "$component"
-          grep -Fq 'attachedRunnerWorkflowGuarded:' "$component"
-          grep -Fq 'attachedRunnerReceiptState:' "$component"
-          grep -Fq 'activeNetworkScanAllowed:false' "$component"
-          grep -Fq 'persistentTrustChangeAllowed:false' "$component"
-          grep -Fq 'noReachableReceiptObserved:' "$component"
-          grep -Fq 'rootCauseInferred:false' "$component"
-          grep -Fq 'Frontiers Advancing:' "$component"
-          grep -Fq 'Needs Work → Aurum/System:' "$component"
-          grep -Fq 'Your Actions:' "$component"
-          grep -Fq 'physicalReceiptCaptured:' "$component"
-          grep -Fq 'stateWeaveHardwareBinding:' "$component"
-          grep -Fq 'mutationAllowed:false' "$component"
-          grep -Fq 'promotionAllowed:false' "$component"
-          grep -Fq 'writeAuthority:false' "$component"
-          grep -Fq "needsWorkOwner:'aurum-system'" "$component"
-          grep -Fq 'humanActionInference:false' "$component"
+          grep -Fq './pi3-physical-evidence.js?v=5' "$page"
+          require_live() { grep -Fq "$1" "$component" || { echo "Missing live Pi3 marker: $1" >&2; exit 1; }; }
+          require_live 'AURUM_PI3_PHYSICAL_EVIDENCE_V1_4_CANONICAL'
+          require_live "schema:'aurum-command-center-pi3-physical-evidence-v1.4'"
+          require_live 'Pi3 Physical Evidence'
+          require_live 'generation2PhysicalUserspaceProof:'
+          require_live 'generation2FaultInjectionQuarantined:'
+          require_live 'generation2LkgMetadataPreserved:'
+          require_live 'generation2MetadataRollbackPassed:'
+          require_live 'kernelCanaryPreflightRequestSafe:'
+          require_live 'kernelCanaryPreflightWorkflowGuarded:'
+          require_live 'kernelModuleLoaded:false'
+          require_live 'kernelDriverMutationAuthority:false'
+          require_live 'Frontiers Advancing:'
+          require_live 'Needs Work → Aurum/System:'
+          require_live 'Your Actions:'
+          require_live 'rootCauseInferred:false'
+          require_live 'mutationAllowed:false'
+          require_live 'promotionAllowed:false'
+          require_live 'writeAuthority:false'
+          require_live "needsWorkOwner:'aurum-system'"
+          require_live 'humanActionInference:false'
+          cmp -s "${{ steps.source.outputs.file }}" "$component"
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
 
       - name: Roll back if verification fails
@@ -245,28 +241,24 @@ jobs:
             "url": "${{ steps.verify.outputs.url }}",
             "canonical_website_repo": "FormatX66/ClusterSites",
             "canonical_component": "services/aurum-arkmatx/pi3-physical-evidence-v1.js",
+            "approved_projection_commit": "1a8066a95645a03769651f2a332b1ea09087ea65",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/pi3-physical-evidence-v1.js",
             "deployment_carrier": "FormatX66/wetbeard-site",
-            "pi3_physical_evidence_revision": "1.3",
+            "pi3_physical_evidence_revision": "1.4",
             "expandable": true,
-            "read_only_request_visible": true,
-            "self_hosted_probe_lane_visible": true,
-            "attached_runner_routing_visible": true,
-            "attached_runner_target": "GLOBAL-FAMILY-DESKTOP",
-            "wrong_runner_jobs_exit_without_probe": true,
-            "passive_usb_neighbor_only": true,
-            "strict_ssh_identity_boundary_visible": true,
+            "generation2_physical_userspace_proof_visible": true,
+            "generation2_fault_quarantine_visible": true,
+            "generation2_lkg_metadata_preservation_visible": true,
+            "generation2_isolated_rollback_visible": true,
+            "kernel_canary_preflight_visible": true,
+            "kernel_canary_preflight_is_compile_only": true,
+            "kernel_module_loaded_inferred": false,
+            "kernel_driver_mutation_authority": false,
+            "physical_kernel_canary_proof_inferred": false,
+            "production_arm64_proof_inferred": false,
             "active_network_scan_allowed": false,
             "persistent_trust_change_allowed": false,
-            "terminal_no_reachable_receipt_visible": true,
-            "terminal_attached_runner_receipts_visible": true,
-            "no_reachable_receipt_is_not_identity_capture": true,
             "root_cause_inference": false,
-            "stateweave_hardware_binding_visible": true,
-            "adaptive_kernel_arch_gate_visible": true,
-            "future_branch_next_state_visible": true,
-            "physical_receipt_separate_from_repository_proof": true,
-            "canonical_projection_parity_republished": true,
             "mutation_authority": false,
             "promotion_authority": false,
             "write_authority": false,
@@ -282,6 +274,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-pi3-physical-evidence-live.json
-          git commit -m 'Record Aurum Pi3 physical evidence v1.3 live [skip ci]' || exit 0
+          git commit -m 'Record Aurum Pi3 physical evidence v1.4 live [skip ci]' || exit 0
           git pull --rebase origin main
           git push origin HEAD:main

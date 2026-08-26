@@ -20,53 +20,53 @@
   ],
   "recent_commits": [
     {
+      "sha": "138302d3",
+      "message": "Record Aurum Pi3 physical evidence v1.5 live [skip ci]",
+      "date": "2026-08-26T04:10:10Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/138302d37ec0c9333341067ffe6a1457640b8449"
+    },
+    {
+      "sha": "2102b96e",
+      "message": "Republish Pi3 v1.5 with live workflow guard",
+      "date": "2026-08-26T04:09:55Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/2102b96eb737f58ccb8cd77432d8a623bb32d106"
+    },
+    {
+      "sha": "ed2cb4fb",
+      "message": "Record Aurum Pi3 physical evidence v1.5 live [skip ci]",
+      "date": "2026-08-26T04:04:28Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/ed2cb4fbef7220ceeac4c514e8dd927b125026bd"
+    },
+    {
+      "sha": "dd3ae1a2",
+      "message": "Publish Pi3 v1.5 kernel and overnight truth safely",
+      "date": "2026-08-26T04:04:14Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/dd3ae1a20730210dce36164533c1dd0bed5b13a4"
+    },
+    {
+      "sha": "d17257c2",
+      "message": "Record Aurum Pi3 physical evidence v1.4 live [skip ci]",
+      "date": "2026-08-26T03:10:34Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/d17257c2ed869838f8ac45322e93d3a871ddf9ec"
+    },
+    {
+      "sha": "639694db",
+      "message": "Publish Pi3 v1.4 physical userspace proof safely",
+      "date": "2026-08-26T03:10:21Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/639694dbf82a67da378111a5028cfd2150944ef2"
+    },
+    {
+      "sha": "99dbf825",
+      "message": "Refresh ArkmatX GitHub status [skip ci]",
+      "date": "2026-08-26T01:58:22Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/99dbf825a98f9c8260ffbe0e5b5807c52f075849"
+    },
+    {
       "sha": "f76c3127",
       "message": "Record Aurum Chat Process Tree v1.1 live [skip ci]",
       "date": "2026-08-26T01:53:35Z",
       "html_url": "https://github.com/FormatX66/wetbeard-site/commit/f76c312774fd7c74c1d8175aadb9ac5961aeec39"
-    },
-    {
-      "sha": "3f683e90",
-      "message": "Publish Chat Process Tree v1.1 safely",
-      "date": "2026-08-26T01:53:20Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/3f683e90053c9d05fd59f206090df18e8791fcd3"
-    },
-    {
-      "sha": "c0e1fee6",
-      "message": "Record Aurum Chat Process Tree v1.0 live [skip ci]",
-      "date": "2026-08-26T00:49:46Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/c0e1fee64700d2a8a318a149e7b5c07f933d7d28"
-    },
-    {
-      "sha": "a2419bfb",
-      "message": "Add safe Aurum Chat Process Tree deployment carrier",
-      "date": "2026-08-26T00:49:34Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/a2419bfb0c4813e4727568eaeb7ce9af44d5c879"
-    },
-    {
-      "sha": "d994d6e6",
-      "message": "Record Aurum Future Branch v1.5 live [skip ci]",
-      "date": "2026-08-25T23:56:06Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/d994d6e64bfcddc6626b08dee036f93a0953295b"
-    },
-    {
-      "sha": "bcf92fc0",
-      "message": "Publish Aurum Future Branch v1.5 mesh transport truth",
-      "date": "2026-08-25T23:55:52Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/bcf92fc0add08440d15b621841df68cc79ab3d71"
-    },
-    {
-      "sha": "f8f27c59",
-      "message": "Record Aurum Future Branch v1.4 live [skip ci]",
-      "date": "2026-08-25T22:54:20Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/f8f27c59b23a8b8625b887626d2c7330806ddf8d"
-    },
-    {
-      "sha": "df0bf9ee",
-      "message": "Publish Future Branch v1.4 diagnostic and human adaptation truth",
-      "date": "2026-08-25T22:54:06Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/df0bf9ee18da0904e8ba35a2f61c9edd43a4bfe8"
     }
   ],
-  "updated_at": "2026-08-26T01:58:22Z"
+  "updated_at": "2026-08-26T07:08:53Z"
 }

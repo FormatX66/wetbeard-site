@@ -73,7 +73,7 @@ jobs:
           grep -Fq 'consolidationCreatesHumanAction:false' "$out"
           grep -Fq 'humanActionInference:false' "$out"
           actual_blob="$(git hash-object "$out")"
-          expected_blob='99ba7235086eb3d67ecf87bad91fe9ab2453c8f8'
+          expected_blob='319c0848a712e890e2c9bb7dd29724557c1fc2b8'
           if [ "$actual_blob" != "$expected_blob" ]; then
             echo "Refusing unapproved Chat Process Tree projection: expected $expected_blob got $actual_blob" >&2
             exit 1

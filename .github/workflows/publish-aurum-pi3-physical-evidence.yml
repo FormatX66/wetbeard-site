@@ -26,40 +26,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Fetch approved public projection of canonical ClusterSites Pi3 evidence surface
+      - name: Fetch approved public projection of canonical ClusterSites Pi3 surface
         id: source
         shell: bash
         run: |
           set -euo pipefail
-          src='https://raw.githubusercontent.com/FormatX66/BoxBrain/1a8066a95645a03769651f2a332b1ea09087ea65/Web/Aurum-Arkmatx/pi3-physical-evidence-v1.js'
+          src='https://raw.githubusercontent.com/FormatX66/BoxBrain/7178e04215bdec9086c099cf0e3666cf39e55408/Web/Aurum-Arkmatx/pi3-physical-evidence-v1.js'
           out="$RUNNER_TEMP/pi3-physical-evidence.js"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 "$src" -o "$out"
           test -s "$out"
           node --check "$out"
           require_marker() { grep -Fq "$1" "$out" || { echo "Missing approved Pi3 marker: $1" >&2; exit 1; }; }
-          require_marker 'AURUM_PI3_PHYSICAL_EVIDENCE_V1_4_CANONICAL'
+          require_marker 'AURUM_PI3_PHYSICAL_EVIDENCE_V1_5_CANONICAL'
           require_marker 'Canonical website owner: FormatX66/ClusterSites.'
-          require_marker "schema:'aurum-command-center-pi3-physical-evidence-v1.4'"
-          require_marker 'Pi3 Physical Evidence'
-          require_marker 'pi3-generation2-physical.json'
-          require_marker 'Aurum Pi3 Kernel Canary Preflight'
-          require_marker 'generation2PhysicalUserspaceProof:'
-          require_marker 'generation2FaultInjectionQuarantined:'
-          require_marker 'generation2LkgMetadataPreserved:'
-          require_marker 'generation2MetadataRollbackPassed:'
-          require_marker 'kernelCanaryPreflightRequestSafe:'
-          require_marker 'kernelCanaryPreflightWorkflowGuarded:'
-          require_marker 'kernelModuleLoaded:false'
-          require_marker 'kernelDriverMutationAuthority:false'
-          require_marker 'Aurum Pi3 Attached-Runner Read-Only Probe'
-          require_marker 'activeNetworkScanAllowed:false'
-          require_marker 'persistentTrustChangeAllowed:false'
-          require_marker 'rootCauseInferred:false'
+          require_marker "schema:'aurum-command-center-pi3-physical-evidence-v1.5'"
+          require_marker 'CURRENT_STATE.json'
+          require_marker 'kernelCanaryCompilePrereqsProven:'
+          require_marker 'kernelCanaryWatchdogProven:'
+          require_marker 'overnightLaboratoryRunning:'
+          require_marker 'overnightObservationPassed:'
+          require_marker 'overnightPhysicalMutationStarted:'
           require_marker 'Frontiers Advancing:'
           require_marker 'Needs Work → Aurum/System:'
           require_marker 'Your Actions:'
-          require_marker 'physicalReceiptCaptured:'
-          require_marker 'stateWeaveHardwareBinding:'
+          require_marker 'kernelModuleLoaded:false'
+          require_marker 'kernelDriverMutationAuthority:false'
+          require_marker 'rootCauseInferred:false'
           require_marker 'mutationAllowed:false'
           require_marker 'promotionAllowed:false'
           require_marker 'writeAuthority:false'
@@ -75,19 +67,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -n "$BLUEHOST_HOST"
-          test -n "$BLUEHOST_USERNAME"
-          test -n "$BLUEHOST_SSH_PRIVATE_KEY"
+          test -n "$BLUEHOST_HOST"; test -n "$BLUEHOST_USERNAME"; test -n "$BLUEHOST_SSH_PRIVATE_KEY"
           install -m 700 -d "$HOME/.ssh"
           printf '%s\n' "$BLUEHOST_SSH_PRIVATE_KEY" > "$HOME/.ssh/bluehost_deploy"
           chmod 600 "$HOME/.ssh/bluehost_deploy"
           : > "$HOME/.ssh/known_hosts"
           for attempt in 1 2 3 4 5; do
-            if ssh-keyscan -T 10 -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null; then exit 0; fi
-            if [ "$attempt" -eq 5 ]; then
-              echo "Bluehost SSH keyscan remained unavailable after $attempt bounded attempts" >&2
-              exit 1
-            fi
+            ssh-keyscan -T 10 -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null && exit 0
+            [ "$attempt" -eq 5 ] && { echo "Bluehost SSH keyscan unavailable after bounded attempts" >&2; exit 1; }
             sleep $((attempt * 5))
           done
 
@@ -99,106 +86,54 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          retry_capture() {
-            local outfile="$1"; shift
-            local attempt=1 rc=0 tmp
-            tmp="$(mktemp)"
-            while true; do
-              if "$@" > "$tmp"; then mv "$tmp" "$outfile"; return 0; fi
-              rc=$?
-              if [ "$attempt" -ge 5 ]; then rm -f "$tmp"; return "$rc"; fi
-              sleep $((attempt * 5))
-              attempt=$((attempt + 1))
-            done
-          }
-          remote='public_html/arkmatx/aurum/dashboard'
-          backup=".aurum-dashboard-backups/pi3-physical-evidence-$GITHUB_RUN_ID"
-          retry_capture "$RUNNER_TEMP/index.html" \
-            ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+          retry_capture(){ local out="$1"; shift; local n=1 tmp; tmp="$(mktemp)"; while true; do "$@" > "$tmp" && { mv "$tmp" "$out"; return 0; }; [ "$n" -ge 5 ] && { rm -f "$tmp"; return 1; }; sleep $((n*5)); n=$((n+1)); done; }
+          remote='public_html/arkmatx/aurum/dashboard'; backup=".aurum-dashboard-backups/pi3-physical-evidence-$GITHUB_RUN_ID"
+          retry_capture "$RUNNER_TEMP/index.html" ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
             "set -eu; mkdir -p '$remote' '$backup'; cp -p '$remote/index.html' '$backup/index.html'; if [ -f '$remote/pi3-physical-evidence.js' ]; then cp -p '$remote/pi3-physical-evidence.js' '$backup/pi3-physical-evidence.js'; else touch '$backup/.missing-pi3-physical-evidence.js'; fi; cat '$remote/index.html'"
           test -s "$RUNNER_TEMP/index.html"
           grep -Fq 'Progress is proof, not activity.' "$RUNNER_TEMP/index.html"
           grep -Fq './command-center.js?v=32' "$RUNNER_TEMP/index.html"
           echo 'ready=true' >> "$GITHUB_OUTPUT"
 
-      - name: Inject Pi3 physical evidence surface
+      - name: Inject expandable Pi3 evidence surface
         shell: bash
         run: |
           set -euo pipefail
           python3 - "$RUNNER_TEMP/index.html" <<'PY'
           from pathlib import Path
-          import re, sys
-          p=Path(sys.argv[1])
-          text=p.read_text(encoding='utf-8')
+          import re,sys
+          p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./pi3-physical-evidence\.js(?:\?v=[^"]+)?"></script>\s*','',text)
-          if '</body>' not in text:
-              raise SystemExit('dashboard missing body close')
-          text=text.replace('</body>','<script src="./pi3-physical-evidence.js?v=5"></script>\n</body>',1)
-          p.write_text(text,encoding='utf-8')
+          if '</body>' not in text: raise SystemExit('dashboard missing body close')
+          p.write_text(text.replace('</body>','<script src="./pi3-physical-evidence.js?v=6"></script>\n</body>',1),encoding='utf-8')
           PY
-          grep -Fq './pi3-physical-evidence.js?v=5' "$RUNNER_TEMP/index.html"
+          grep -Fq './pi3-physical-evidence.js?v=6' "$RUNNER_TEMP/index.html"
 
-      - name: Publish Pi3 physical evidence with bounded connection count
+      - name: Publish with bounded connection count
         env:
           BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
           BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
         shell: bash
         run: |
           set -euo pipefail
-          retry() {
-            local attempt=1 rc=0
-            while true; do
-              "$@" && return 0
-              rc=$?
-              if [ "$attempt" -ge 5 ]; then return "$rc"; fi
-              sleep $((attempt * 5))
-              attempt=$((attempt + 1))
-            done
-          }
-          remote='public_html/arkmatx/aurum/dashboard'
-          stage="$RUNNER_TEMP/aurum-pi3-physical-evidence-publish"
-          mkdir -p "$stage"
-          cp "$RUNNER_TEMP/index.html" "$stage/index.html"
-          cp "${{ steps.source.outputs.file }}" "$stage/pi3-physical-evidence.js"
-          retry scp -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -P 22 \
-            "$stage/index.html" "$stage/pi3-physical-evidence.js" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/"
-          retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
-            "chmod 644 '$remote/index.html' '$remote/pi3-physical-evidence.js'"
+          retry(){ local n=1; while true; do "$@" && return 0; [ "$n" -ge 5 ] && return 1; sleep $((n*5)); n=$((n+1)); done; }
+          remote='public_html/arkmatx/aurum/dashboard'; stage="$RUNNER_TEMP/pi3-v15-publish"; mkdir -p "$stage"
+          cp "$RUNNER_TEMP/index.html" "$stage/index.html"; cp "${{ steps.source.outputs.file }}" "$stage/pi3-physical-evidence.js"
+          retry scp -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -P 22 "$stage/index.html" "$stage/pi3-physical-evidence.js" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/"
+          retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" "chmod 644 '$remote/index.html' '$remote/pi3-physical-evidence.js'"
 
-      - name: Verify live Pi3 physical evidence surface
+      - name: Verify live Pi3 v1.5 surface
         id: verify
         shell: bash
         run: |
           set -euo pipefail
-          page="$(mktemp)"
-          component="$(mktemp)"
+          page="$(mktemp)"; component="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
-          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' \
-            'https://arkmatx.com/aurum/dashboard/pi3-physical-evidence.js?rev=5' -o "$component"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/pi3-physical-evidence.js?rev=6' -o "$component"
           grep -Fq 'Progress is proof, not activity.' "$page"
           grep -Fq './command-center.js?v=32' "$page"
-          grep -Fq './pi3-physical-evidence.js?v=5' "$page"
-          require_live() { grep -Fq "$1" "$component" || { echo "Missing live Pi3 marker: $1" >&2; exit 1; }; }
-          require_live 'AURUM_PI3_PHYSICAL_EVIDENCE_V1_4_CANONICAL'
-          require_live "schema:'aurum-command-center-pi3-physical-evidence-v1.4'"
-          require_live 'Pi3 Physical Evidence'
-          require_live 'generation2PhysicalUserspaceProof:'
-          require_live 'generation2FaultInjectionQuarantined:'
-          require_live 'generation2LkgMetadataPreserved:'
-          require_live 'generation2MetadataRollbackPassed:'
-          require_live 'kernelCanaryPreflightRequestSafe:'
-          require_live 'kernelCanaryPreflightWorkflowGuarded:'
-          require_live 'kernelModuleLoaded:false'
-          require_live 'kernelDriverMutationAuthority:false'
-          require_live 'Frontiers Advancing:'
-          require_live 'Needs Work → Aurum/System:'
-          require_live 'Your Actions:'
-          require_live 'rootCauseInferred:false'
-          require_live 'mutationAllowed:false'
-          require_live 'promotionAllowed:false'
-          require_live 'writeAuthority:false'
-          require_live "needsWorkOwner:'aurum-system'"
-          require_live 'humanActionInference:false'
+          grep -Fq './pi3-physical-evidence.js?v=6' "$page"
+          for marker in 'AURUM_PI3_PHYSICAL_EVIDENCE_V1_5_CANONICAL' "schema:'aurum-command-center-pi3-physical-evidence-v1.5'" 'kernelCanaryCompilePrereqsProven:' 'kernelCanaryWatchdogProven:' 'overnightLaboratoryRunning:' 'Frontiers Advancing:' 'Needs Work → Aurum/System:' 'Your Actions:' 'kernelModuleLoaded:false' 'kernelDriverMutationAuthority:false' 'humanActionInference:false'; do grep -Fq "$marker" "$component" || { echo "Missing live Pi3 marker: $marker" >&2; exit 1; }; done
           cmp -s "${{ steps.source.outputs.file }}" "$component"
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
 
@@ -210,70 +145,48 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          retry() {
-            local attempt=1 rc=0
-            while true; do
-              "$@" && return 0
-              rc=$?
-              if [ "$attempt" -ge 5 ]; then return "$rc"; fi
-              sleep $((attempt * 5))
-              attempt=$((attempt + 1))
-            done
-          }
-          remote='public_html/arkmatx/aurum/dashboard'
-          backup=".aurum-dashboard-backups/pi3-physical-evidence-$GITHUB_RUN_ID"
+          retry(){ local n=1; while true; do "$@" && return 0; [ "$n" -ge 5 ] && return 1; sleep $((n*5)); n=$((n+1)); done; }
+          remote='public_html/arkmatx/aurum/dashboard'; backup=".aurum-dashboard-backups/pi3-physical-evidence-$GITHUB_RUN_ID"
           retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
             "set -eu; cp -p '$backup/index.html' '$remote/index.html'; if [ -f '$backup/pi3-physical-evidence.js' ]; then cp -p '$backup/pi3-physical-evidence.js' '$remote/pi3-physical-evidence.js'; elif [ -f '$backup/.missing-pi3-physical-evidence.js' ]; then rm -f '$remote/pi3-physical-evidence.js'; fi"
 
-      - name: Record verified Pi3 physical evidence receipt
+      - name: Record verified Pi3 v1.5 receipt
         if: success()
         shell: bash
         run: |
           set -euo pipefail
-          git fetch origin main
-          git checkout main
-          git reset --hard origin/main
-          mkdir -p deployments
+          git fetch origin main; git checkout main; git reset --hard origin/main; mkdir -p deployments
           verified_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
           cat > deployments/aurum-pi3-physical-evidence-live.json <<EOF
           {
-            "site": "aurum-command-center",
-            "url": "${{ steps.verify.outputs.url }}",
-            "canonical_website_repo": "FormatX66/ClusterSites",
-            "canonical_component": "services/aurum-arkmatx/pi3-physical-evidence-v1.js",
-            "approved_projection_commit": "1a8066a95645a03769651f2a332b1ea09087ea65",
-            "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/pi3-physical-evidence-v1.js",
-            "deployment_carrier": "FormatX66/wetbeard-site",
-            "pi3_physical_evidence_revision": "1.4",
-            "expandable": true,
-            "generation2_physical_userspace_proof_visible": true,
-            "generation2_fault_quarantine_visible": true,
-            "generation2_lkg_metadata_preservation_visible": true,
-            "generation2_isolated_rollback_visible": true,
-            "kernel_canary_preflight_visible": true,
-            "kernel_canary_preflight_is_compile_only": true,
-            "kernel_module_loaded_inferred": false,
-            "kernel_driver_mutation_authority": false,
-            "physical_kernel_canary_proof_inferred": false,
-            "production_arm64_proof_inferred": false,
-            "active_network_scan_allowed": false,
-            "persistent_trust_change_allowed": false,
-            "root_cause_inference": false,
-            "mutation_authority": false,
-            "promotion_authority": false,
-            "write_authority": false,
-            "frontiers_advancing_visible": true,
-            "needs_work_system_owned": true,
-            "human_action_inference": false,
-            "backup_before_publish": true,
-            "rollback_on_verify_failure": true,
-            "status": "verified-live",
-            "verified_at_utc": "$verified_at"
+            "site":"aurum-command-center",
+            "url":"${{ steps.verify.outputs.url }}",
+            "canonical_website_repo":"FormatX66/ClusterSites",
+            "canonical_component":"services/aurum-arkmatx/pi3-physical-evidence-v1.js",
+            "approved_projection_commit":"7178e04215bdec9086c099cf0e3666cf39e55408",
+            "public_projection":"FormatX66/BoxBrain:Web/Aurum-Arkmatx/pi3-physical-evidence-v1.js",
+            "deployment_carrier":"FormatX66/wetbeard-site",
+            "pi3_physical_evidence_revision":"1.5",
+            "expandable":true,
+            "generation2_physical_userspace_proof_visible":true,
+            "kernel_shared_state_visible":true,
+            "kernel_canary_compile_prerequisite_surface":true,
+            "kernel_watchdog_boundary_visible":true,
+            "overnight_laboratory_surface":true,
+            "physical_kernel_canary_proof_inferred":false,
+            "mutation_authority":false,
+            "promotion_authority":false,
+            "write_authority":false,
+            "frontiers_advancing_visible":true,
+            "needs_work_system_owned":true,
+            "human_action_inference":false,
+            "backup_before_publish":true,
+            "rollback_on_verify_failure":true,
+            "status":"verified-live",
+            "verified_at_utc":"$verified_at"
           }
           EOF
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git config user.name 'github-actions[bot]'; git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-pi3-physical-evidence-live.json
-          git commit -m 'Record Aurum Pi3 physical evidence v1.4 live [skip ci]' || exit 0
-          git pull --rebase origin main
-          git push origin HEAD:main
+          git commit -m 'Record Aurum Pi3 physical evidence v1.5 live [skip ci]' || exit 0
+          git pull --rebase origin main; git push origin HEAD:main

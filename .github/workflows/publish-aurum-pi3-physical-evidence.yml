@@ -32,29 +32,26 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          src='https://raw.githubusercontent.com/FormatX66/BoxBrain/97f89e54f239235dbfd1d23f0017f0fb3efd6818/Web/Aurum-Arkmatx/pi3-physical-evidence-v1.js'
+          src='https://raw.githubusercontent.com/FormatX66/BoxBrain/1df83a8df7c2644b0a25716890941688dfb3aa3b/Web/Aurum-Arkmatx/pi3-physical-evidence-v1.js'
           out="$RUNNER_TEMP/pi3-physical-evidence.js"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 "$src" -o "$out"
           test -s "$out"
           node --check "$out"
           require_marker(){ grep -Fq "$1" "$out" || { echo "Missing approved Pi3 marker: $1" >&2; exit 1; }; }
-          require_marker 'AURUM_PI3_PHYSICAL_EVIDENCE_V1_13_CANONICAL'
-          require_marker 'AURUM_PI3_PHYSICAL_EVIDENCE_V1_12_CANONICAL compatibility marker.'
+          require_marker 'AURUM_PI3_PHYSICAL_EVIDENCE_V1_14_CANONICAL'
+          require_marker 'AURUM_PI3_PHYSICAL_EVIDENCE_V1_13_CANONICAL compatibility marker.'
           require_marker 'Canonical website owner: FormatX66/ClusterSites.'
-          require_marker "schema:'aurum-command-center-pi3-physical-evidence-v1.13'"
-          require_marker 'pi3-smsc95xx-usbnet-control-loop-differential-latest.json'
-          require_marker 'pi3-smsc95xx-integrated-packet-control-loop-latest.json'
-          require_marker 'pi3-smsc95xx-virtual-usb-fault-harness-latest.json'
-          require_marker 'pi3-smsc95xx-virtual-usb-timing-latest.json'
-          require_marker 'pi3-smsc95xx-virtual-usb-queue-pressure-latest.json'
-          require_marker 'hostCompiledUsbnetControlLoopDifferentialProven:ct'
-          require_marker 'integratedPacketControlLoopProven:it'
-          require_marker 'virtualUsbFaultHarnessProven:fh'
-          require_marker 'virtualUsbTimingConcurrencyProven:tm'
-          require_marker 'virtualUsbQueuePressureProven:qp'
-          require_marker 'virtualUsbQueueViolationCount:qp?+s.queue.violation_count:null'
-          require_marker 'nextSafeGate:qp?s.queue.next_safe_gate:null'
-          require_marker 'linux-usbnet-urb-lifecycle-reference-differential'
+          require_marker "schema:'aurum-command-center-pi3-physical-evidence-v1.14'"
+          require_marker 'pi3-smsc95xx-linux-usbnet-urb-reference-latest.json'
+          require_marker "d?.schema==='aurum.pi3.smsc95xx.linux-usbnet-urb-reference-differential.v1'"
+          require_marker "d?.state==='linux-usbnet-urb-reference-compatible'"
+          require_marker "r.signed_stable_tag==='v6.18.34'"
+          require_marker "r.commit==='18ad16ce4a6b2714583fd1e1044c6ea8e53b3519'"
+          require_marker 'r.tag_signature_verified_by_github_api===true'
+          require_marker 'd.upstream_queue_receipt_sha256===s.queue?.receipt_sha256'
+          require_marker "d.next_safe_gate==='raspberry-pi-source-patch-delta-for-usbnet-urb-semantics'"
+          require_marker 'linuxUsbnetUrbReferenceProven:lr'
+          require_marker 'linuxReferenceMismatchCount:lr?+s.linuxref.mismatch_count:null'
           require_marker 'offlineHardwareContacted:false'
           require_marker 'physicalBindingProven:false'
           require_marker 'nativeDriverProven:false'
@@ -118,9 +115,9 @@ jobs:
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./pi3-physical-evidence\.js(?:\?v=[^"]+)?"></script>\s*','',text)
           if '</body>' not in text: raise SystemExit('dashboard missing body close')
-          p.write_text(text.replace('</body>','<script src="./pi3-physical-evidence.js?v=15"></script>\n</body>',1),encoding='utf-8')
+          p.write_text(text.replace('</body>','<script src="./pi3-physical-evidence.js?v=16"></script>\n</body>',1),encoding='utf-8')
           PY
-          grep -Fq './pi3-physical-evidence.js?v=15' "$RUNNER_TEMP/index.html"
+          grep -Fq './pi3-physical-evidence.js?v=16' "$RUNNER_TEMP/index.html"
 
       - name: Publish with bounded connection count
         env:
@@ -130,22 +127,22 @@ jobs:
         run: |
           set -euo pipefail
           retry(){ local n=1; while true; do "$@" && return 0; [ "$n" -ge 5 ] && return 1; sleep $((n*5)); n=$((n+1)); done; }
-          remote='public_html/arkmatx/aurum/dashboard'; stage="$RUNNER_TEMP/pi3-v113-publish"; mkdir -p "$stage"
+          remote='public_html/arkmatx/aurum/dashboard'; stage="$RUNNER_TEMP/pi3-v114-publish"; mkdir -p "$stage"
           cp "$RUNNER_TEMP/index.html" "$stage/index.html"; cp "${{ steps.source.outputs.file }}" "$stage/pi3-physical-evidence.js"
           retry scp -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -P 22 "$stage/index.html" "$stage/pi3-physical-evidence.js" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/"
           retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" "chmod 644 '$remote/index.html' '$remote/pi3-physical-evidence.js'"
 
-      - name: Verify live Pi3 v1.13 surface
+      - name: Verify live Pi3 v1.14 surface
         id: verify
         shell: bash
         run: |
           set -euo pipefail
           page="$(mktemp)"; component="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
-          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/pi3-physical-evidence.js?rev=15' -o "$component"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/pi3-physical-evidence.js?rev=16' -o "$component"
           grep -Fq 'Progress is proof, not activity.' "$page"
-          grep -Fq './pi3-physical-evidence.js?v=15' "$page"
-          for marker in 'AURUM_PI3_PHYSICAL_EVIDENCE_V1_13_CANONICAL' "schema:'aurum-command-center-pi3-physical-evidence-v1.13'" 'hostCompiledUsbnetControlLoopDifferentialProven:ct' 'integratedPacketControlLoopProven:it' 'virtualUsbFaultHarnessProven:fh' 'virtualUsbTimingConcurrencyProven:tm' 'virtualUsbQueuePressureProven:qp' 'linux-usbnet-urb-lifecycle-reference-differential' 'offlineHardwareContacted:false' 'physicalBindingProven:false' 'nativeDriverProven:false' 'outOfBandWatchdogProven:false' 'outOfBandWatchdogRequiredForBroaderMutation:true' 'Frontiers Advancing:' 'Needs Work → Aurum/System:' 'Your Actions:' 'none for this Pi3 lane.' 'kernelDriverMutationAuthority:false' 'replacementKernelAuthority:false' 'humanActionInference:false'; do grep -Fq "$marker" "$component" || { echo "Missing live Pi3 marker: $marker" >&2; exit 1; }; done
+          grep -Fq './pi3-physical-evidence.js?v=16' "$page"
+          for marker in 'AURUM_PI3_PHYSICAL_EVIDENCE_V1_14_CANONICAL' "schema:'aurum-command-center-pi3-physical-evidence-v1.14'" 'pi3-smsc95xx-linux-usbnet-urb-reference-latest.json' 'linuxUsbnetUrbReferenceProven:lr' "r.signed_stable_tag==='v6.18.34'" "d.next_safe_gate==='raspberry-pi-source-patch-delta-for-usbnet-urb-semantics'" 'offlineHardwareContacted:false' 'physicalBindingProven:false' 'nativeDriverProven:false' 'outOfBandWatchdogProven:false' 'outOfBandWatchdogRequiredForBroaderMutation:true' 'Frontiers Advancing:' 'Needs Work → Aurum/System:' 'Your Actions:' 'none for this Pi3 lane.' 'kernelDriverMutationAuthority:false' 'replacementKernelAuthority:false' 'humanActionInference:false'; do grep -Fq "$marker" "$component" || { echo "Missing live Pi3 marker: $marker" >&2; exit 1; }; done
           cmp -s "${{ steps.source.outputs.file }}" "$component"
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
 
@@ -162,7 +159,7 @@ jobs:
           retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
             "set -eu; cp -p '$backup/index.html' '$remote/index.html'; if [ -f '$backup/pi3-physical-evidence.js' ]; then cp -p '$backup/pi3-physical-evidence.js' '$remote/pi3-physical-evidence.js'; elif [ -f '$backup/.missing-pi3-physical-evidence.js' ]; then rm -f '$remote/pi3-physical-evidence.js'; fi"
 
-      - name: Record verified Pi3 v1.13 receipt
+      - name: Record verified Pi3 v1.14 receipt
         if: success()
         shell: bash
         run: |
@@ -175,26 +172,27 @@ jobs:
             "url":"${{ steps.verify.outputs.url }}",
             "canonical_website_repo":"FormatX66/ClusterSites",
             "canonical_component":"services/aurum-arkmatx/pi3-physical-evidence-v1.js",
-            "approved_projection_commit":"97f89e54f239235dbfd1d23f0017f0fb3efd6818",
+            "approved_projection_commit":"1df83a8df7c2644b0a25716890941688dfb3aa3b",
             "public_projection":"FormatX66/BoxBrain:Web/Aurum-Arkmatx/pi3-physical-evidence-v1.js",
             "deployment_carrier":"FormatX66/wetbeard-site",
-            "pi3_physical_evidence_revision":"1.13",
+            "pi3_physical_evidence_revision":"1.14",
             "expandable":true,
             "reference_model_complete":true,
             "reference_model_agreements":8,
             "reference_model_gaps":0,
             "host_compiled_control_loop_proven":true,
-            "host_compiled_control_loop_scenarios_min":65731,
             "integrated_packet_control_loop_proven":true,
-            "integrated_packet_control_loop_scenarios_min":33223,
             "virtual_usb_fault_harness_proven":true,
-            "virtual_usb_fault_scenarios_min":16402,
             "virtual_usb_timing_concurrency_proven":true,
-            "virtual_usb_timing_scenarios_min":32779,
             "virtual_usb_queue_pressure_proven":true,
-            "virtual_usb_queue_scenarios_min":32785,
             "virtual_usb_queue_violations":0,
-            "next_gate":"linux-usbnet-urb-lifecycle-reference-differential",
+            "linux_usbnet_urb_reference_proven":true,
+            "linux_reference_repository":"gregkh/linux",
+            "linux_reference_signed_stable_tag":"v6.18.34",
+            "linux_reference_commit":"18ad16ce4a6b2714583fd1e1044c6ea8e53b3519",
+            "linux_reference_mismatches":0,
+            "linux_reference_receipt_sha256":"c9ef19b12f325f0ff04b6eea91aa41a451aeddd0d93ab95263fe5080186012d3",
+            "next_gate":"raspberry-pi-source-patch-delta-for-usbnet-urb-semantics",
             "offline_hardware_contact":false,
             "physical_binding_proven":false,
             "native_driver_proven":false,
@@ -215,5 +213,5 @@ jobs:
           EOF
           git config user.name 'github-actions[bot]'; git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-pi3-physical-evidence-live.json
-          git commit -m 'Record Aurum Pi3 physical evidence v1.13 live [skip ci]' || exit 0
+          git commit -m 'Record Aurum Pi3 physical evidence v1.14 live [skip ci]' || exit 0
           git pull --rebase origin main; git push origin HEAD:main

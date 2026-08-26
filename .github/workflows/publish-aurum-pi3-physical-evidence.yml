@@ -31,28 +31,35 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          src='https://raw.githubusercontent.com/FormatX66/BoxBrain/0b5035e948e5c4a79cc0c7cc7f50c4b24414956d/Web/Aurum-Arkmatx/pi3-physical-evidence-v1.js'
+          src='https://raw.githubusercontent.com/FormatX66/BoxBrain/f34962906be300d1b0c2e45b085fd27a7dd64908/Web/Aurum-Arkmatx/pi3-physical-evidence-v1.js'
           out="$RUNNER_TEMP/pi3-physical-evidence.js"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 "$src" -o "$out"
           test -s "$out"
           node --check "$out"
           require_marker() { grep -Fq "$1" "$out" || { echo "Missing approved Pi3 marker: $1" >&2; exit 1; }; }
-          require_marker 'AURUM_PI3_PHYSICAL_EVIDENCE_V1_5_CANONICAL'
+          require_marker 'AURUM_PI3_PHYSICAL_EVIDENCE_V1_6_CANONICAL'
+          require_marker 'AURUM_PI3_PHYSICAL_EVIDENCE_V1_5_CANONICAL compatibility marker.'
           require_marker 'Canonical website owner: FormatX66/ClusterSites.'
-          require_marker "schema:'aurum-command-center-pi3-physical-evidence-v1.5'"
+          require_marker "schema:'aurum-command-center-pi3-physical-evidence-v1.6'"
           require_marker 'CURRENT_STATE.json'
           require_marker 'kernelCanaryCompilePrereqsProven:'
           require_marker 'kernelCanaryWatchdogProven:'
+          require_marker 'kernelCanaryPreflightModuleLoaded:false'
+          require_marker 'exactHeaderModuleCanaryPassed'
           require_marker 'overnightLaboratoryRunning:'
           require_marker "r?.status==='in_progress'"
           require_marker 'shared state pending reconciliation'
-          require_marker 'overnightObservationPassed:'
-          require_marker 'overnightPhysicalMutationStarted:'
+          require_marker 'overnightExactHeaderModuleCanaryPassed:'
+          require_marker 'overnightInertModuleTransientLoadProven:'
+          require_marker 'overnightModulePresentAfter:'
+          require_marker 'overnightModuleSha256:'
+          require_marker 'overnightVermagic:'
+          require_marker 'overnightBootId:'
           require_marker 'Frontiers Advancing:'
           require_marker 'Needs Work → Aurum/System:'
           require_marker 'Your Actions:'
-          require_marker 'kernelModuleLoaded:false'
           require_marker 'kernelDriverMutationAuthority:false'
+          require_marker 'replacementKernelAuthority:false'
           require_marker 'rootCauseInferred:false'
           require_marker 'mutationAllowed:false'
           require_marker 'promotionAllowed:false'
@@ -107,9 +114,9 @@ jobs:
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./pi3-physical-evidence\.js(?:\?v=[^"]+)?"></script>\s*','',text)
           if '</body>' not in text: raise SystemExit('dashboard missing body close')
-          p.write_text(text.replace('</body>','<script src="./pi3-physical-evidence.js?v=7"></script>\n</body>',1),encoding='utf-8')
+          p.write_text(text.replace('</body>','<script src="./pi3-physical-evidence.js?v=8"></script>\n</body>',1),encoding='utf-8')
           PY
-          grep -Fq './pi3-physical-evidence.js?v=7' "$RUNNER_TEMP/index.html"
+          grep -Fq './pi3-physical-evidence.js?v=8' "$RUNNER_TEMP/index.html"
 
       - name: Publish with bounded connection count
         env:
@@ -119,23 +126,23 @@ jobs:
         run: |
           set -euo pipefail
           retry(){ local n=1; while true; do "$@" && return 0; [ "$n" -ge 5 ] && return 1; sleep $((n*5)); n=$((n+1)); done; }
-          remote='public_html/arkmatx/aurum/dashboard'; stage="$RUNNER_TEMP/pi3-v15-publish"; mkdir -p "$stage"
+          remote='public_html/arkmatx/aurum/dashboard'; stage="$RUNNER_TEMP/pi3-v16-publish"; mkdir -p "$stage"
           cp "$RUNNER_TEMP/index.html" "$stage/index.html"; cp "${{ steps.source.outputs.file }}" "$stage/pi3-physical-evidence.js"
           retry scp -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -P 22 "$stage/index.html" "$stage/pi3-physical-evidence.js" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/"
           retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" "chmod 644 '$remote/index.html' '$remote/pi3-physical-evidence.js'"
 
-      - name: Verify live Pi3 v1.5 surface
+      - name: Verify live Pi3 v1.6 surface
         id: verify
         shell: bash
         run: |
           set -euo pipefail
           page="$(mktemp)"; component="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
-          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/pi3-physical-evidence.js?rev=7' -o "$component"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/pi3-physical-evidence.js?rev=8' -o "$component"
           grep -Fq 'Progress is proof, not activity.' "$page"
           grep -Fq './command-center.js?v=32' "$page"
-          grep -Fq './pi3-physical-evidence.js?v=7' "$page"
-          for marker in 'AURUM_PI3_PHYSICAL_EVIDENCE_V1_5_CANONICAL' "schema:'aurum-command-center-pi3-physical-evidence-v1.5'" 'kernelCanaryCompilePrereqsProven:' 'kernelCanaryWatchdogProven:' 'overnightLaboratoryRunning:' "r?.status==='in_progress'" 'shared state pending reconciliation' 'Frontiers Advancing:' 'Needs Work → Aurum/System:' 'Your Actions:' 'kernelModuleLoaded:false' 'kernelDriverMutationAuthority:false' 'humanActionInference:false'; do grep -Fq "$marker" "$component" || { echo "Missing live Pi3 marker: $marker" >&2; exit 1; }; done
+          grep -Fq './pi3-physical-evidence.js?v=8' "$page"
+          for marker in 'AURUM_PI3_PHYSICAL_EVIDENCE_V1_6_CANONICAL' "schema:'aurum-command-center-pi3-physical-evidence-v1.6'" 'kernelCanaryCompilePrereqsProven:' 'kernelCanaryWatchdogProven:' 'kernelCanaryPreflightModuleLoaded:false' 'exactHeaderModuleCanaryPassed' 'overnightLaboratoryRunning:' 'overnightExactHeaderModuleCanaryPassed:' 'overnightInertModuleTransientLoadProven:' 'overnightModulePresentAfter:' 'replacementKernelAuthority:false' 'Frontiers Advancing:' 'Needs Work → Aurum/System:' 'Your Actions:' 'kernelDriverMutationAuthority:false' 'humanActionInference:false'; do grep -Fq "$marker" "$component" || { echo "Missing live Pi3 marker: $marker" >&2; exit 1; }; done
           cmp -s "${{ steps.source.outputs.file }}" "$component"
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
 
@@ -152,7 +159,7 @@ jobs:
           retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
             "set -eu; cp -p '$backup/index.html' '$remote/index.html'; if [ -f '$backup/pi3-physical-evidence.js' ]; then cp -p '$backup/pi3-physical-evidence.js' '$remote/pi3-physical-evidence.js'; elif [ -f '$backup/.missing-pi3-physical-evidence.js' ]; then rm -f '$remote/pi3-physical-evidence.js'; fi"
 
-      - name: Record verified Pi3 v1.5 receipt
+      - name: Record verified Pi3 v1.6 receipt
         if: success()
         shell: bash
         run: |
@@ -165,17 +172,23 @@ jobs:
             "url":"${{ steps.verify.outputs.url }}",
             "canonical_website_repo":"FormatX66/ClusterSites",
             "canonical_component":"services/aurum-arkmatx/pi3-physical-evidence-v1.js",
-            "approved_projection_commit":"0b5035e948e5c4a79cc0c7cc7f50c4b24414956d",
+            "approved_projection_commit":"f34962906be300d1b0c2e45b085fd27a7dd64908",
             "public_projection":"FormatX66/BoxBrain:Web/Aurum-Arkmatx/pi3-physical-evidence-v1.js",
             "deployment_carrier":"FormatX66/wetbeard-site",
-            "pi3_physical_evidence_revision":"1.5",
+            "pi3_physical_evidence_revision":"1.6",
             "expandable":true,
             "generation2_physical_userspace_proof_visible":true,
             "kernel_shared_state_visible":true,
             "kernel_canary_compile_prerequisite_surface":true,
-            "kernel_watchdog_boundary_visible":true,
+            "kernel_preflight_module_loaded":false,
+            "exact_header_inert_module_canary_visible":true,
+            "transient_kernel_module_load_unload_proven":true,
+            "module_present_after_canary":false,
+            "out_of_band_watchdog_proven":false,
+            "driver_binding_authority":false,
+            "replacement_kernel_authority":false,
+            "broader_kernel_mutation_proof_inferred":false,
             "overnight_laboratory_surface":true,
-            "physical_kernel_canary_proof_inferred":false,
             "mutation_authority":false,
             "promotion_authority":false,
             "write_authority":false,
@@ -190,5 +203,5 @@ jobs:
           EOF
           git config user.name 'github-actions[bot]'; git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-pi3-physical-evidence-live.json
-          git commit -m 'Record Aurum Pi3 physical evidence v1.5 live [skip ci]' || exit 0
+          git commit -m 'Record Aurum Pi3 physical evidence v1.6 live [skip ci]' || exit 0
           git pull --rebase origin main; git push origin HEAD:main

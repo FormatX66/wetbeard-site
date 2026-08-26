@@ -31,7 +31,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          src='https://raw.githubusercontent.com/FormatX66/BoxBrain/7178e04215bdec9086c099cf0e3666cf39e55408/Web/Aurum-Arkmatx/pi3-physical-evidence-v1.js'
+          src='https://raw.githubusercontent.com/FormatX66/BoxBrain/0b5035e948e5c4a79cc0c7cc7f50c4b24414956d/Web/Aurum-Arkmatx/pi3-physical-evidence-v1.js'
           out="$RUNNER_TEMP/pi3-physical-evidence.js"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 "$src" -o "$out"
           test -s "$out"
@@ -44,6 +44,8 @@ jobs:
           require_marker 'kernelCanaryCompilePrereqsProven:'
           require_marker 'kernelCanaryWatchdogProven:'
           require_marker 'overnightLaboratoryRunning:'
+          require_marker "r?.status==='in_progress'"
+          require_marker 'shared state pending reconciliation'
           require_marker 'overnightObservationPassed:'
           require_marker 'overnightPhysicalMutationStarted:'
           require_marker 'Frontiers Advancing:'
@@ -105,9 +107,9 @@ jobs:
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./pi3-physical-evidence\.js(?:\?v=[^"]+)?"></script>\s*','',text)
           if '</body>' not in text: raise SystemExit('dashboard missing body close')
-          p.write_text(text.replace('</body>','<script src="./pi3-physical-evidence.js?v=6"></script>\n</body>',1),encoding='utf-8')
+          p.write_text(text.replace('</body>','<script src="./pi3-physical-evidence.js?v=7"></script>\n</body>',1),encoding='utf-8')
           PY
-          grep -Fq './pi3-physical-evidence.js?v=6' "$RUNNER_TEMP/index.html"
+          grep -Fq './pi3-physical-evidence.js?v=7' "$RUNNER_TEMP/index.html"
 
       - name: Publish with bounded connection count
         env:
@@ -129,11 +131,11 @@ jobs:
           set -euo pipefail
           page="$(mktemp)"; component="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
-          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/pi3-physical-evidence.js?rev=6' -o "$component"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/pi3-physical-evidence.js?rev=7' -o "$component"
           grep -Fq 'Progress is proof, not activity.' "$page"
           grep -Fq './command-center.js?v=32' "$page"
-          grep -Fq './pi3-physical-evidence.js?v=6' "$page"
-          for marker in 'AURUM_PI3_PHYSICAL_EVIDENCE_V1_5_CANONICAL' "schema:'aurum-command-center-pi3-physical-evidence-v1.5'" 'kernelCanaryCompilePrereqsProven:' 'kernelCanaryWatchdogProven:' 'overnightLaboratoryRunning:' 'Frontiers Advancing:' 'Needs Work → Aurum/System:' 'Your Actions:' 'kernelModuleLoaded:false' 'kernelDriverMutationAuthority:false' 'humanActionInference:false'; do grep -Fq "$marker" "$component" || { echo "Missing live Pi3 marker: $marker" >&2; exit 1; }; done
+          grep -Fq './pi3-physical-evidence.js?v=7' "$page"
+          for marker in 'AURUM_PI3_PHYSICAL_EVIDENCE_V1_5_CANONICAL' "schema:'aurum-command-center-pi3-physical-evidence-v1.5'" 'kernelCanaryCompilePrereqsProven:' 'kernelCanaryWatchdogProven:' 'overnightLaboratoryRunning:' "r?.status==='in_progress'" 'shared state pending reconciliation' 'Frontiers Advancing:' 'Needs Work → Aurum/System:' 'Your Actions:' 'kernelModuleLoaded:false' 'kernelDriverMutationAuthority:false' 'humanActionInference:false'; do grep -Fq "$marker" "$component" || { echo "Missing live Pi3 marker: $marker" >&2; exit 1; }; done
           cmp -s "${{ steps.source.outputs.file }}" "$component"
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
 
@@ -163,7 +165,7 @@ jobs:
             "url":"${{ steps.verify.outputs.url }}",
             "canonical_website_repo":"FormatX66/ClusterSites",
             "canonical_component":"services/aurum-arkmatx/pi3-physical-evidence-v1.js",
-            "approved_projection_commit":"7178e04215bdec9086c099cf0e3666cf39e55408",
+            "approved_projection_commit":"0b5035e948e5c4a79cc0c7cc7f50c4b24414956d",
             "public_projection":"FormatX66/BoxBrain:Web/Aurum-Arkmatx/pi3-physical-evidence-v1.js",
             "deployment_carrier":"FormatX66/wetbeard-site",
             "pi3_physical_evidence_revision":"1.5",

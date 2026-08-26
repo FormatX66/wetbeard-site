@@ -42,18 +42,29 @@ jobs:
           grep -Fq 'Needs Work → Aurum/System:' "$out"
           grep -Fq 'Your Actions:' "$out"
           grep -Fq "schema:'aurum-command-center-chat-process-tree-v1.0'" "$out"
+          grep -Fq "componentRevision:'1.1'" "$out"
           grep -Fq 'topicRouterVisible:' "$out"
           grep -Fq 'sharedStateBusVisible:' "$out"
           grep -Fq 'gptBridgeVisible:' "$out"
           grep -Fq 'operationalFutureBranchVisible:' "$out"
+          grep -Fq 'mcpAdapterVisible:' "$out"
+          grep -Fq 'mcpWorkflowState:' "$out"
+          grep -Fq 'chatGptAppPanelVisible:' "$out"
+          grep -Fq 'chatGptAppWorkflowState:' "$out"
+          grep -Fq 'crossChatMetadataCacheVisible:' "$out"
+          grep -Fq 'fullChatBodiesCached:false' "$out"
+          grep -Fq 'cachedTextGrantsAuthority:false' "$out"
+          grep -Fq 'chatGptRuntimeConnectionInferred:false' "$out"
           grep -Fq 'sharedRuntimeProjectionPresent:' "$out"
           grep -Fq 'treeGrantsExecutionAuthority:false' "$out"
           grep -Fq 'sharedStateGrantsExecutionAuthority:false' "$out"
+          grep -Fq 'mcpGrantsExecutionAuthority:false' "$out"
+          grep -Fq 'appPanelGrantsExecutionAuthority:false' "$out"
           grep -Fq 'treeResolvesPhysicalBoundaries:false' "$out"
           grep -Fq "needsWorkOwner:'aurum-system'" "$out"
           grep -Fq 'humanActionInference:false' "$out"
           actual_blob="$(git hash-object "$out")"
-          expected_blob='9b33c7211c86b5273b8c32119a124555d99279ad'
+          expected_blob='3072685616f092442309d6d6cf1e458c9cde8e64'
           if [ "$actual_blob" != "$expected_blob" ]; then
             echo "Refusing unapproved Chat Process Tree projection: expected $expected_blob got $actual_blob" >&2
             exit 1
@@ -127,10 +138,10 @@ jobs:
           text=re.sub(r'<script src="\./chat-process-tree\.js(?:\?v=[^"]+)?"></script>\s*','',text)
           if '</body>' not in text:
               raise SystemExit('dashboard missing body close')
-          text=text.replace('</body>','<script src="./chat-process-tree.js?v=1"></script>\n</body>',1)
+          text=text.replace('</body>','<script src="./chat-process-tree.js?v=2"></script>\n</body>',1)
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './chat-process-tree.js?v=1' "$RUNNER_TEMP/index.html"
+          grep -Fq './chat-process-tree.js?v=2' "$RUNNER_TEMP/index.html"
 
       - name: Publish Chat Process Tree with bounded connection count
         env:
@@ -168,23 +179,34 @@ jobs:
           component="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' \
-            'https://arkmatx.com/aurum/dashboard/chat-process-tree.js?rev=1' -o "$component"
+            'https://arkmatx.com/aurum/dashboard/chat-process-tree.js?rev=2' -o "$component"
           grep -Fq 'Progress is proof, not activity.' "$page"
           grep -Fq './command-center.js?v=32' "$page"
-          grep -Fq './chat-process-tree.js?v=1' "$page"
+          grep -Fq './chat-process-tree.js?v=2' "$page"
           grep -Fq 'AURUM_CHAT_PROCESS_TREE_V1_CANONICAL' "$component"
           grep -Fq 'Canonical website owner: FormatX66/ClusterSites.' "$component"
           grep -Fq 'Frontiers Advancing:' "$component"
           grep -Fq 'Needs Work → Aurum/System:' "$component"
           grep -Fq 'Your Actions:' "$component"
           grep -Fq "schema:'aurum-command-center-chat-process-tree-v1.0'" "$component"
+          grep -Fq "componentRevision:'1.1'" "$component"
           grep -Fq 'topicRouterVisible:' "$component"
           grep -Fq 'sharedStateBusVisible:' "$component"
           grep -Fq 'gptBridgeVisible:' "$component"
           grep -Fq 'operationalFutureBranchVisible:' "$component"
+          grep -Fq 'mcpAdapterVisible:' "$component"
+          grep -Fq 'mcpWorkflowState:' "$component"
+          grep -Fq 'chatGptAppPanelVisible:' "$component"
+          grep -Fq 'chatGptAppWorkflowState:' "$component"
+          grep -Fq 'crossChatMetadataCacheVisible:' "$component"
+          grep -Fq 'fullChatBodiesCached:false' "$component"
+          grep -Fq 'cachedTextGrantsAuthority:false' "$component"
+          grep -Fq 'chatGptRuntimeConnectionInferred:false' "$component"
           grep -Fq 'sharedRuntimeProjectionPresent:' "$component"
           grep -Fq 'treeGrantsExecutionAuthority:false' "$component"
           grep -Fq 'sharedStateGrantsExecutionAuthority:false' "$component"
+          grep -Fq 'mcpGrantsExecutionAuthority:false' "$component"
+          grep -Fq 'appPanelGrantsExecutionAuthority:false' "$component"
           grep -Fq 'treeResolvesPhysicalBoundaries:false' "$component"
           grep -Fq "needsWorkOwner:'aurum-system'" "$component"
           grep -Fq 'humanActionInference:false' "$component"
@@ -237,7 +259,7 @@ jobs:
             "canonical_component": "services/aurum-arkmatx/chat-process-tree-v1.js",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/chat-process-tree-v1.js",
             "deployment_carrier": "FormatX66/wetbeard-site",
-            "chat_process_tree_revision": "1.0",
+            "chat_process_tree_revision": "1.1",
             "approved_component_blob": "${{ steps.source.outputs.blob }}",
             "live_component_blob": "${{ steps.verify.outputs.blob }}",
             "expandable": true,
@@ -245,11 +267,19 @@ jobs:
             "shared_state_contract_visible": true,
             "gpt_process_bridge_visible": true,
             "operational_future_branch_visible": true,
+            "mcp_adapter_visible": true,
+            "chatgpt_app_panel_visible": true,
+            "cross_chat_metadata_cache_visible": true,
+            "full_chat_bodies_cached": false,
+            "cached_text_grants_authority": false,
+            "chatgpt_runtime_connection_inferred": false,
             "runtime_shared_state_inferred": false,
             "frontiers_advancing_visible": true,
             "needs_work_system_owned": true,
             "tree_grants_execution_authority": false,
             "shared_state_grants_execution_authority": false,
+            "mcp_grants_execution_authority": false,
+            "app_panel_grants_execution_authority": false,
             "tree_resolves_physical_boundaries": false,
             "human_action_inference": false,
             "backup_before_publish": true,
@@ -261,6 +291,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-chat-process-tree-live.json
-          git commit -m 'Record Aurum Chat Process Tree v1.0 live [skip ci]' || exit 0
+          git commit -m 'Record Aurum Chat Process Tree v1.1 live [skip ci]' || exit 0
           git pull --rebase origin main
           git push origin HEAD:main

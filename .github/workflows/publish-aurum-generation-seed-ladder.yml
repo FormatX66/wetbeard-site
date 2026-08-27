@@ -30,7 +30,7 @@ jobs:
           # ClusterSites is private and remains canonical. The production carrier
           # consumes only the public BoxBrain projection after pinning its Git
           # blob byte-for-byte to the approved ClusterSites canonical blob.
-          expected_canonical_blob='064ac6305002957cdcdf67f515baa61ff33f0c6b'
+          expected_canonical_blob='cfda60bfebba31d30ad3776f4184c031c657fa72'
           projection="$RUNNER_TEMP/generation-seed-ladder-canonical.js"
           curl --fail-with-body --silent --show-error --location \
             'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/generation-seed-ladder-v1.js' -o "$projection"
@@ -40,12 +40,15 @@ jobs:
           test "$blob" = "$expected_canonical_blob"
           grep -Fq 'AURUM_GENERATION_SEED_LADDER_V1_CANONICAL' "$projection"
           grep -Fq "canonicalWebsiteRepo:'FormatX66/ClusterSites'" "$projection"
-          grep -Fq "EVIDENCE_COMMIT='8b4e266c7d98fe33686cbd5ff1e4428d5561e707'" "$projection"
+          grep -Fq "EVIDENCE_COMMIT='525c37e997d9c1a4ca6fe67d0166c1c58ea5b77b'" "$projection"
           grep -Fq 'futureBranchParallelPreparation:true' "$projection"
           grep -Fq 'generationEarnedBySoftwarePreparation:false' "$projection"
           grep -Fq 'lkgMutationAllowed:false' "$projection"
           grep -Fq 'trustWideningAllowed:false' "$projection"
           grep -Fq 'humanActionInferred:false' "$projection"
+          grep -Fq 'cross-node evidence receipt + replay' "$projection"
+          grep -Fq 'multi-node live exchange' "$projection"
+          grep -Fq 'independent-node recovery' "$projection"
           grep -Fq 'Frontiers Advancing:' "$projection"
           grep -Fq 'Needs Work → Aurum/System:' "$projection"
           grep -Fq 'Your Actions:' "$projection"
@@ -56,7 +59,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          commit='8b4e266c7d98fe33686cbd5ff1e4428d5561e707'
+          commit='525c37e997d9c1a4ca6fe67d0166c1c58ea5b77b'
           curl --fail-with-body --silent --show-error --location \
             "https://api.github.com/repos/FormatX66/BoxBrain/actions/runs?head_sha=$commit&per_page=100" \
             -o "$RUNNER_TEMP/runs.json"
@@ -113,7 +116,7 @@ jobs:
           import re, sys
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./generation-seed-ladder\.js(?:\?v=[^"]+)?"></script>\s*','',text)
-          tag='<script src="./generation-seed-ladder.js?v=1"></script>'
+          tag='<script src="./generation-seed-ladder.js?v=2"></script>'
           markers=[r'<script src="\./seed-lifecycle\.js(?:\?v=[^"]+)?"></script>',r'<script src="\./recovery-guardian\.js(?:\?v=[^"]+)?"></script>',r'</body>']
           for pattern in markers:
               m=re.search(pattern,text)
@@ -124,7 +127,7 @@ jobs:
               raise SystemExit('dashboard missing generation ladder injection point')
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './generation-seed-ladder.js?v=1' "$RUNNER_TEMP/index.html"
+          grep -Fq './generation-seed-ladder.js?v=2' "$RUNNER_TEMP/index.html"
 
       - name: Publish with bounded retries
         env:
@@ -149,11 +152,14 @@ jobs:
           page="$RUNNER_TEMP/live-index.html"; js="$RUNNER_TEMP/live-generation-seed-ladder.js"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' \
-            'https://arkmatx.com/aurum/dashboard/generation-seed-ladder.js?rev=1' -o "$js"
-          grep -Fq './generation-seed-ladder.js?v=1' "$page"
+            'https://arkmatx.com/aurum/dashboard/generation-seed-ladder.js?rev=2' -o "$js"
+          grep -Fq './generation-seed-ladder.js?v=2' "$page"
           cmp -s "${{ steps.source.outputs.file }}" "$js"
           grep -Fq 'AURUM_GENERATION_SEED_LADDER_V1_CANONICAL' "$js"
           grep -Fq 'generationEarnedBySoftwarePreparation:false' "$js"
+          grep -Fq 'cross-node evidence receipt + replay' "$js"
+          grep -Fq 'multi-node live exchange' "$js"
+          grep -Fq 'independent-node recovery' "$js"
           grep -Fq 'humanActionInferred:false' "$js"
           grep -Fq 'Frontiers Advancing:' "$js"
           grep -Fq 'Needs Work → Aurum/System:' "$js"
@@ -191,12 +197,15 @@ jobs:
             "canonical_component": "services/aurum-arkmatx/generation-seed-ladder-v1.js",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/generation-seed-ladder-v1.js",
             "deployment_carrier": "FormatX66/wetbeard-site",
-            "component_revision": "1.0",
+            "component_revision": "1.1",
             "approved_blob": "${{ steps.source.outputs.blob }}",
-            "boxbrain_evidence_commit": "8b4e266c7d98fe33686cbd5ff1e4428d5561e707",
+            "boxbrain_evidence_commit": "525c37e997d9c1a4ca6fe67d0166c1c58ea5b77b",
             "boxbrain_ci_proven": true,
             "future_branch_parallel_preparation": true,
             "generation_earned_by_software_preparation": false,
+            "gen3_cross_node_evidence_receipt_replay_proven": true,
+            "gen3_live_multi_node_exchange_proven": false,
+            "gen3_independent_node_recovery_proven": false,
             "parent_recovery_provenance_gates_required": true,
             "lkg_mutation_allowed": false,
             "trust_widening_allowed": false,

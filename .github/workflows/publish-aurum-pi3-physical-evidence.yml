@@ -32,26 +32,47 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          src='https://raw.githubusercontent.com/FormatX66/BoxBrain/82d6a1b38793b766feb0c2c2a1fbd4cf3c584f06/Web/Aurum-Arkmatx/pi3-physical-evidence-v1.js'
+          src='https://raw.githubusercontent.com/FormatX66/BoxBrain/b67bc7ecbaba5a00ec2c1407c6fa8bd4c1e55e0e/Web/Aurum-Arkmatx/pi3-physical-evidence-v1.js'
           out="$RUNNER_TEMP/pi3-physical-evidence.js"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 "$src" -o "$out"
           test -s "$out"
           node --check "$out"
           require_marker(){ grep -Fq "$1" "$out" || { echo "Missing approved Pi3 marker: $1" >&2; exit 1; }; }
-          require_marker 'AURUM_PI3_PHYSICAL_EVIDENCE_V1_15_CANONICAL'
-          require_marker 'AURUM_PI3_PHYSICAL_EVIDENCE_V1_14_CANONICAL compatibility marker.'
+          require_marker 'AURUM_PI3_PHYSICAL_EVIDENCE_V1_16_CANONICAL'
+          require_marker 'AURUM_PI3_PHYSICAL_EVIDENCE_V1_15_CANONICAL compatibility marker.'
           require_marker 'Canonical website owner: FormatX66/ClusterSites.'
-          require_marker "schema:'aurum-command-center-pi3-physical-evidence-v1.15'"
+          require_marker "schema:'aurum-command-center-pi3-physical-evidence-v1.16'"
           require_marker 'pi3-source-package-recipe-provenance-latest.json'
           require_marker 'pi3-kernel-shadow-compile-latest.json'
+          require_marker 'pi3-kernel-shadow-farmer-audit-latest.json'
           require_marker 'pi3-smsc95xx-physical-ethernet-canary-20260826.json'
           require_marker 'pi3-smsc95xx-physical-ethernet-canary-controller-to-pi-20260826.json'
+          require_marker "d?.schema==='aurum.pi3.kernel-shadow.farmer-audit.v1'"
+          require_marker "d?.state==='verified-completion-with-held-physical-boundaries'"
+          require_marker "o.id==='AF-PI3-KERNEL-SHADOW-EMULATION-002'"
+          require_marker "o.terminal==='verified_completion'"
+          require_marker '+o.pending_count===0'
+          require_marker '+o.defect_count===0'
+          require_marker '+o.blocker_count===0'
+          require_marker "f.package_version==='3.2'"
+          require_marker '+f.test_count===44'
+          require_marker '+f.test_failures===0'
+          require_marker 'i.physical_device_contacted===false'
+          require_marker 'i.module_loaded===false'
+          require_marker 'i.driver_binding_changed===false'
+          require_marker 'i.last_known_good_preserved===true'
           require_marker 'officialSourcePackageProtectedRecipeProven:rp'
           require_marker 'wholeTreeBuildReproducibilityProven:false'
           require_marker 'kernelShadowCompileOnlyProven:sh'
           require_marker 'kernelShadowModuleLoaded:false'
+          require_marker 'farmerKernelShadowAuditProven:fa'
+          require_marker 'farmerVerifierTests:fa?+au.farmer?.test_count:null'
+          require_marker 'farmerVerifierFailures:fa?+au.farmer?.test_failures:null'
+          require_marker 'farmerPendingCount:fa?+au.objective?.pending_count:null'
+          require_marker 'farmerDefectCount:fa?+au.objective?.defect_count:null'
+          require_marker 'farmerBlockerCount:fa?+au.objective?.blocker_count:null'
           require_marker 'bidirectionalPhysicalEthernetReferenceProven:bi'
-          require_marker "nextSafeGate:'nonbinding-candidate-vs-reference-hardware-behavior-differential'"
+          require_marker "nextSafeGate:'architecture-accurate-pi3-emulation-with-held-physical-boundaries'"
           require_marker 'physicalBindingProven:false'
           require_marker 'nativeDriverProven:false'
           require_marker 'outOfBandWatchdogProven:false'
@@ -116,9 +137,9 @@ jobs:
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./pi3-physical-evidence\.js(?:\?v=[^"]+)?"></script>\s*','',text)
           if '</body>' not in text: raise SystemExit('dashboard missing body close')
-          p.write_text(text.replace('</body>','<script src="./pi3-physical-evidence.js?v=17"></script>\n</body>',1),encoding='utf-8')
+          p.write_text(text.replace('</body>','<script src="./pi3-physical-evidence.js?v=18"></script>\n</body>',1),encoding='utf-8')
           PY
-          grep -Fq './pi3-physical-evidence.js?v=17' "$RUNNER_TEMP/index.html"
+          grep -Fq './pi3-physical-evidence.js?v=18' "$RUNNER_TEMP/index.html"
 
       - name: Publish with bounded connection count
         env:
@@ -128,22 +149,22 @@ jobs:
         run: |
           set -euo pipefail
           retry(){ local n=1; while true; do "$@" && return 0; [ "$n" -ge 5 ] && return 1; sleep $((n*5)); n=$((n+1)); done; }
-          remote='public_html/arkmatx/aurum/dashboard'; stage="$RUNNER_TEMP/pi3-v115-publish"; mkdir -p "$stage"
+          remote='public_html/arkmatx/aurum/dashboard'; stage="$RUNNER_TEMP/pi3-v116-publish"; mkdir -p "$stage"
           cp "$RUNNER_TEMP/index.html" "$stage/index.html"; cp "${{ steps.source.outputs.file }}" "$stage/pi3-physical-evidence.js"
           retry scp -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -P 22 "$stage/index.html" "$stage/pi3-physical-evidence.js" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/"
           retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" "chmod 644 '$remote/index.html' '$remote/pi3-physical-evidence.js'"
 
-      - name: Verify live Pi3 v1.15 surface
+      - name: Verify live Pi3 v1.16 surface
         id: verify
         shell: bash
         run: |
           set -euo pipefail
           page="$(mktemp)"; component="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
-          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/pi3-physical-evidence.js?rev=17' -o "$component"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/pi3-physical-evidence.js?rev=18' -o "$component"
           grep -Fq 'Progress is proof, not activity.' "$page"
-          grep -Fq './pi3-physical-evidence.js?v=17' "$page"
-          for marker in 'AURUM_PI3_PHYSICAL_EVIDENCE_V1_15_CANONICAL' "schema:'aurum-command-center-pi3-physical-evidence-v1.15'" 'pi3-source-package-recipe-provenance-latest.json' 'pi3-kernel-shadow-compile-latest.json' 'bidirectionalPhysicalEthernetReferenceProven:bi' "nextSafeGate:'nonbinding-candidate-vs-reference-hardware-behavior-differential'" 'wholeTreeBuildReproducibilityProven:false' 'physicalBindingProven:false' 'nativeDriverProven:false' 'outOfBandWatchdogProven:false' 'outOfBandWatchdogRequiredForBroaderMutation:true' 'Frontiers Advancing:' 'Needs Work → Aurum/System:' 'Your Actions:' 'none for this Pi3 lane.' 'kernelDriverMutationAuthority:false' 'replacementKernelAuthority:false' 'humanActionInference:false'; do grep -Fq "$marker" "$component" || { echo "Missing live Pi3 marker: $marker" >&2; exit 1; }; done
+          grep -Fq './pi3-physical-evidence.js?v=18' "$page"
+          for marker in 'AURUM_PI3_PHYSICAL_EVIDENCE_V1_16_CANONICAL' "schema:'aurum-command-center-pi3-physical-evidence-v1.16'" 'pi3-kernel-shadow-farmer-audit-latest.json' "d?.state==='verified-completion-with-held-physical-boundaries'" "o.terminal==='verified_completion'" '+o.pending_count===0' '+o.defect_count===0' '+o.blocker_count===0' '+f.test_count===44' '+f.test_failures===0' 'farmerKernelShadowAuditProven:fa' 'farmerVerifierTests:fa?+au.farmer?.test_count:null' "nextSafeGate:'architecture-accurate-pi3-emulation-with-held-physical-boundaries'" 'wholeTreeBuildReproducibilityProven:false' 'physicalBindingProven:false' 'nativeDriverProven:false' 'outOfBandWatchdogProven:false' 'outOfBandWatchdogRequiredForBroaderMutation:true' 'Frontiers Advancing:' 'Needs Work → Aurum/System:' 'Your Actions:' 'none for this Pi3 lane.' 'kernelDriverMutationAuthority:false' 'replacementKernelAuthority:false' 'humanActionInference:false'; do grep -Fq "$marker" "$component" || { echo "Missing live Pi3 marker: $marker" >&2; exit 1; }; done
           cmp -s "${{ steps.source.outputs.file }}" "$component"
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
 
@@ -160,7 +181,7 @@ jobs:
           retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
             "set -eu; cp -p '$backup/index.html' '$remote/index.html'; if [ -f '$backup/pi3-physical-evidence.js' ]; then cp -p '$backup/pi3-physical-evidence.js' '$remote/pi3-physical-evidence.js'; elif [ -f '$backup/.missing-pi3-physical-evidence.js' ]; then rm -f '$remote/pi3-physical-evidence.js'; fi"
 
-      - name: Record verified Pi3 v1.15 receipt
+      - name: Record verified Pi3 v1.16 receipt
         if: success()
         shell: bash
         run: |
@@ -173,10 +194,10 @@ jobs:
             "url":"${{ steps.verify.outputs.url }}",
             "canonical_website_repo":"FormatX66/ClusterSites",
             "canonical_component":"services/aurum-arkmatx/pi3-physical-evidence-v1.js",
-            "approved_projection_commit":"82d6a1b38793b766feb0c2c2a1fbd4cf3c584f06",
+            "approved_projection_commit":"b67bc7ecbaba5a00ec2c1407c6fa8bd4c1e55e0e",
             "public_projection":"FormatX66/BoxBrain:Web/Aurum-Arkmatx/pi3-physical-evidence-v1.js",
             "deployment_carrier":"FormatX66/wetbeard-site",
-            "pi3_physical_evidence_revision":"1.15",
+            "pi3_physical_evidence_revision":"1.16",
             "expandable":true,
             "reference_model_complete":true,
             "reference_model_agreements":8,
@@ -185,10 +206,21 @@ jobs:
             "whole_tree_build_reproducibility_proven":false,
             "kernel_shadow_compile_only_proven":true,
             "kernel_shadow_module_loaded":false,
+            "farmer_kernel_shadow_audit_proven":true,
+            "farmer_package_version":"3.2",
+            "farmer_terminal":"verified_completion",
+            "farmer_verifier_tests":44,
+            "farmer_verifier_failures":0,
+            "farmer_pending_count":0,
+            "farmer_defect_count":0,
+            "farmer_blocker_count":0,
+            "farmer_physical_device_contacted":false,
+            "farmer_module_loaded":false,
+            "farmer_driver_binding_changed":false,
             "bidirectional_physical_ethernet_reference_proven":true,
             "physical_ethernet_bytes_each_direction":67108864,
             "reference_driver":"smsc95xx",
-            "next_gate":"nonbinding-candidate-vs-reference-hardware-behavior-differential",
+            "next_gate":"architecture-accurate-pi3-emulation-with-held-physical-boundaries",
             "physical_binding_proven":false,
             "native_driver_proven":false,
             "out_of_band_watchdog_proven":false,
@@ -209,5 +241,5 @@ jobs:
           EOF2
           git config user.name 'github-actions[bot]'; git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-pi3-physical-evidence-live.json
-          git commit -m 'Record Aurum Pi3 physical evidence v1.15 live [skip ci]' || exit 0
+          git commit -m 'Record Aurum Pi3 physical evidence v1.16 live [skip ci]' || exit 0
           git pull --rebase origin main; git push origin HEAD:main

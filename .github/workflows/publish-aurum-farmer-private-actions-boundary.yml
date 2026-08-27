@@ -1,0 +1,204 @@
+name: Publish Aurum Farmer Private Actions Boundary
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-aurum-farmer-private-actions-boundary.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aurum-farmer-private-actions-boundary-production
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify approved projection and account-boundary evidence
+        id: source
+        shell: bash
+        env:
+          EXPECTED_BLOB: eda142cc901c34b91f080f2f81f40df3ff7bad2f
+        run: |
+          set -euo pipefail
+          src="$RUNNER_TEMP/farmer-private-actions-boundary-v1.js"
+          meta="$RUNNER_TEMP/projection-meta.json"
+          status="$RUNNER_TEMP/private-actions-boundary.json"
+          curl --fail-with-body --silent --show-error --location \
+            'https://api.github.com/repos/FormatX66/BoxBrain/contents/Web/Aurum-Arkmatx/farmer-private-actions-boundary-v1.js?ref=main' -o "$meta"
+          test "$(jq -r '.sha' "$meta")" = "$EXPECTED_BLOB"
+          curl --fail-with-body --silent --show-error --location \
+            'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/farmer-private-actions-boundary-v1.js' -o "$src"
+          curl --fail-with-body --silent --show-error --location \
+            'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Projects/AurumBridge/results/private-actions-account-boundary-latest.json' -o "$status"
+          test -s "$src"; node --check "$src"
+          grep -Fq 'AURUM_FARMER_PRIVATE_ACTIONS_BOUNDARY_V1_CANONICAL' "$src"
+          grep -Fq 'Canonical website owner: FormatX66/ClusterSites' "$src"
+          grep -Fq 'Private GitHub Actions account boundary' "$src"
+          grep -Fq 'Frontiers Advancing:' "$src"
+          grep -Fq 'Needs Work → Aurum/System:' "$src"
+          grep -Fq 'Your Actions:' "$src"
+          grep -Fq 'grantsExecutionAuthority:false' "$src"
+          grep -Fq 'grantsDestructiveAuthority:false' "$src"
+          grep -Fq 'grantsLkgMutation:false' "$src"
+          python3 - "$status" <<'PY'
+          import json,sys
+          from datetime import datetime, timezone
+          s=json.load(open(sys.argv[1],encoding='utf-8'))
+          assert s['schema']=='aurum-private-actions-account-boundary-v1'
+          assert s['state']=='HUMAN_ACCOUNT_CHECK_REQUIRED'
+          assert s['human_action_required'] is True
+          assert s['root_cause_exactly_proven'] is False
+          assert s['evidence']['chat_to_git_pipeline']['workflow_steps_present'] is False
+          assert s['evidence']['cluster_sites']['workflow_steps_present'] is False
+          assert s['evidence']['public_execution_counterexample']['conclusion']=='success'
+          assert all(s['authority'][k] is False for k in ['grants_execution_authority','grants_destructive_authority','grants_lkg_mutation'])
+          observed=datetime.fromisoformat(s['observed_at_utc'].replace('Z','+00:00'))
+          age=(datetime.now(timezone.utc)-observed).total_seconds()
+          assert -300 <= age <= int(s['fresh_for_seconds'])
+          print('AURUM_FARMER_PRIVATE_ACTIONS_BOUNDARY_OK')
+          PY
+          echo "file=$src" >> "$GITHUB_OUTPUT"
+
+      - name: Configure Bluehost SSH with bounded retry
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+          BLUEHOST_SSH_PRIVATE_KEY: ${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$BLUEHOST_HOST"; test -n "$BLUEHOST_USERNAME"; test -n "$BLUEHOST_SSH_PRIVATE_KEY"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$BLUEHOST_SSH_PRIVATE_KEY" > "$HOME/.ssh/bluehost_deploy"
+          chmod 600 "$HOME/.ssh/bluehost_deploy"
+          : > "$HOME/.ssh/known_hosts"
+          for attempt in 1 2 3 4 5; do
+            ssh-keyscan -T 10 -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null && exit 0
+            [ "$attempt" -eq 5 ] && exit 1
+            sleep $((attempt * 5))
+          done
+
+      - name: Back up current dashboard
+        id: backup
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          retry_capture(){ local out="$1"; shift; local n=1 tmp; tmp="$(mktemp)"; while true; do if "$@" > "$tmp"; then mv "$tmp" "$out"; return 0; fi; [ "$n" -ge 5 ] && { rm -f "$tmp"; return 1; }; sleep $((n*5)); n=$((n+1)); done; }
+          remote='public_html/arkmatx/aurum/dashboard'; backup=".aurum-dashboard-backups/farmer-private-actions-boundary-$GITHUB_RUN_ID"
+          retry_capture "$RUNNER_TEMP/index.html" ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "set -eu; mkdir -p '$remote' '$backup'; cp -p '$remote/index.html' '$backup/index.html'; if [ -f '$remote/farmer-private-actions-boundary-v1.js' ]; then cp -p '$remote/farmer-private-actions-boundary-v1.js' '$backup/farmer-private-actions-boundary-v1.js'; else touch '$backup/.missing-farmer-private-actions-boundary-v1.js'; fi; cat '$remote/index.html'"
+          test -s "$RUNNER_TEMP/index.html"
+          echo 'ready=true' >> "$GITHUB_OUTPUT"
+
+      - name: Inject cache-busted account-boundary overlay
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - "$RUNNER_TEMP/index.html" <<'PY'
+          from pathlib import Path
+          import re,sys
+          p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
+          text=re.sub(r'<script src="\./farmer-private-actions-boundary-v1\.js(?:\?v=[^"]+)?"></script>\s*','',text)
+          tag='<script src="./farmer-private-actions-boundary-v1.js?v=100"></script>'
+          marker=re.search(r'<script src="\./autonomy-controller-v1\.js(?:\?v=[^"]+)?"></script>',text)
+          if marker: text=text[:marker.end()]+'\n'+tag+text[marker.end():]
+          elif '</body>' in text: text=text.replace('</body>',tag+'\n</body>',1)
+          else: raise SystemExit('dashboard missing injection point')
+          p.write_text(text,encoding='utf-8')
+          PY
+          grep -Fq './farmer-private-actions-boundary-v1.js?v=100' "$RUNNER_TEMP/index.html"
+
+      - name: Publish with bounded retries
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          retry(){ local n=1; while true; do "$@" && return 0; [ "$n" -ge 5 ] && return 1; sleep $((n*5)); n=$((n+1)); done; }
+          remote='public_html/arkmatx/aurum/dashboard'
+          retry scp -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -P 22 "$RUNNER_TEMP/index.html" "${{ steps.source.outputs.file }}" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/"
+          retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" "set -eu; chmod 644 '$remote/index.html' '$remote/farmer-private-actions-boundary-v1.js'"
+
+      - name: Verify live component byte-for-byte
+        id: verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          page="$(mktemp)"; js="$(mktemp)"
+          final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/farmer-private-actions-boundary-v1.js?rev=100' -o "$js"
+          grep -Fq './farmer-private-actions-boundary-v1.js?v=100' "$page"
+          cmp -s "${{ steps.source.outputs.file }}" "$js"
+          grep -Fq 'AURUM_FARMER_PRIVATE_ACTIONS_BOUNDARY_V1_CANONICAL' "$js"
+          grep -Fq 'Human Boundary' "$js"
+          grep -Fq 'Frontiers Advancing:' "$js"
+          grep -Fq 'Needs Work → Aurum/System:' "$js"
+          grep -Fq 'Your Actions:' "$js"
+          grep -Fq 'grantsExecutionAuthority:false' "$js"
+          echo "url=$final_url" >> "$GITHUB_OUTPUT"
+
+      - name: Roll back on verification failure
+        if: ${{ failure() && steps.backup.outputs.ready == 'true' }}
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          retry(){ local n=1; while true; do "$@" && return 0; [ "$n" -ge 5 ] && return 1; sleep $((n*5)); n=$((n+1)); done; }
+          remote='public_html/arkmatx/aurum/dashboard'; backup=".aurum-dashboard-backups/farmer-private-actions-boundary-$GITHUB_RUN_ID"
+          retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "set -eu; cp -p '$backup/index.html' '$remote/index.html'; if [ -f '$backup/farmer-private-actions-boundary-v1.js' ]; then cp -p '$backup/farmer-private-actions-boundary-v1.js' '$remote/farmer-private-actions-boundary-v1.js'; elif [ -f '$backup/.missing-farmer-private-actions-boundary-v1.js' ]; then rm -f '$remote/farmer-private-actions-boundary-v1.js'; fi"
+
+      - name: Record verified live receipt
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main; git checkout main; git reset --hard origin/main
+          mkdir -p deployments
+          verified_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          cat > deployments/aurum-farmer-private-actions-boundary-live.json <<EOF
+          {
+            "site":"aurum-command-center",
+            "url":"${{ steps.verify.outputs.url }}",
+            "canonical_website_repo":"FormatX66/ClusterSites",
+            "canonical_component":"services/aurum-arkmatx/farmer-private-actions-boundary-v1.js",
+            "approved_component_blob":"eda142cc901c34b91f080f2f81f40df3ff7bad2f",
+            "public_projection":"FormatX66/BoxBrain:Web/Aurum-Arkmatx/farmer-private-actions-boundary-v1.js",
+            "deployment_carrier":"FormatX66/wetbeard-site",
+            "revision":"1.0",
+            "freshness_gated":true,
+            "exact_root_cause_inferred":false,
+            "private_pre_runner_failure_visible":true,
+            "public_execution_counterexample_visible":true,
+            "human_account_check_visible":true,
+            "human_action_required":true,
+            "execution_authority_granted":false,
+            "destructive_authority_granted":false,
+            "lkg_mutation_granted":false,
+            "frontiers_needs_work_your_actions_separated":true,
+            "expandable_autonomy_controller_preserved":true,
+            "backup_before_publish":true,
+            "live_byte_verification":true,
+            "rollback_protected":true,
+            "status":"verified-live",
+            "verified_at_utc":"$verified_at"
+          }
+          EOF
+          git config user.name 'github-actions[bot]'; git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add deployments/aurum-farmer-private-actions-boundary-live.json
+          git commit -m 'Record Farmer private Actions boundary live [skip ci]' || exit 0
+          git pull --rebase origin main; git push origin HEAD:main

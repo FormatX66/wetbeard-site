@@ -18,14 +18,15 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     environment: production
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
-      - name: Verify approved projection and physical evidence
+      - name: Verify approved projection and recovery evidence
         id: source
         shell: bash
         env:
-          EXPECTED_BLOB: c56b3d5951648d08d0a2231d001950467f0cfb2e
+          EXPECTED_BLOB: b4846a7a3527e65e34616500b868b74d7db4aaae
         run: |
           set -euo pipefail
           src="$RUNNER_TEMP/tinyseed-physical-acceptance-v1.js"
@@ -37,35 +38,56 @@ jobs:
             'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/tinyseed-physical-acceptance-v1.js' -o "$src"
           test -s "$src"
           node --check "$src"
-          grep -Fq 'AURUM_TINYSEED_PHYSICAL_ACCEPTANCE_V1_1_CANONICAL' "$src"
+          grep -Fq 'AURUM_TINYSEED_PHYSICAL_ACCEPTANCE_V1_2_CANONICAL' "$src"
           grep -Fq 'Canonical website owner: FormatX66/ClusterSites' "$src"
-          grep -Fq 'QUARANTINED_PHYSICAL_ACCEPTANCE_FAILED' "$src"
-          grep -Fq "pill.textContent!=='Needs Work'" "$src"
-          grep -Fq 'readyToBootSupersededForPhysicalReadiness:failed' "$src"
+          grep -Fq 'FULL_SEED_CLEAN_REGROW_PREPARED_ROUTE_REPAIR_REQUIRED' "$src"
+          grep -Fq "recoveryStrategy:pivot?'full-seed-clean-regrow':null" "$src"
+          grep -Fq 'RETIRED_REFUSAL_ONLY' "$src"
+          grep -Fq 'routeRepairRequired:routeHeld' "$src"
+          grep -Fq 'tinySeedPrimaryRecovery:pivot?false:null' "$src"
           grep -Fq 'humanActionRequired:false' "$src"
           grep -Fq 'humanActionInference:false' "$src"
           grep -Fq 'Frontiers Advancing:' "$src"
           grep -Fq 'Needs Work → Aurum/System:' "$src"
           grep -Fq 'Your Actions:' "$src"
-          acc="$RUNNER_TEMP/acceptance.json"; rel="$RUNNER_TEMP/release.json"; flash="$RUNNER_TEMP/flash.json"
+
+          acc="$RUNNER_TEMP/acceptance.json"
+          rel="$RUNNER_TEMP/release.json"
+          flash="$RUNNER_TEMP/flash.json"
+          strategy="$RUNNER_TEMP/strategy.json"
           curl --fail-with-body --silent --show-error --location 'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Projects/Aurum/Recovery/latest-tinyseed-physical-acceptance.json' -o "$acc"
           curl --fail-with-body --silent --show-error --location 'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Projects/Aurum/Release/latest-tinyseed-handoff.json' -o "$rel"
           curl --fail-with-body --silent --show-error --location 'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Projects/Aurum/Recovery/latest-tinyseed-flash-receipt.json' -o "$flash"
-          python3 - "$acc" "$rel" "$flash" <<'PY'
+          curl --fail-with-body --silent --show-error --location 'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Projects/Aurum/Recovery/latest-seed-recovery-strategy.json' -o "$strategy"
+          python3 - "$acc" "$rel" "$flash" "$strategy" <<'PY'
           import json,sys
           from datetime import datetime
-          a,r,f=[json.load(open(p,encoding='utf-8')) for p in sys.argv[1:]]
+          a,r,f,s=[json.load(open(p,encoding='utf-8')) for p in sys.argv[1:]]
           assert a['schema']=='aurum-tinyseed-physical-acceptance-v1'
           assert a['state']=='QUARANTINED_PHYSICAL_ACCEPTANCE_FAILED'
-          assert a['candidate_quarantined'] is True and a['physical_acceptance'] is False and a['physical_ready_to_boot'] is False
+          assert a['candidate_quarantined'] is True
+          assert a['physical_acceptance'] is False and a['physical_ready_to_boot'] is False
           assert a['supersedes_prior_physical_readiness'] is True
           assert a['release']['source_commit']==r['source_commit']==f['source_commit']
           assert a['release']['x86_sha256']==r['artifacts']['x86']['sha256']==f['image_sha256']
           assert f['state']=='READY_TO_BOOT' and f['raw_readback_verified'] is True and f['write_authority_consumed'] is True
           assert datetime.fromisoformat(a['observed_at_utc'].replace('Z','+00:00')) > datetime.fromisoformat(f['observed_at_utc'].replace('Z','+00:00'))
           assert set(a['release_blockers'])=={'wifi_nonfunctional','graphics_fallback_recursive_loop'}
-          auth=a['authority']; assert all(auth[k] is False for k in ['write_authority','promotion_authority','physical_action_authority','human_action_inferred'])
-          print('AURUM_TINYSEED_PHYSICAL_ACCEPTANCE_V1_1_OK')
+          assert s['schema']=='aurum-seed-recovery-strategy-v1'
+          assert s['state']=='FULL_SEED_CLEAN_REGROW_PREPARED_ROUTE_REPAIR_REQUIRED'
+          assert s['strategy']=='full_seed_installer_clean_regrow'
+          assert s['tinyseed_primary_recovery'] is False
+          assert s['current_tinyseed_candidate_quarantined'] is True
+          assert s['objective']['controller_ingress_verified'] is False
+          assert s['objective']['current_physical_flash_verified'] is False
+          assert s['flash_route']['current_historical_workflow_state']=='RETIRED_REFUSAL_ONLY'
+          assert s['flash_route']['legacy_static_authority_valid'] is False
+          assert s['flash_route']['write_authority'] is False
+          assert s['execution_boundary']['route_repair_required'] is True
+          assert s['authority']['human_action_required'] is False
+          assert s['authority']['human_action_inferred'] is False
+          assert all(s['authority'][k] is False for k in ['grants_execution_authority','grants_destructive_authority','grants_write_authority','grants_promotion_authority','grants_lkg_mutation'])
+          print('AURUM_TINYSEED_PHYSICAL_ACCEPTANCE_V1_2_OK')
           PY
           echo "file=$src" >> "$GITHUB_OUTPUT"
 
@@ -97,13 +119,14 @@ jobs:
         run: |
           set -euo pipefail
           retry_capture(){ local out="$1"; shift; local n=1 tmp; tmp="$(mktemp)"; while true; do if "$@" > "$tmp"; then mv "$tmp" "$out"; return 0; fi; [ "$n" -ge 5 ] && { rm -f "$tmp"; return 1; }; sleep $((n*5)); n=$((n+1)); done; }
-          remote='public_html/arkmatx/aurum/dashboard'; backup=".aurum-dashboard-backups/tinyseed-physical-acceptance-$GITHUB_RUN_ID"
+          remote='public_html/arkmatx/aurum/dashboard'
+          backup=".aurum-dashboard-backups/tinyseed-physical-acceptance-$GITHUB_RUN_ID"
           retry_capture "$RUNNER_TEMP/index.html" ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
             "set -eu; mkdir -p '$remote' '$backup'; cp -p '$remote/index.html' '$backup/index.html'; if [ -f '$remote/tinyseed-physical-acceptance-v1.js' ]; then cp -p '$remote/tinyseed-physical-acceptance-v1.js' '$backup/tinyseed-physical-acceptance-v1.js'; else touch '$backup/.missing-tinyseed-physical-acceptance-v1.js'; fi; cat '$remote/index.html'"
           test -s "$RUNNER_TEMP/index.html"
           echo 'ready=true' >> "$GITHUB_OUTPUT"
 
-      - name: Inject cache-busted physical acceptance overlay
+      - name: Inject cache-busted recovery overlay
         shell: bash
         run: |
           set -euo pipefail
@@ -112,14 +135,14 @@ jobs:
           import re,sys
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./tinyseed-physical-acceptance-v1\.js(?:\?v=[^"]+)?"></script>\s*','',text)
-          tag='<script src="./tinyseed-physical-acceptance-v1.js?v=101"></script>'
+          tag='<script src="./tinyseed-physical-acceptance-v1.js?v=102"></script>'
           marker=re.search(r'<script src="\./tinyseed-media-handoff-v1\.js(?:\?v=[^"]+)?"></script>',text)
           if marker: text=text[:marker.end()]+'\n'+tag+text[marker.end():]
           elif '</body>' in text: text=text.replace('</body>',tag+'\n</body>',1)
           else: raise SystemExit('dashboard missing injection point')
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './tinyseed-physical-acceptance-v1.js?v=101' "$RUNNER_TEMP/index.html"
+          grep -Fq './tinyseed-physical-acceptance-v1.js?v=102' "$RUNNER_TEMP/index.html"
 
       - name: Publish with bounded retries
         env:
@@ -140,13 +163,13 @@ jobs:
           set -euo pipefail
           page="$(mktemp)"; js="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
-          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/tinyseed-physical-acceptance-v1.js?rev=101' -o "$js"
-          grep -Fq './tinyseed-physical-acceptance-v1.js?v=101' "$page"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/tinyseed-physical-acceptance-v1.js?rev=102' -o "$js"
+          grep -Fq './tinyseed-physical-acceptance-v1.js?v=102' "$page"
           cmp -s "${{ steps.source.outputs.file }}" "$js"
-          grep -Fq 'AURUM_TINYSEED_PHYSICAL_ACCEPTANCE_V1_1_CANONICAL' "$js"
-          grep -Fq 'CANDIDATE QUARANTINED' "$js"
-          grep -Fq "pill.textContent!=='Needs Work'" "$js"
-          grep -Fq 'readyToBootSupersededForPhysicalReadiness:failed' "$js"
+          grep -Fq 'AURUM_TINYSEED_PHYSICAL_ACCEPTANCE_V1_2_CANONICAL' "$js"
+          grep -Fq 'Recovery strategy · FULL-SEED CLEAN REGROW' "$js"
+          grep -Fq 'RETIRED_REFUSAL_ONLY' "$js"
+          grep -Fq 'routeRepairRequired:routeHeld' "$js"
           grep -Fq 'humanActionRequired:false' "$js"
           grep -Fq 'Frontiers Advancing:' "$js"
           grep -Fq 'Needs Work → Aurum/System:' "$js"
@@ -162,7 +185,8 @@ jobs:
         run: |
           set -euo pipefail
           retry(){ local n=1; while true; do "$@" && return 0; [ "$n" -ge 5 ] && return 1; sleep $((n*5)); n=$((n+1)); done; }
-          remote='public_html/arkmatx/aurum/dashboard'; backup=".aurum-dashboard-backups/tinyseed-physical-acceptance-$GITHUB_RUN_ID"
+          remote='public_html/arkmatx/aurum/dashboard'
+          backup=".aurum-dashboard-backups/tinyseed-physical-acceptance-$GITHUB_RUN_ID"
           retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
             "set -eu; cp -p '$backup/index.html' '$remote/index.html'; if [ -f '$backup/tinyseed-physical-acceptance-v1.js' ]; then cp -p '$backup/tinyseed-physical-acceptance-v1.js' '$remote/tinyseed-physical-acceptance-v1.js'; elif [ -f '$backup/.missing-tinyseed-physical-acceptance-v1.js' ]; then rm -f '$remote/tinyseed-physical-acceptance-v1.js'; fi"
 
@@ -171,7 +195,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git fetch origin main; git checkout main; git reset --hard origin/main
+          git fetch origin main
+          git checkout main
+          git reset --hard origin/main
           mkdir -p deployments
           verified_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
           cat > deployments/aurum-tinyseed-physical-acceptance-live.json <<EOF
@@ -180,17 +206,20 @@ jobs:
             "url":"${{ steps.verify.outputs.url }}",
             "canonical_website_repo":"FormatX66/ClusterSites",
             "canonical_component":"services/aurum-arkmatx/tinyseed-physical-acceptance-v1.js",
-            "approved_component_blob":"c56b3d5951648d08d0a2231d001950467f0cfb2e",
+            "approved_component_blob":"b4846a7a3527e65e34616500b868b74d7db4aaae",
             "public_projection":"FormatX66/BoxBrain:Web/Aurum-Arkmatx/tinyseed-physical-acceptance-v1.js",
             "deployment_carrier":"FormatX66/wetbeard-site",
-            "revision":"1.1",
+            "revision":"1.2",
             "matching_raw_readback_preserved_as_media_integrity":true,
             "physical_acceptance_failure_supersedes_ready_to_boot":true,
             "candidate_quarantined":true,
-            "wifi_nonfunctional_visible":true,
-            "graphics_fallback_recursive_loop_visible":true,
-            "dom_updates_idempotent":true,
-            "ready_to_boot_physical_action_inferred":false,
+            "full_seed_clean_regrow_primary_recovery":true,
+            "tinyseed_primary_recovery":false,
+            "legacy_pc01_flash_route_retired":true,
+            "route_repair_required":true,
+            "current_controller_ingress_verified":false,
+            "current_full_seed_flash_verified":false,
+            "write_authority_granted":false,
             "human_action_inference":false,
             "needs_work_owner":"aurum-system",
             "frontiers_needs_work_your_actions_separated":true,
@@ -202,7 +231,9 @@ jobs:
             "verified_at_utc":"$verified_at"
           }
           EOF
-          git config user.name 'github-actions[bot]'; git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-tinyseed-physical-acceptance-live.json
-          git commit -m 'Record Tiny Seed physical acceptance overlay v1.1 live [skip ci]' || exit 0
-          git pull --rebase origin main; git push origin HEAD:main
+          git commit -m 'Record full-seed Clean Regrow recovery truth live [skip ci]' || exit 0
+          git pull --rebase origin main
+          git push origin HEAD:main

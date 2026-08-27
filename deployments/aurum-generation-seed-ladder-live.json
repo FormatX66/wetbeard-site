@@ -5,12 +5,15 @@
   "canonical_component": "services/aurum-arkmatx/generation-seed-ladder-v1.js",
   "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/generation-seed-ladder-v1.js",
   "deployment_carrier": "FormatX66/wetbeard-site",
-  "component_revision": "1.0",
-  "approved_blob": "064ac6305002957cdcdf67f515baa61ff33f0c6b",
-  "boxbrain_evidence_commit": "8b4e266c7d98fe33686cbd5ff1e4428d5561e707",
+  "component_revision": "1.1",
+  "approved_blob": "cfda60bfebba31d30ad3776f4184c031c657fa72",
+  "boxbrain_evidence_commit": "525c37e997d9c1a4ca6fe67d0166c1c58ea5b77b",
   "boxbrain_ci_proven": true,
   "future_branch_parallel_preparation": true,
   "generation_earned_by_software_preparation": false,
+  "gen3_cross_node_evidence_receipt_replay_proven": true,
+  "gen3_live_multi_node_exchange_proven": false,
+  "gen3_independent_node_recovery_proven": false,
   "parent_recovery_provenance_gates_required": true,
   "lkg_mutation_allowed": false,
   "trust_widening_allowed": false,
@@ -22,5 +25,5 @@
   "backup_before_publish": true,
   "rollback_on_verification_failure": true,
   "status": "verified-live",
-  "verified_at_utc": "2026-08-27T04:54:22Z"
+  "verified_at_utc": "2026-08-27T06:50:44Z"
 }

@@ -1,0 +1,217 @@
+name: Publish Aurum Generation Seed Ladder
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-aurum-generation-seed-ladder.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aurum-generation-seed-ladder-production
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify ClusterSites canonical source and BoxBrain projection
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          canonical="$RUNNER_TEMP/generation-seed-ladder-canonical.js"
+          projection="$RUNNER_TEMP/generation-seed-ladder.js"
+          curl --fail-with-body --silent --show-error --location \
+            'https://raw.githubusercontent.com/FormatX66/ClusterSites/main/services/aurum-arkmatx/generation-seed-ladder-v1.js' -o "$canonical"
+          curl --fail-with-body --silent --show-error --location \
+            'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/generation-seed-ladder-v1.js' -o "$projection"
+          test -s "$canonical"; test -s "$projection"
+          node --check "$canonical"
+          cmp -s "$canonical" "$projection"
+          grep -Fq 'AURUM_GENERATION_SEED_LADDER_V1_CANONICAL' "$canonical"
+          grep -Fq "EVIDENCE_COMMIT='8b4e266c7d98fe33686cbd5ff1e4428d5561e707'" "$canonical"
+          grep -Fq 'futureBranchParallelPreparation:true' "$canonical"
+          grep -Fq 'generationEarnedBySoftwarePreparation:false' "$canonical"
+          grep -Fq 'lkgMutationAllowed:false' "$canonical"
+          grep -Fq 'trustWideningAllowed:false' "$canonical"
+          grep -Fq 'humanActionInferred:false' "$canonical"
+          grep -Fq 'Frontiers Advancing:' "$canonical"
+          grep -Fq 'Needs Work → Aurum/System:' "$canonical"
+          grep -Fq 'Your Actions:' "$canonical"
+          blob="$(git hash-object "$canonical")"
+          echo "file=$canonical" >> "$GITHUB_OUTPUT"
+          echo "blob=$blob" >> "$GITHUB_OUTPUT"
+
+      - name: Verify pinned BoxBrain CI evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          commit='8b4e266c7d98fe33686cbd5ff1e4428d5561e707'
+          curl --fail-with-body --silent --show-error --location \
+            "https://api.github.com/repos/FormatX66/BoxBrain/actions/runs?head_sha=$commit&per_page=100" \
+            -o "$RUNNER_TEMP/runs.json"
+          python3 - "$RUNNER_TEMP/runs.json" <<'PY'
+          import json, sys
+          runs=json.load(open(sys.argv[1],encoding='utf-8')).get('workflow_runs',[])
+          good=[r for r in runs if r.get('name')=='BoxBrain CI' and r.get('status')=='completed' and r.get('conclusion')=='success']
+          assert good, 'generation ladder evidence commit lacks successful BoxBrain CI'
+          print('GENERATION_LADDER_BOXBRAIN_CI_OK run=%s' % good[0]['id'])
+          PY
+
+      - name: Configure Bluehost SSH with bounded retry
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+          BLUEHOST_SSH_PRIVATE_KEY: ${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$BLUEHOST_HOST"; test -n "$BLUEHOST_USERNAME"; test -n "$BLUEHOST_SSH_PRIVATE_KEY"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$BLUEHOST_SSH_PRIVATE_KEY" > "$HOME/.ssh/bluehost_deploy"
+          chmod 600 "$HOME/.ssh/bluehost_deploy"
+          : > "$HOME/.ssh/known_hosts"
+          for attempt in 1 2 3 4 5; do
+            if ssh-keyscan -T 10 -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null; then exit 0; fi
+            if [ "$attempt" -eq 5 ]; then exit 1; fi
+            sleep $((attempt * 5))
+          done
+
+      - name: Back up current Command Center
+        id: backup
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          retry_capture() { local out="$1"; shift; local n=1 tmp; tmp="$(mktemp)"; while true; do if "$@" > "$tmp"; then mv "$tmp" "$out"; return 0; fi; if [ "$n" -ge 5 ]; then rm -f "$tmp"; return 1; fi; sleep $((n * 5)); n=$((n+1)); done; }
+          remote='public_html/arkmatx/aurum/dashboard'
+          backup=".aurum-dashboard-backups/generation-seed-ladder-$GITHUB_RUN_ID"
+          retry_capture "$RUNNER_TEMP/index.html" \
+            ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "set -eu; mkdir -p '$remote' '$backup'; cp -p '$remote/index.html' '$backup/index.html'; if [ -f '$remote/generation-seed-ladder.js' ]; then cp -p '$remote/generation-seed-ladder.js' '$backup/generation-seed-ladder.js'; else touch '$backup/.missing-generation-seed-ladder.js'; fi; cat '$remote/index.html'"
+          test -s "$RUNNER_TEMP/index.html"
+          echo 'ready=true' >> "$GITHUB_OUTPUT"
+
+      - name: Inject expandable generation ladder component
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - "$RUNNER_TEMP/index.html" <<'PY'
+          from pathlib import Path
+          import re, sys
+          p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
+          text=re.sub(r'<script src="\./generation-seed-ladder\.js(?:\?v=[^"]+)?"></script>\s*','',text)
+          tag='<script src="./generation-seed-ladder.js?v=1"></script>'
+          markers=[r'<script src="\./seed-lifecycle\.js(?:\?v=[^"]+)?"></script>',r'<script src="\./recovery-guardian\.js(?:\?v=[^"]+)?"></script>',r'</body>']
+          for pattern in markers:
+              m=re.search(pattern,text)
+              if m:
+                  text=text[:m.start()]+tag+'\n'+text[m.start():]
+                  break
+          else:
+              raise SystemExit('dashboard missing generation ladder injection point')
+          p.write_text(text,encoding='utf-8')
+          PY
+          grep -Fq './generation-seed-ladder.js?v=1' "$RUNNER_TEMP/index.html"
+
+      - name: Publish with bounded retries
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          retry() { local n=1; while true; do "$@" && return 0; if [ "$n" -ge 5 ]; then return 1; fi; sleep $((n * 5)); n=$((n+1)); done; }
+          remote='public_html/arkmatx/aurum/dashboard'
+          retry scp -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -P 22 \
+            "$RUNNER_TEMP/index.html" "${{ steps.source.outputs.file }}" \
+            "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/"
+          retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "set -eu; mv '$remote/generation-seed-ladder-canonical.js' '$remote/generation-seed-ladder.js'; chmod 644 '$remote/index.html' '$remote/generation-seed-ladder.js'"
+
+      - name: Verify live Command Center
+        id: verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          page="$RUNNER_TEMP/live-index.html"; js="$RUNNER_TEMP/live-generation-seed-ladder.js"
+          final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' \
+            'https://arkmatx.com/aurum/dashboard/generation-seed-ladder.js?rev=1' -o "$js"
+          grep -Fq './generation-seed-ladder.js?v=1' "$page"
+          cmp -s "${{ steps.source.outputs.file }}" "$js"
+          grep -Fq 'AURUM_GENERATION_SEED_LADDER_V1_CANONICAL' "$js"
+          grep -Fq 'generationEarnedBySoftwarePreparation:false' "$js"
+          grep -Fq 'humanActionInferred:false' "$js"
+          grep -Fq 'Frontiers Advancing:' "$js"
+          grep -Fq 'Needs Work → Aurum/System:' "$js"
+          grep -Fq 'Your Actions:' "$js"
+          echo "url=$final_url" >> "$GITHUB_OUTPUT"
+
+      - name: Roll back on verification failure
+        if: ${{ failure() && steps.backup.outputs.ready == 'true' }}
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          retry() { local n=1; while true; do "$@" && return 0; if [ "$n" -ge 5 ]; then return 1; fi; sleep $((n * 5)); n=$((n+1)); done; }
+          remote='public_html/arkmatx/aurum/dashboard'; backup=".aurum-dashboard-backups/generation-seed-ladder-$GITHUB_RUN_ID"
+          retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "set -eu; cp -p '$backup/index.html' '$remote/index.html'; if [ -f '$backup/generation-seed-ladder.js' ]; then cp -p '$backup/generation-seed-ladder.js' '$remote/generation-seed-ladder.js'; elif [ -f '$backup/.missing-generation-seed-ladder.js' ]; then rm -f '$remote/generation-seed-ladder.js'; fi"
+
+      - name: Record verified live receipt
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git checkout main
+          git reset --hard origin/main
+          mkdir -p deployments
+          verified_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          cat > deployments/aurum-generation-seed-ladder-live.json <<EOF_RECEIPT
+          {
+            "site": "aurum-command-center",
+            "url": "${{ steps.verify.outputs.url }}",
+            "canonical_website_repo": "FormatX66/ClusterSites",
+            "canonical_component": "services/aurum-arkmatx/generation-seed-ladder-v1.js",
+            "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/generation-seed-ladder-v1.js",
+            "deployment_carrier": "FormatX66/wetbeard-site",
+            "component_revision": "1.0",
+            "approved_blob": "${{ steps.source.outputs.blob }}",
+            "boxbrain_evidence_commit": "8b4e266c7d98fe33686cbd5ff1e4428d5561e707",
+            "boxbrain_ci_proven": true,
+            "future_branch_parallel_preparation": true,
+            "generation_earned_by_software_preparation": false,
+            "parent_recovery_provenance_gates_required": true,
+            "lkg_mutation_allowed": false,
+            "trust_widening_allowed": false,
+            "physical_proof_inferred": false,
+            "human_action_inference": false,
+            "major_box_added": false,
+            "seed_lifecycle_remains_expandable": true,
+            "needs_work_owner": "aurum-system",
+            "backup_before_publish": true,
+            "rollback_on_verification_failure": true,
+            "status": "verified-live",
+            "verified_at_utc": "$verified_at"
+          }
+          EOF_RECEIPT
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add deployments/aurum-generation-seed-ladder-live.json
+          git commit -m 'Record Aurum generation seed ladder live [skip ci]' || exit 0
+          git pull --rebase origin main
+          git push origin HEAD:main

@@ -34,23 +34,27 @@ jobs:
           # ClusterSites is canonical. The deploy carrier cannot anonymously read that
           # repository, so it accepts the public BoxBrain projection only when its Git
           # blob hash exactly matches the approved ClusterSites canonical blob.
-          expected_canonical_blob='84013e53ceb86a5502189b59361dab8a6e3a4f25'
+          expected_canonical_blob='3f2e8edc196328aeb92c51a95fcb5f4a3369449a'
           projection='https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/autonomy-controller-v1.js'
           out="$RUNNER_TEMP/autonomy-controller.js"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 "$projection" -o "$out"
           test -s "$out"
           actual_blob="$(git hash-object "$out")"
           test "$actual_blob" = "$expected_canonical_blob"
-          grep -Fq 'AURUM_AUTONOMY_CONTROLLER_V1_6_CANONICAL' "$out"
+          grep -Fq 'AURUM_AUTONOMY_CONTROLLER_V1_7_CANONICAL' "$out"
           grep -Fq 'Canonical website owner: FormatX66/ClusterSites' "$out"
           grep -Fq 'FARMER_PROOF_URL' "$out"
           grep -Fq 'Aurum Farmer' "$out"
           grep -Fq 'Self-hosted deployed runtime' "$out"
           grep -Fq 'Production local operational-state authority' "$out"
+          grep -Fq 'Morris enrollment' "$out"
+          grep -Fq 'BBPI4 enrollment' "$out"
+          grep -Fq 'active edge web node' "$out"
+          grep -Fq 'require a fresh heartbeat before any promotion' "$out"
+          grep -Fq 'do not create duplicate leadership' "$out"
           grep -Fq 'Frontiers Advancing:' "$out"
           grep -Fq 'Needs Work → Aurum/System:' "$out"
           grep -Fq 'Your Actions:' "$out"
-          grep -Fq 'zero-authority compatibility/reconstruction projection' "$out"
           grep -Fq 'this surface never creates a human task from controller state alone.' "$out"
           echo "file=$out" >> "$GITHUB_OUTPUT"
           echo "canonical_blob=$actual_blob" >> "$GITHUB_OUTPUT"
@@ -126,10 +130,10 @@ jobs:
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./autonomy-controller\.js(?:\?v=[^"]+)?"></script>\s*','',text)
           if '</body>' not in text: raise SystemExit('dashboard missing body close')
-          text=text.replace('</body>','<script src="./autonomy-controller.js?v=1.6"></script>\n</body>',1)
+          text=text.replace('</body>','<script src="./autonomy-controller.js?v=1.7"></script>\n</body>',1)
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './autonomy-controller.js?v=1.6' "$RUNNER_TEMP/index.html"
+          grep -Fq './autonomy-controller.js?v=1.7' "$RUNNER_TEMP/index.html"
 
       - name: Publish autonomy controller with bounded connection count
         env:
@@ -153,16 +157,22 @@ jobs:
           set -euo pipefail
           page="$(mktemp)"; component="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
-          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/autonomy-controller.js?rev=1.6' -o "$component"
-          grep -Fq './autonomy-controller.js?v=1.6' "$page"
-          grep -Fq 'AURUM_AUTONOMY_CONTROLLER_V1_6_CANONICAL' "$component"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/autonomy-controller.js?rev=1.7' -o "$component"
+          grep -Fq './autonomy-controller.js?v=1.7' "$page"
+          grep -Fq 'AURUM_AUTONOMY_CONTROLLER_V1_7_CANONICAL' "$component"
           grep -Fq 'FARMER_PROOF_URL' "$component"
           grep -Fq 'Self-hosted deployed runtime' "$component"
           grep -Fq 'Production local operational-state authority' "$component"
+          grep -Fq 'Morris enrollment' "$component"
+          grep -Fq 'BBPI4 enrollment' "$component"
+          grep -Fq 'require a fresh heartbeat before any promotion' "$component"
           grep -Fq 'Frontiers Advancing:' "$component"
           grep -Fq 'Needs Work → Aurum/System:' "$component"
           grep -Fq 'Your Actions:' "$component"
+          live_blob="$(git hash-object "$component")"
+          test "$live_blob" = '${{ steps.source.outputs.canonical_blob }}'
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
+          echo "live_blob=$live_blob" >> "$GITHUB_OUTPUT"
 
       - name: Roll back if verification fails
         if: ${{ failure() && steps.backup.outputs.ready == 'true' }}
@@ -193,9 +203,15 @@ jobs:
             "canonical_website_repo": "FormatX66/ClusterSites",
             "public_projection_repo": "FormatX66/BoxBrain",
             "component": "autonomy-controller-v1.js",
-            "revision": "1.6",
+            "revision": "1.7",
             "canonical_blob": "${{ steps.source.outputs.canonical_blob }}",
+            "live_blob": "${{ steps.verify.outputs.live_blob }}",
             "canonical_projection_byte_identical": true,
+            "live_byte_identical": true,
+            "active_edge_state_dynamic": true,
+            "child_enrollment_truth_dynamic": true,
+            "bbpi4_promotion_requires_fresh_heartbeat": true,
+            "duplicate_leadership_inferred": false,
             "farmer_repository_contract_proven": true,
             "farmer_ci_run": 32874824671,
             "farmer_hosted_windows_install_proof": true,

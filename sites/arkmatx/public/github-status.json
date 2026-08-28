@@ -20,53 +20,53 @@
   ],
   "recent_commits": [
     {
-      "sha": "097222eb",
-      "message": "Record Farmer private Actions boundary v1.1 live [skip ci]",
-      "date": "2026-08-28T08:50:30Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/097222eb0974f0e1805d187e3a7afc37a2f563da"
+      "sha": "fcfeba6a",
+      "message": "Record Aurum autonomy controller live deployment [skip ci]",
+      "date": "2026-08-28T21:02:33Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/fcfeba6ae9d2f7f5889e109155de3084236b46ee"
     },
     {
-      "sha": "3f795a14",
-      "message": "Expire stale Farmer account actions safely",
-      "date": "2026-08-28T08:50:14Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/3f795a1458763c2d613ef8ff684b2627edd3f598"
+      "sha": "b43d8718",
+      "message": "Fix Autonomy v1.7 moving Farmer receipt provenance gate",
+      "date": "2026-08-28T21:02:15Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/b43d871832f32a3c04f50b0b45017e2c2147c915"
     },
     {
-      "sha": "8bd6c8dc",
-      "message": "Record current-schema native-chain-aware workflow failsafe live [skip ci]",
-      "date": "2026-08-28T02:05:20Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/8bd6c8dc8bbabdda2c5e44270c809e9935bfbe7f"
+      "sha": "5c56814f",
+      "message": "Deploy Autonomy Controller v1.7 active-edge enrollment truth",
+      "date": "2026-08-28T20:55:18Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/5c56814fc4463dd35c72a6e16e8a22ac14afc75e"
     },
     {
-      "sha": "ecb2bdbb",
-      "message": "Pin corrected Workflow Failsafe v1.8 canonical projection",
-      "date": "2026-08-28T02:05:03Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/ecb2bdbb3706061efe09aaaa7569c857d3d80c8e"
+      "sha": "f92e0a77",
+      "message": "Record preference-trial-aware workflow failsafe live [skip ci]",
+      "date": "2026-08-28T18:49:16Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/f92e0a772e8bc5b62d603a941a4073d727178400"
     },
     {
-      "sha": "91fff2b5",
-      "message": "Record native-chain-aware workflow failsafe live [skip ci]",
-      "date": "2026-08-28T01:56:37Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/91fff2b5fd30fac8069678983ab7880b55cdb4a8"
+      "sha": "8b621ffb",
+      "message": "Publish Aurum Workflow Failsafe v1.9",
+      "date": "2026-08-28T18:48:59Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/8b621ffb690911c00bc52377b7f52968657148fc"
     },
     {
-      "sha": "37e4e177",
-      "message": "Fix v1.8 live syntax verifier temp suffix",
-      "date": "2026-08-28T01:56:21Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/37e4e1775498abbd076ac88ab7f1d3249d8539f2"
+      "sha": "36f6ed8f",
+      "message": "Record Aurum generation seed ladder live [skip ci]",
+      "date": "2026-08-28T12:50:16Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/36f6ed8f174f08535e88ad1cf774797b08dfc8f4"
     },
     {
-      "sha": "7b01acdb",
-      "message": "Publish Aurum Workflow Failsafe v1.8",
-      "date": "2026-08-28T01:55:18Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/7b01acdb11b40d3c237ff3854ca07b77fea3a432"
+      "sha": "79bf0a45",
+      "message": "Publish Gen1 web and prompt seed evidence",
+      "date": "2026-08-28T12:50:01Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/79bf0a45a387d7b1a0ba88973a2662c644054546"
     },
     {
-      "sha": "4f05e6b3",
-      "message": "Record Aurum Pi3 physical evidence v1.17 live [skip ci]",
-      "date": "2026-08-27T23:53:51Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/4f05e6b3d3abbe475cb60a2007b0e7b0706b18ef"
+      "sha": "360b0666",
+      "message": "Refresh ArkmatX GitHub status [skip ci]",
+      "date": "2026-08-28T11:23:31Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/360b0666b8301171278424b406fbcc21100063ea"
     }
   ],
-  "updated_at": "2026-08-28T11:23:31Z"
+  "updated_at": "2026-08-28T22:19:52Z"
 }

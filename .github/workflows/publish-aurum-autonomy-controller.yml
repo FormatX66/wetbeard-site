@@ -100,7 +100,7 @@ jobs:
               out.write(f"runner_name={p.get('runner_name','')}\n")
               out.write(f"observed_at_utc={observed}\n")
           PY
-          source_commit='${{ steps.farmer.outputs.source_commit }}'
+          source_commit="$(sed -n 's/^source_commit=//p' "$GITHUB_OUTPUT" | tail -n 1)"
           test -n "$source_commit"
           commit_json="$RUNNER_TEMP/farmer-source-commit.json"
           compare_json="$RUNNER_TEMP/farmer-source-compare.json"

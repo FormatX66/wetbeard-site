@@ -20,53 +20,53 @@
   ],
   "recent_commits": [
     {
-      "sha": "24e9845a",
-      "message": "Record full-seed Clean Regrow recovery truth live [skip ci]",
-      "date": "2026-08-27T16:52:12Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/24e9845a63cb7ae94f84464ee4a8ac05920f43aa"
+      "sha": "097222eb",
+      "message": "Record Farmer private Actions boundary v1.1 live [skip ci]",
+      "date": "2026-08-28T08:50:30Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/097222eb0974f0e1805d187e3a7afc37a2f563da"
     },
     {
-      "sha": "c33f6106",
-      "message": "Publish full-seed Clean Regrow recovery truth safely",
-      "date": "2026-08-27T16:51:55Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/c33f6106fcea869af24f7bb3f6c3add044c1fbf2"
+      "sha": "3f795a14",
+      "message": "Expire stale Farmer account actions safely",
+      "date": "2026-08-28T08:50:14Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/3f795a1458763c2d613ef8ff684b2627edd3f598"
     },
     {
-      "sha": "6b761bc0",
-      "message": "Record Farmer private Actions boundary live [skip ci]",
-      "date": "2026-08-27T16:03:18Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/6b761bc07f0a220fa27b4dd8647e9170583412ff"
+      "sha": "8bd6c8dc",
+      "message": "Record current-schema native-chain-aware workflow failsafe live [skip ci]",
+      "date": "2026-08-28T02:05:20Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/8bd6c8dc8bbabdda2c5e44270c809e9935bfbe7f"
     },
     {
-      "sha": "6ff433af",
-      "message": "Add protected Farmer private Actions boundary deployment",
-      "date": "2026-08-27T16:03:03Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/6ff433af26be5ae3d56306be7ae1911097e14aa7"
+      "sha": "ecb2bdbb",
+      "message": "Pin corrected Workflow Failsafe v1.8 canonical projection",
+      "date": "2026-08-28T02:05:03Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/ecb2bdbb3706061efe09aaaa7569c857d3d80c8e"
     },
     {
-      "sha": "952e50b4",
-      "message": "Record Tiny Seed physical acceptance overlay v1.1 live [skip ci]",
-      "date": "2026-08-27T15:56:29Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/952e50b4f6f8e9d3634acda9656598d0bb82c20f"
+      "sha": "91fff2b5",
+      "message": "Record native-chain-aware workflow failsafe live [skip ci]",
+      "date": "2026-08-28T01:56:37Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/91fff2b5fd30fac8069678983ab7880b55cdb4a8"
     },
     {
-      "sha": "e521461e",
-      "message": "Publish Tiny Seed physical acceptance overlay v1.1",
-      "date": "2026-08-27T15:56:13Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/e521461ed110f564c0f843403b66e48007863571"
+      "sha": "37e4e177",
+      "message": "Fix v1.8 live syntax verifier temp suffix",
+      "date": "2026-08-28T01:56:21Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/37e4e1775498abbd076ac88ab7f1d3249d8539f2"
     },
     {
-      "sha": "da49ebfb",
-      "message": "Record Tiny Seed physical acceptance overlay live [skip ci]",
-      "date": "2026-08-27T15:53:52Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/da49ebfb3466e595009e1c3c65095fbc36417c1f"
+      "sha": "7b01acdb",
+      "message": "Publish Aurum Workflow Failsafe v1.8",
+      "date": "2026-08-28T01:55:18Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/7b01acdb11b40d3c237ff3854ca07b77fea3a432"
     },
     {
-      "sha": "375ba8b3",
-      "message": "Add protected Tiny Seed physical acceptance deployment",
-      "date": "2026-08-27T15:53:34Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/375ba8b3cbe0cd7e5263305be2c7f3b00af29e51"
+      "sha": "4f05e6b3",
+      "message": "Record Aurum Pi3 physical evidence v1.17 live [skip ci]",
+      "date": "2026-08-27T23:53:51Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/4f05e6b3d3abbe475cb60a2007b0e7b0706b18ef"
     }
   ],
-  "updated_at": "2026-08-27T22:15:53Z"
+  "updated_at": "2026-08-28T11:23:31Z"
 }

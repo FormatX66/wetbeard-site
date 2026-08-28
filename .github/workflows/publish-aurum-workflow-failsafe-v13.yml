@@ -1,4 +1,4 @@
-name: Publish Aurum Workflow Failsafe v1.8
+name: Publish Aurum Workflow Failsafe v1.9
 
 on:
   push:
@@ -32,15 +32,18 @@ jobs:
             -o "$src"
           test -s "$src"
           actual_blob="$(git hash-object "$src")"
-          test "$actual_blob" = '2955ca8231d739601f3987782e9a851eaa53cbbc'
+          test "$actual_blob" = '5a0ffcbf1719616f9db39754559d59aff186b9ce'
           node --check "$src"
           grep -Fq 'Canonical website owner: FormatX66/ClusterSites.' "$src"
-          grep -Fq 'AURUM_WORKFLOW_FAILSAFE_V1_8_CANONICAL' "$src"
+          grep -Fq 'AURUM_WORKFLOW_FAILSAFE_V1_9_CANONICAL' "$src"
           grep -Fq 'External GUI proof boundary:' "$src"
           grep -Fq 'Pointer proof boundary:' "$src"
           grep -Fq 'Native-chain boundary:' "$src"
-          grep -Fq 'adaptive-shell GUI live-trial evidence expired' "$src"
-          grep -Fq 'gui-live-trial-evidence-expired' "$src"
+          grep -Fq 'adaptive-shell GUI preference live-trial' "$src"
+          grep -Fq 'gui-preference-trial-evidence-expired' "$src"
+          grep -Fq 'blocked-planning-verified' "$src"
+          grep -Fq 'adaptive_shell_gui_preference_live_trial' "$src"
+          grep -Fq 'current candidate/planning state remains verified' "$src"
           grep -Fq 'Physical presence is not the current blocker.' "$src"
           grep -Fq 'Workflow or native-chain state alone never creates a human task.' "$src"
           echo "file=$src" >> "$GITHUB_OUTPUT"
@@ -90,7 +93,7 @@ jobs:
           import re, sys
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./workflow-failsafe\.js(?:\?v=[^"]+)?"></script>\s*','',text)
-          tag='<script src="./workflow-failsafe.js?v=18"></script>'
+          tag='<script src="./workflow-failsafe.js?v=19"></script>'
           marker=re.search(r'<script src="\./action-ownership\.js(?:\?v=[^"]+)?"></script>',text)
           if marker:
               text=text[:marker.start()]+tag+'\n'+text[marker.start():]
@@ -100,7 +103,7 @@ jobs:
               raise SystemExit('dashboard missing injection point')
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './workflow-failsafe.js?v=18' "$RUNNER_TEMP/index.html"
+          grep -Fq './workflow-failsafe.js?v=19' "$RUNNER_TEMP/index.html"
 
       - name: Publish failsafe component with bounded retries
         env:
@@ -125,16 +128,19 @@ jobs:
           page="$(mktemp)"; js="$(mktemp --suffix=.js)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' \
-            'https://arkmatx.com/aurum/dashboard/workflow-failsafe.js?rev=18' -o "$js"
+            'https://arkmatx.com/aurum/dashboard/workflow-failsafe.js?rev=19' -o "$js"
           node --check "$js"
-          test "$(git hash-object "$js")" = '2955ca8231d739601f3987782e9a851eaa53cbbc'
-          grep -Fq './workflow-failsafe.js?v=18' "$page"
-          grep -Fq 'AURUM_WORKFLOW_FAILSAFE_V1_8_CANONICAL' "$js"
+          test "$(git hash-object "$js")" = '5a0ffcbf1719616f9db39754559d59aff186b9ce'
+          grep -Fq './workflow-failsafe.js?v=19' "$page"
+          grep -Fq 'AURUM_WORKFLOW_FAILSAFE_V1_9_CANONICAL' "$js"
           grep -Fq 'External GUI proof boundary:' "$js"
           grep -Fq 'Pointer proof boundary:' "$js"
           grep -Fq 'Native-chain boundary:' "$js"
-          grep -Fq 'adaptive-shell GUI live-trial evidence expired' "$js"
-          grep -Fq 'gui-live-trial-evidence-expired' "$js"
+          grep -Fq 'adaptive-shell GUI preference live-trial' "$js"
+          grep -Fq 'gui-preference-trial-evidence-expired' "$js"
+          grep -Fq 'blocked-planning-verified' "$js"
+          grep -Fq 'adaptive_shell_gui_preference_live_trial' "$js"
+          grep -Fq 'current candidate/planning state remains verified' "$js"
           grep -Fq 'Physical presence is not the current blocker.' "$js"
           grep -Fq 'Frontiers Advancing:' "$js"
           grep -Fq 'Needs Work → Aurum/System:' "$js"
@@ -173,9 +179,9 @@ jobs:
             "canonical_component": "services/aurum-arkmatx/workflow-failsafe-v1.js",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/workflow-failsafe-v1.js",
             "canonical_projection_byte_parity_verified": true,
-            "approved_projection_git_blob_sha": "2955ca8231d739601f3987782e9a851eaa53cbbc",
+            "approved_projection_git_blob_sha": "5a0ffcbf1719616f9db39754559d59aff186b9ce",
             "deployment_carrier": "FormatX66/wetbeard-site",
-            "workflow_failsafe_revision": "1.8",
+            "workflow_failsafe_revision": "1.9",
             "attempt_scoped_readback_supported": true,
             "legacy_readback_supported": true,
             "newest_run_attempt_selection": true,
@@ -191,9 +197,11 @@ jobs:
             "actual_pointer_motion_required": true,
             "native_chain_boundary_visible": true,
             "native_chain_verified_candidate_separate_from_live_trial_freshness": true,
-            "native_chain_live_trial_reseed_owned_by_system": true,
-            "native_chain_live_trial_reacquisition_owned_by_system": true,
+            "native_chain_blocked_planning_verified_supported": true,
             "native_chain_current_schema_gui_live_trial_expiry_supported": true,
+            "native_chain_gui_preference_live_trial_expiry_supported": true,
+            "native_chain_preference_trial_reacquisition_owned_by_system": true,
+            "native_chain_preference_boundary_inferred_human": false,
             "native_chain_physical_presence_inferred": false,
             "runner_root_cause_non_inference": true,
             "human_action_inference": false,
@@ -206,6 +214,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-workflow-failsafe-live.json
-          git commit -m 'Record current-schema native-chain-aware workflow failsafe live [skip ci]' || exit 0
+          git commit -m 'Record preference-trial-aware workflow failsafe live [skip ci]' || exit 0
           git pull --rebase origin main
           git push origin HEAD:main

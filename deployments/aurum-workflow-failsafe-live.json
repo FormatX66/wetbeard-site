@@ -5,7 +5,7 @@
   "canonical_component": "services/aurum-arkmatx/workflow-failsafe-v1.js",
   "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/workflow-failsafe-v1.js",
   "canonical_projection_byte_parity_verified": true,
-  "approved_projection_git_blob_sha": "9ef0a6e46de870b9c660f274f7796e9a0bc9da25",
+  "approved_projection_git_blob_sha": "2955ca8231d739601f3987782e9a851eaa53cbbc",
   "deployment_carrier": "FormatX66/wetbeard-site",
   "workflow_failsafe_revision": "1.8",
   "attempt_scoped_readback_supported": true,
@@ -24,11 +24,13 @@
   "native_chain_boundary_visible": true,
   "native_chain_verified_candidate_separate_from_live_trial_freshness": true,
   "native_chain_live_trial_reseed_owned_by_system": true,
+  "native_chain_live_trial_reacquisition_owned_by_system": true,
+  "native_chain_current_schema_gui_live_trial_expiry_supported": true,
   "native_chain_physical_presence_inferred": false,
   "runner_root_cause_non_inference": true,
   "human_action_inference": false,
   "frontiers_needs_work_actions_separation_visible": true,
   "rollback_protected": true,
   "status": "verified-live",
-  "verified_at_utc": "2026-08-28T01:56:37Z"
+  "verified_at_utc": "2026-08-28T02:05:20Z"
 }

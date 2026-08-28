@@ -25,7 +25,7 @@ jobs:
         id: source
         shell: bash
         env:
-          EXPECTED_BLOB: eda142cc901c34b91f080f2f81f40df3ff7bad2f
+          EXPECTED_BLOB: 81b7c6bbc6ed13b5abfcc19c5fc74d11151bd044
         run: |
           set -euo pipefail
           src="$RUNNER_TEMP/farmer-private-actions-boundary-v1.js"
@@ -39,16 +39,21 @@ jobs:
           curl --fail-with-body --silent --show-error --location \
             'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Projects/AurumBridge/results/private-actions-account-boundary-latest.json' -o "$status"
           test -s "$src"; node --check "$src"
-          grep -Fq 'AURUM_FARMER_PRIVATE_ACTIONS_BOUNDARY_V1_CANONICAL' "$src"
+          grep -Fq 'AURUM_FARMER_PRIVATE_ACTIONS_BOUNDARY_V1_1_CANONICAL' "$src"
+          grep -Fq 'AURUM_FARMER_PRIVATE_ACTIONS_BOUNDARY_V1_CANONICAL compatibility marker' "$src"
           grep -Fq 'Canonical website owner: FormatX66/ClusterSites' "$src"
           grep -Fq 'Private GitHub Actions account boundary' "$src"
           grep -Fq 'Frontiers Advancing:' "$src"
           grep -Fq 'Needs Work → Aurum/System:' "$src"
           grep -Fq 'Your Actions:' "$src"
+          grep -Fq 'function restoreBase(card)' "$src"
+          grep -Fq 'if(!active()){restoreBase(card);return}' "$src"
+          grep -Fq 'humanActionRequired:on' "$src"
+          grep -Fq 'expired:Boolean' "$src"
           grep -Fq 'grantsExecutionAuthority:false' "$src"
           grep -Fq 'grantsDestructiveAuthority:false' "$src"
           grep -Fq 'grantsLkgMutation:false' "$src"
-          python3 - "$status" <<'PY'
+          python3 - "$status" "$GITHUB_OUTPUT" <<'PY'
           import json,sys
           from datetime import datetime, timezone
           s=json.load(open(sys.argv[1],encoding='utf-8'))
@@ -62,8 +67,12 @@ jobs:
           assert all(s['authority'][k] is False for k in ['grants_execution_authority','grants_destructive_authority','grants_lkg_mutation'])
           observed=datetime.fromisoformat(s['observed_at_utc'].replace('Z','+00:00'))
           age=(datetime.now(timezone.utc)-observed).total_seconds()
-          assert -300 <= age <= int(s['fresh_for_seconds'])
-          print('AURUM_FARMER_PRIVATE_ACTIONS_BOUNDARY_OK')
+          fresh=max(0,int(s['fresh_for_seconds']))
+          assert fresh>0
+          active=(-300 <= age <= fresh)
+          with open(sys.argv[2],'a',encoding='utf-8') as out:
+              out.write(f"evidence_active={'true' if active else 'false'}\n")
+          print(f"AURUM_FARMER_PRIVATE_ACTIONS_BOUNDARY_OK active={active} age_seconds={int(age)}")
           PY
           echo "file=$src" >> "$GITHUB_OUTPUT"
 
@@ -110,14 +119,14 @@ jobs:
           import re,sys
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./farmer-private-actions-boundary-v1\.js(?:\?v=[^"]+)?"></script>\s*','',text)
-          tag='<script src="./farmer-private-actions-boundary-v1.js?v=100"></script>'
+          tag='<script src="./farmer-private-actions-boundary-v1.js?v=110"></script>'
           marker=re.search(r'<script src="\./autonomy-controller-v1\.js(?:\?v=[^"]+)?"></script>',text)
           if marker: text=text[:marker.end()]+'\n'+tag+text[marker.end():]
           elif '</body>' in text: text=text.replace('</body>',tag+'\n</body>',1)
           else: raise SystemExit('dashboard missing injection point')
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './farmer-private-actions-boundary-v1.js?v=100' "$RUNNER_TEMP/index.html"
+          grep -Fq './farmer-private-actions-boundary-v1.js?v=110' "$RUNNER_TEMP/index.html"
 
       - name: Publish with bounded retries
         env:
@@ -138,11 +147,13 @@ jobs:
           set -euo pipefail
           page="$(mktemp)"; js="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
-          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/farmer-private-actions-boundary-v1.js?rev=100' -o "$js"
-          grep -Fq './farmer-private-actions-boundary-v1.js?v=100' "$page"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/farmer-private-actions-boundary-v1.js?rev=110' -o "$js"
+          grep -Fq './farmer-private-actions-boundary-v1.js?v=110' "$page"
           cmp -s "${{ steps.source.outputs.file }}" "$js"
-          grep -Fq 'AURUM_FARMER_PRIVATE_ACTIONS_BOUNDARY_V1_CANONICAL' "$js"
+          grep -Fq 'AURUM_FARMER_PRIVATE_ACTIONS_BOUNDARY_V1_1_CANONICAL' "$js"
           grep -Fq 'Human Boundary' "$js"
+          grep -Fq 'function restoreBase(card)' "$js"
+          grep -Fq 'if(!active()){restoreBase(card);return}' "$js"
           grep -Fq 'Frontiers Advancing:' "$js"
           grep -Fq 'Needs Work → Aurum/System:' "$js"
           grep -Fq 'Your Actions:' "$js"
@@ -176,16 +187,18 @@ jobs:
             "url":"${{ steps.verify.outputs.url }}",
             "canonical_website_repo":"FormatX66/ClusterSites",
             "canonical_component":"services/aurum-arkmatx/farmer-private-actions-boundary-v1.js",
-            "approved_component_blob":"eda142cc901c34b91f080f2f81f40df3ff7bad2f",
+            "approved_component_blob":"81b7c6bbc6ed13b5abfcc19c5fc74d11151bd044",
             "public_projection":"FormatX66/BoxBrain:Web/Aurum-Arkmatx/farmer-private-actions-boundary-v1.js",
             "deployment_carrier":"FormatX66/wetbeard-site",
-            "revision":"1.0",
+            "revision":"1.1",
             "freshness_gated":true,
+            "stale_overlay_cleanup":true,
+            "expired_evidence_can_create_human_action":false,
             "exact_root_cause_inferred":false,
             "private_pre_runner_failure_visible":true,
             "public_execution_counterexample_visible":true,
-            "human_account_check_visible":true,
-            "human_action_required":true,
+            "human_account_check_visible":${{ steps.source.outputs.evidence_active }},
+            "human_action_required":${{ steps.source.outputs.evidence_active }},
             "execution_authority_granted":false,
             "destructive_authority_granted":false,
             "lkg_mutation_granted":false,
@@ -200,5 +213,5 @@ jobs:
           EOF
           git config user.name 'github-actions[bot]'; git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-farmer-private-actions-boundary-live.json
-          git commit -m 'Record Farmer private Actions boundary live [skip ci]' || exit 0
+          git commit -m 'Record Farmer private Actions boundary v1.1 live [skip ci]' || exit 0
           git pull --rebase origin main; git push origin HEAD:main

@@ -121,7 +121,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          page="$(mktemp)"; js="$(mktemp)"
+          page="$(mktemp)"; js="$(mktemp --suffix=.js)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' \
             'https://arkmatx.com/aurum/dashboard/workflow-failsafe.js?rev=18' -o "$js"
@@ -149,7 +149,7 @@ jobs:
           set -euo pipefail
           retry() { local n=1; while true; do "$@" && return 0; if [ "$n" -ge 5 ]; then return 1; fi; sleep $((n * 5)); n=$((n+1)); done; }
           remote='public_html/arkmatx/aurum/dashboard'; backup=".aurum-dashboard-backups/workflow-failsafe-$GITHUB_RUN_ID"
-          retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+          retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
             "set -eu; cp -p '$backup/index.html' '$remote/index.html'; if [ -f '$backup/workflow-failsafe.js' ]; then cp -p '$backup/workflow-failsafe.js' '$remote/workflow-failsafe.js'; elif [ -f '$backup/.missing-workflow-failsafe.js' ]; then rm -f '$remote/workflow-failsafe.js'; fi"
 
       - name: Record verified live receipt

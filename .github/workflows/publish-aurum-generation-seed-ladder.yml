@@ -89,7 +89,7 @@ jobs:
         run: |
           set -euo pipefail
           projection_commit='43e3b229f7c8d8a9fc625635d73b2bb1cea3b1e2'
-          ci_run='33269246781'
+          ci_run='33269246843'
           active='90fbe875533e1fe106928daf70b48f8aec574bad'
           parent='4c1ab29487583c12cfaf791a91fb856635b2b658'
           restored='a4b605b50708252fa945783e619a68b706d29382'
@@ -302,7 +302,7 @@ jobs:
             "component_revision": "1.7",
             "approved_blob": "${{ steps.source.outputs.blob }}",
             "boxbrain_projection_commit": "${{ steps.source.outputs.projection_commit }}",
-            "boxbrain_ci_run": 33269246781,
+            "boxbrain_ci_run": 33269246843,
             "boxbrain_ci_proven": true,
             "restored_lkg_head": "a4b605b50708252fa945783e619a68b706d29382",
             "active_trunk_commit": "90fbe875533e1fe106928daf70b48f8aec574bad",

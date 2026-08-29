@@ -20,6 +20,24 @@
   ],
   "recent_commits": [
     {
+      "sha": "7d20ba46",
+      "message": "Record Aurum Pi3 physical evidence v1.18 live [skip ci]",
+      "date": "2026-08-29T01:57:24Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/7d20ba460d1d0be63106c36e4c1da9312bd6b0f7"
+    },
+    {
+      "sha": "a6e9f685",
+      "message": "Aurum Command Center: protected Pi3 v1.18 publish",
+      "date": "2026-08-29T01:57:10Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/a6e9f6855552e57ecc1d9f51308b3ba70fc586b3"
+    },
+    {
+      "sha": "182993cd",
+      "message": "Refresh ArkmatX GitHub status [skip ci]",
+      "date": "2026-08-28T22:19:52Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/182993cd854a9c179ee39e3298131c56e02c18bd"
+    },
+    {
       "sha": "fcfeba6a",
       "message": "Record Aurum autonomy controller live deployment [skip ci]",
       "date": "2026-08-28T21:02:33Z",
@@ -48,25 +66,7 @@
       "message": "Publish Aurum Workflow Failsafe v1.9",
       "date": "2026-08-28T18:48:59Z",
       "html_url": "https://github.com/FormatX66/wetbeard-site/commit/8b621ffb690911c00bc52377b7f52968657148fc"
-    },
-    {
-      "sha": "36f6ed8f",
-      "message": "Record Aurum generation seed ladder live [skip ci]",
-      "date": "2026-08-28T12:50:16Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/36f6ed8f174f08535e88ad1cf774797b08dfc8f4"
-    },
-    {
-      "sha": "79bf0a45",
-      "message": "Publish Gen1 web and prompt seed evidence",
-      "date": "2026-08-28T12:50:01Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/79bf0a45a387d7b1a0ba88973a2662c644054546"
-    },
-    {
-      "sha": "360b0666",
-      "message": "Refresh ArkmatX GitHub status [skip ci]",
-      "date": "2026-08-28T11:23:31Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/360b0666b8301171278424b406fbcc21100063ea"
     }
   ],
-  "updated_at": "2026-08-28T22:19:52Z"
+  "updated_at": "2026-08-29T07:04:35Z"
 }

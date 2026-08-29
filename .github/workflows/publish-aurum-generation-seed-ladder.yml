@@ -27,9 +27,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          expected_canonical_blob='2f415936426576c5df263e99c211ce81930da5f8'
-          canonical_commit='a1cea0e4a1c8fc80ff45f399bcf939273bc307f2'
-          projection_commit='8d4cb841cf2b7f829dfa19f5b2211d7c7ce22b49'
+          expected_canonical_blob='69de8e8612c72618ea328a35c08db48b131bfe27'
+          canonical_commit='c3fe9d69c66f33b77be3840f73dc37459104b659'
+          projection_commit='59d97090ac1d6016c6ec62c64d31cebbef3eab06'
           projection="$RUNNER_TEMP/generation-seed-ladder-canonical.js"
           current="$RUNNER_TEMP/generation-seed-ladder-current.js"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 \
@@ -47,6 +47,7 @@ jobs:
           grep -Fq "RESTORED_LKG_HEAD='a4b605b50708252fa945783e619a68b706d29382'" "$projection"
           grep -Fq "ACTIVE_TRUNK_COMMIT='a89a70b18786b035b6d414ddf6250289c999571a'" "$projection"
           grep -Fq "ACTIVE_TRUNK_PARENT='5f15b0f673cdc7c667948a202d4e428d0916c947'" "$projection"
+          grep -Fq "HISTORICAL_ROUTE_FIX_COMMIT='6c9baefd9de4583976d99b3a90ac6a28114986bb'" "$projection"
           grep -Fq "ACTIVE_TRUNK_TREE='81dd65851c0956adc3cca8440712fc58b801b5da'" "$projection"
           grep -Fq "HEAL_REGROW_AUTOBUILD_RUN='33260822948'" "$projection"
           grep -Fq 'activeTrunkTreeMatchesLastKnownGood:false' "$projection"
@@ -58,7 +59,11 @@ jobs:
           grep -Fq 'laterForwardDescendantRequiredAfterCull:true' "$projection"
           grep -Fq 'backwardGitOperationsForbidden:true' "$projection"
           grep -Fq 'healAndRegrowExactHeadAutobuildPassed:false' "$projection"
-          grep -Fq "healAndRegrowExactHeadBlocker:'gui-preference-live-trial-evidence-expired-during-run-tests'" "$projection"
+          grep -Fq "healAndRegrowExactHeadBlocker:'gui-live-trial-approved-route-contract-regression'" "$projection"
+          grep -Fq 'routeContractRegressionProven:true' "$projection"
+          grep -Fq "guiLiveTrialEvidenceRoute:'192.168.0.194'" "$projection"
+          grep -Fq "currentConsumerRequiredRoute:'10.12.194.1'" "$projection"
+          grep -Fq 'historicalApprovedRouteFixContainedActiveTrunk:false' "$projection"
           grep -Fq 'humanActionInferred:false' "$projection"
           grep -Fq 'Frontiers Advancing:' "$projection"
           grep -Fq 'Needs Work → Aurum/System:' "$projection"
@@ -72,11 +77,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          projection_commit='8d4cb841cf2b7f829dfa19f5b2211d7c7ce22b49'
-          ci_run='33261339802'
+          projection_commit='59d97090ac1d6016c6ec62c64d31cebbef3eab06'
+          ci_run='33262007353'
           active='a89a70b18786b035b6d414ddf6250289c999571a'
           parent='5f15b0f673cdc7c667948a202d4e428d0916c947'
           restored='a4b605b50708252fa945783e619a68b706d29382'
+          route_fix='6c9baefd9de4583976d99b3a90ac6a28114986bb'
           heal_run='33260822948'
           restore='bd76bc92f960169ced6edd2b7f895fbbde4b5cce'
           broken='0395b2672e006262c4cbe767e3566c81fe9d9b0c'
@@ -94,10 +100,22 @@ jobs:
           curl --fail-with-body --silent --show-error --location "https://api.github.com/repos/FormatX66/BoxBrain/compare/$restored...$active" -o "$RUNNER_TEMP/compare.json"
           curl --fail-with-body --silent --show-error --location "https://api.github.com/repos/FormatX66/BoxBrain/actions/runs/$heal_run" -o "$RUNNER_TEMP/heal-run.json"
           curl --fail-with-body --silent --show-error --location "https://api.github.com/repos/FormatX66/BoxBrain/actions/runs/$heal_run/jobs?per_page=100" -o "$RUNNER_TEMP/heal-jobs.json"
-          python3 - "$RUNNER_TEMP/ci.json" "$RUNNER_TEMP/active.json" "$RUNNER_TEMP/compare.json" "$RUNNER_TEMP/heal-run.json" "$RUNNER_TEMP/heal-jobs.json" "$projection_commit" "$active" "$parent" "$restored" <<'PY'
+          curl --fail-with-body --silent --show-error --location "https://raw.githubusercontent.com/FormatX66/BoxBrain/$active/Projects/Codelation/field/external_prerequisite_evidence.py" -o "$RUNNER_TEMP/current-consumer.py"
+          curl --fail-with-body --silent --show-error --location "https://raw.githubusercontent.com/FormatX66/BoxBrain/$active/Projects/Codelation/autobuild/external_evidence/adaptive_shell_gui_live_trial.json" -o "$RUNNER_TEMP/current-evidence.json"
+          curl --fail-with-body --silent --show-error --location "https://raw.githubusercontent.com/FormatX66/BoxBrain/$route_fix/Projects/Codelation/field/external_prerequisite_evidence.py" -o "$RUNNER_TEMP/fixed-consumer.py"
+          curl --fail-with-body --silent --show-error --location "https://raw.githubusercontent.com/FormatX66/BoxBrain/$route_fix/Projects/Codelation/tests/test_adaptive_shell_gui_deployment.py" -o "$RUNNER_TEMP/fixed-tests.py"
+          grep -Fq 'USB_SSH_ROUTE = "10.12.194.1"' "$RUNNER_TEMP/current-consumer.py"
+          grep -Fq 'or route != USB_SSH_ROUTE' "$RUNNER_TEMP/current-consumer.py"
+          grep -Fq 'or transport.get("usb_route") != USB_SSH_ROUTE' "$RUNNER_TEMP/current-consumer.py"
+          grep -Fq 'GUI_LIVE_TRIAL_APPROVED_ROUTES' "$RUNNER_TEMP/fixed-consumer.py"
+          grep -Fq '"192.168.0.194"' "$RUNNER_TEMP/fixed-consumer.py"
+          grep -Fq 'or route not in GUI_LIVE_TRIAL_APPROVED_ROUTES' "$RUNNER_TEMP/fixed-consumer.py"
+          grep -Fq 'or transport.get("usb_route") != route' "$RUNNER_TEMP/fixed-consumer.py"
+          grep -Fq 'for approved_route in ("10.12.194.1", "10.42.194.1", "bbpi4.local", "192.168.0.194")' "$RUNNER_TEMP/fixed-tests.py"
+          python3 - "$RUNNER_TEMP/ci.json" "$RUNNER_TEMP/active.json" "$RUNNER_TEMP/compare.json" "$RUNNER_TEMP/heal-run.json" "$RUNNER_TEMP/heal-jobs.json" "$RUNNER_TEMP/current-evidence.json" "$projection_commit" "$active" "$parent" "$restored" <<'PY'
           import json,sys
-          ci,active_doc,compare_doc,heal,jobs=[json.load(open(p,encoding='utf-8')) for p in sys.argv[1:6]]
-          projection,active,parent,restored=sys.argv[6:10]
+          ci,active_doc,compare_doc,heal,jobs,evidence=[json.load(open(p,encoding='utf-8')) for p in sys.argv[1:7]]
+          projection,active,parent,restored=sys.argv[7:11]
           assert ci.get('name')=='BoxBrain CI' and ci.get('head_sha')==projection
           assert ci.get('status')=='completed' and ci.get('conclusion')=='success'
           assert active_doc.get('sha')==active and active_doc.get('parents',[{}])[0].get('sha')==parent
@@ -105,10 +123,13 @@ jobs:
           assert compare_doc.get('status')=='ahead' and compare_doc.get('behind_by')==0 and compare_doc.get('ahead_by')==2
           assert compare_doc.get('merge_base_commit',{}).get('sha')==restored
           assert heal.get('head_sha')==active and heal.get('status')=='completed' and heal.get('conclusion')=='failure'
-          loop=next((j for j in jobs.get('jobs',[]) if j.get('name')=='AurumAutobuildLoop'),None)
+          loop=next((j for j in jobs.get('jobs',[]) if j.get('name')=='Resume verified native growth'),None)
           assert loop and loop.get('conclusion')=='failure'
-          assert any(s.get('name')=='Run tests' and s.get('conclusion')=='failure' for s in loop.get('steps',[]))
-          print('GENERATION_LADDER_CURRENT_BOUNDARY_OK ci=%s heal_run=%s' % (ci['id'],heal['id']))
+          assert any(s.get('name')=='Verify native self-build contracts' and s.get('conclusion')=='failure' for s in loop.get('steps',[]))
+          assert evidence.get('route')=='192.168.0.194'
+          assert evidence.get('transport',{}).get('usb_route')=='192.168.0.194'
+          assert evidence.get('verified') is True
+          print('GENERATION_LADDER_CURRENT_ROUTE_BOUNDARY_OK ci=%s heal_run=%s' % (ci['id'],heal['id']))
           PY
           for sha in "$restored" "$restore" "$lkg"; do
             curl --fail-with-body --silent --show-error --location "https://api.github.com/repos/FormatX66/BoxBrain/commits/$sha" -o "$RUNNER_TEMP/$sha.json"
@@ -224,7 +245,11 @@ jobs:
           grep -Fq 'appendOnlySeedLineageImplemented:true' "$js"
           grep -Fq 'failedCandidateCullAndRegrowImplemented:true' "$js"
           grep -Fq 'healAndRegrowExactHeadAutobuildPassed:false' "$js"
-          grep -Fq "healAndRegrowExactHeadBlocker:'gui-preference-live-trial-evidence-expired-during-run-tests'" "$js"
+          grep -Fq "healAndRegrowExactHeadBlocker:'gui-live-trial-approved-route-contract-regression'" "$js"
+          grep -Fq 'routeContractRegressionProven:true' "$js"
+          grep -Fq "guiLiveTrialEvidenceRoute:'192.168.0.194'" "$js"
+          grep -Fq "currentConsumerRequiredRoute:'10.12.194.1'" "$js"
+          grep -Fq 'historicalApprovedRouteFixContainedActiveTrunk:false' "$js"
           grep -Fq 'humanActionInferred:false' "$js"
           grep -Fq 'Frontiers Advancing:' "$js"
           grep -Fq 'Needs Work → Aurum/System:' "$js"
@@ -266,7 +291,7 @@ jobs:
             "component_revision": "1.5",
             "approved_blob": "${{ steps.source.outputs.blob }}",
             "boxbrain_projection_commit": "${{ steps.source.outputs.projection_commit }}",
-            "boxbrain_ci_run": 33261339802,
+            "boxbrain_ci_run": 33262007353,
             "boxbrain_ci_proven": true,
             "restored_lkg_head": "a4b605b50708252fa945783e619a68b706d29382",
             "active_trunk_commit": "a89a70b18786b035b6d414ddf6250289c999571a",
@@ -282,8 +307,13 @@ jobs:
             "backward_git_operations_forbidden": true,
             "heal_and_regrow_autobuild_run": 33260822948,
             "heal_and_regrow_exact_head_autobuild_passed": false,
-            "heal_and_regrow_exact_head_blocker": "gui-preference-live-trial-evidence-expired-during-run-tests",
+            "heal_and_regrow_exact_head_blocker": "gui-live-trial-approved-route-contract-regression",
             "heal_and_regrow_runtime_acceptance_proven": false,
+            "route_contract_regression_proven": true,
+            "gui_live_trial_evidence_route": "192.168.0.194",
+            "current_consumer_required_route": "10.12.194.1",
+            "historical_approved_route_fix_commit": "6c9baefd9de4583976d99b3a90ac6a28114986bb",
+            "historical_approved_route_fix_contained_active_trunk": false,
             "restore_tree_pc_image_run": 33253166899,
             "restore_tree_boot_evidence_retained": true,
             "human_action_inference": false,

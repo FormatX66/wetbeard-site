@@ -22,52 +22,50 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Verify ClusterSites canonical source and BoxBrain projection
+      - name: Verify approved ClusterSites canonical blob through BoxBrain projection
         id: source
         shell: bash
         run: |
           set -euo pipefail
           expected_canonical_blob='2f415936426576c5df263e99c211ce81930da5f8'
+          canonical_commit='a1cea0e4a1c8fc80ff45f399bcf939273bc307f2'
           projection_commit='8d4cb841cf2b7f829dfa19f5b2211d7c7ce22b49'
-          canonical="$RUNNER_TEMP/generation-seed-ladder-canonical.js"
-          projection="$RUNNER_TEMP/generation-seed-ladder-projection.js"
+          projection="$RUNNER_TEMP/generation-seed-ladder-canonical.js"
           current="$RUNNER_TEMP/generation-seed-ladder-current.js"
-          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 \
-            'https://raw.githubusercontent.com/FormatX66/ClusterSites/main/services/aurum-arkmatx/generation-seed-ladder-v1.js' -o "$canonical"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 \
             "https://raw.githubusercontent.com/FormatX66/BoxBrain/$projection_commit/Web/Aurum-Arkmatx/generation-seed-ladder-v1.js" -o "$projection"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 \
             'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/generation-seed-ladder-v1.js' -o "$current"
-          test -s "$canonical"; test -s "$projection"; test -s "$current"
-          node --check "$canonical"
-          cmp -s "$canonical" "$projection"
-          cmp -s "$canonical" "$current"
-          blob="$(git hash-object "$canonical")"
+          test -s "$projection"; test -s "$current"
+          node --check "$projection"
+          cmp -s "$projection" "$current"
+          blob="$(git hash-object "$projection")"
           test "$blob" = "$expected_canonical_blob"
-          grep -Fq 'AURUM_GENERATION_SEED_LADDER_V1_CANONICAL' "$canonical"
-          grep -Fq "canonicalWebsiteRepo:'FormatX66/ClusterSites'" "$canonical"
-          grep -Fq "componentRevision:'1.5'" "$canonical"
-          grep -Fq "RESTORED_LKG_HEAD='a4b605b50708252fa945783e619a68b706d29382'" "$canonical"
-          grep -Fq "ACTIVE_TRUNK_COMMIT='a89a70b18786b035b6d414ddf6250289c999571a'" "$canonical"
-          grep -Fq "ACTIVE_TRUNK_PARENT='5f15b0f673cdc7c667948a202d4e428d0916c947'" "$canonical"
-          grep -Fq "ACTIVE_TRUNK_TREE='81dd65851c0956adc3cca8440712fc58b801b5da'" "$canonical"
-          grep -Fq "HEAL_REGROW_AUTOBUILD_RUN='33260822948'" "$canonical"
-          grep -Fq 'activeTrunkTreeMatchesLastKnownGood:false' "$canonical"
-          grep -Fq 'activeTrunkDescendsFromRestoredLkg:true' "$canonical"
-          grep -Fq 'forwardOnlyHealingContractImplemented:true' "$canonical"
-          grep -Fq 'appendOnlySeedLineageImplemented:true' "$canonical"
-          grep -Fq 'failedCandidateCullAndRegrowImplemented:true' "$canonical"
-          grep -Fq 'culledCandidateRetryForbidden:true' "$canonical"
-          grep -Fq 'laterForwardDescendantRequiredAfterCull:true' "$canonical"
-          grep -Fq 'backwardGitOperationsForbidden:true' "$canonical"
-          grep -Fq 'healAndRegrowExactHeadAutobuildPassed:false' "$canonical"
-          grep -Fq "healAndRegrowExactHeadBlocker:'gui-preference-live-trial-evidence-expired-during-run-tests'" "$canonical"
-          grep -Fq 'humanActionInferred:false' "$canonical"
-          grep -Fq 'Frontiers Advancing:' "$canonical"
-          grep -Fq 'Needs Work → Aurum/System:' "$canonical"
-          grep -Fq 'Your Actions:' "$canonical"
-          echo "file=$canonical" >> "$GITHUB_OUTPUT"
+          grep -Fq 'AURUM_GENERATION_SEED_LADDER_V1_CANONICAL' "$projection"
+          grep -Fq "canonicalWebsiteRepo:'FormatX66/ClusterSites'" "$projection"
+          grep -Fq "componentRevision:'1.5'" "$projection"
+          grep -Fq "RESTORED_LKG_HEAD='a4b605b50708252fa945783e619a68b706d29382'" "$projection"
+          grep -Fq "ACTIVE_TRUNK_COMMIT='a89a70b18786b035b6d414ddf6250289c999571a'" "$projection"
+          grep -Fq "ACTIVE_TRUNK_PARENT='5f15b0f673cdc7c667948a202d4e428d0916c947'" "$projection"
+          grep -Fq "ACTIVE_TRUNK_TREE='81dd65851c0956adc3cca8440712fc58b801b5da'" "$projection"
+          grep -Fq "HEAL_REGROW_AUTOBUILD_RUN='33260822948'" "$projection"
+          grep -Fq 'activeTrunkTreeMatchesLastKnownGood:false' "$projection"
+          grep -Fq 'activeTrunkDescendsFromRestoredLkg:true' "$projection"
+          grep -Fq 'forwardOnlyHealingContractImplemented:true' "$projection"
+          grep -Fq 'appendOnlySeedLineageImplemented:true' "$projection"
+          grep -Fq 'failedCandidateCullAndRegrowImplemented:true' "$projection"
+          grep -Fq 'culledCandidateRetryForbidden:true' "$projection"
+          grep -Fq 'laterForwardDescendantRequiredAfterCull:true' "$projection"
+          grep -Fq 'backwardGitOperationsForbidden:true' "$projection"
+          grep -Fq 'healAndRegrowExactHeadAutobuildPassed:false' "$projection"
+          grep -Fq "healAndRegrowExactHeadBlocker:'gui-preference-live-trial-evidence-expired-during-run-tests'" "$projection"
+          grep -Fq 'humanActionInferred:false' "$projection"
+          grep -Fq 'Frontiers Advancing:' "$projection"
+          grep -Fq 'Needs Work → Aurum/System:' "$projection"
+          grep -Fq 'Your Actions:' "$projection"
+          echo "file=$projection" >> "$GITHUB_OUTPUT"
           echo "blob=$blob" >> "$GITHUB_OUTPUT"
+          echo "canonical_commit=$canonical_commit" >> "$GITHUB_OUTPUT"
           echo "projection_commit=$projection_commit" >> "$GITHUB_OUTPUT"
 
       - name: Verify exact projection CI and current Aurum evidence boundary
@@ -262,6 +260,7 @@ jobs:
             "url": "${{ steps.verify.outputs.url }}",
             "canonical_website_repo": "FormatX66/ClusterSites",
             "canonical_component": "services/aurum-arkmatx/generation-seed-ladder-v1.js",
+            "canonical_component_commit": "${{ steps.source.outputs.canonical_commit }}",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/generation-seed-ladder-v1.js",
             "deployment_carrier": "FormatX66/wetbeard-site",
             "component_revision": "1.5",

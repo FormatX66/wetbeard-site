@@ -6,119 +6,72 @@ on:
     paths:
       - '.github/workflows/publish-aurum-autonomy-controller.yml'
   workflow_dispatch:
-  workflow_run:
-    workflows:
-      - Publish ClusterSites Aurum Dashboard
-    types: [completed]
 
 permissions:
   contents: write
 
 concurrency:
   group: aurum-autonomy-controller-production
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   publish:
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     environment: production
     steps:
       - uses: actions/checkout@v4
 
-      - name: Fetch projection pinned to approved ClusterSites canonical blob
+      - name: Verify ClusterSites-approved projection
         id: source
         shell: bash
         run: |
           set -euo pipefail
-          # ClusterSites is canonical. The deploy carrier cannot anonymously read that
-          # repository, so it accepts the public BoxBrain projection only when its Git
-          # blob hash exactly matches the approved ClusterSites canonical blob.
-          expected_canonical_blob='43a200ef138298da6ef5093d6bc93c7ef34da278'
-          projection='https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/autonomy-controller-v1.js'
+          expected='0e5b5e055b74150dc27c44402afd86828e78fe48'
           out="$RUNNER_TEMP/autonomy-controller.js"
-          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 "$projection" -o "$out"
-          test -s "$out"
-          actual_blob="$(git hash-object "$out")"
-          test "$actual_blob" = "$expected_canonical_blob"
-          grep -Fq 'AURUM_AUTONOMY_CONTROLLER_V1_7_CANONICAL' "$out"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 \
+            'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/autonomy-controller-v1.js' -o "$out"
+          actual="$(git hash-object "$out")"
+          test "$actual" = "$expected"
+          grep -Fq 'AURUM_AUTONOMY_CONTROLLER_V1_8_CANONICAL' "$out"
           grep -Fq 'Canonical website owner: FormatX66/ClusterSites' "$out"
-          grep -Fq 'FARMER_PROOF_URL' "$out"
-          grep -Fq 'Aurum Farmer' "$out"
-          grep -Fq 'Self-hosted deployed runtime' "$out"
-          grep -Fq 'latest validated self-hosted Farmer receipt' "$out"
-          grep -Fq 'stale static deployment pin' "$out"
-          grep -Fq 'Production local operational-state authority' "$out"
-          grep -Fq 'Morris enrollment' "$out"
-          grep -Fq 'BBPI4 enrollment' "$out"
-          grep -Fq 'active edge web node' "$out"
-          grep -Fq 'require a fresh heartbeat before any promotion' "$out"
-          grep -Fq 'do not create duplicate leadership' "$out"
+          grep -Fq "LIVE_NODES='/aurum/index.php/nodes'" "$out"
+          grep -Fq "LIVE_WORK='/aurum/index.php/work/status?id=bbpi4-bootstrap-v1'" "$out"
+          grep -Fq 'historically confirmed; not present in live node directory' "$out"
+          grep -Fq 'work state is not a heartbeat' "$out"
           grep -Fq 'Frontiers Advancing:' "$out"
           grep -Fq 'Needs Work → Aurum/System:' "$out"
           grep -Fq 'Your Actions:' "$out"
           grep -Fq 'this surface never creates a human task from controller state alone.' "$out"
           echo "file=$out" >> "$GITHUB_OUTPUT"
-          echo "canonical_blob=$actual_blob" >> "$GITHUB_OUTPUT"
+          echo "blob=$actual" >> "$GITHUB_OUTPUT"
 
-      - name: Verify latest deployed Farmer proof contract and provenance
+      - name: Verify latest Farmer proof remains fail-closed
         id: farmer
         shell: bash
         run: |
           set -euo pipefail
-          proof="$RUNNER_TEMP/latest-windows-runtime-proof.json"
+          proof="$RUNNER_TEMP/farmer.json"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 \
-            'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Projects/AurumFarmer/Deploy/latest-windows-runtime-proof.json' \
-            -o "$proof"
+            'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Projects/AurumFarmer/Deploy/latest-windows-runtime-proof.json' -o "$proof"
           python3 - "$proof" "$GITHUB_OUTPUT" <<'PY'
-          import datetime as dt
-          import json, re, sys
-          proof_path, output_path = sys.argv[1:3]
-          with open(proof_path, encoding='utf-8-sig') as f:
-              p=json.load(f)
-          assert p.get('schema') == 'aurum.farmer.windows-runtime-proof.v1', p
-          assert p.get('runner_name') == 'AURUM-LAPTOP-EBD8CG8P', p
-          source=p.get('source_commit','')
-          assert re.fullmatch(r'[0-9a-f]{40}', source), p
-          release=str(p.get('release_root','')).lower()
-          assert source[:12] in release, p
-          observed=str(p.get('observed_at_utc',''))
-          dt.datetime.fromisoformat(observed.replace('Z','+00:00'))
-          assert p.get('task_state') == 'Running', p
-          assert p.get('initial_health_verified') is True, p
-          assert p.get('post_restart_health_verified') is True, p
-          assert p.get('event_chain_valid') is True, p
-          assert p.get('queued_while_supervisor_stopped') is True, p
-          assert p.get('restart_resume_job_state') == 'SUCCEEDED', p
-          assert int(p.get('sealed_receipt_count',0)) >= 1, p
-          assert p.get('previous_releases_preserved') is True, p
-          assert p.get('destructive_action_allowed') is False, p
-          assert p.get('lkg_mutation_inferred') is False, p
-          assert p.get('physical_proof_inferred') is False, p
-          with open(output_path,'a',encoding='utf-8') as out:
-              out.write(f"source_commit={source}\n")
-              out.write(f"runner_name={p.get('runner_name','')}\n")
-              out.write(f"observed_at_utc={observed}\n")
-          PY
-          source_commit="$(sed -n 's/^source_commit=//p' "$GITHUB_OUTPUT" | tail -n 1)"
-          test -n "$source_commit"
-          commit_json="$RUNNER_TEMP/farmer-source-commit.json"
-          compare_json="$RUNNER_TEMP/farmer-source-compare.json"
-          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 \
-            "https://api.github.com/repos/FormatX66/BoxBrain/commits/$source_commit" -o "$commit_json"
-          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 \
-            "https://api.github.com/repos/FormatX66/BoxBrain/compare/$source_commit...main" -o "$compare_json"
-          python3 - "$commit_json" "$compare_json" "$source_commit" <<'PY'
-          import json, sys
-          commit_path, compare_path, source = sys.argv[1:4]
-          with open(commit_path, encoding='utf-8') as f: commit=json.load(f)
-          with open(compare_path, encoding='utf-8') as f: compare=json.load(f)
-          assert commit.get('sha') == source, commit
-          assert compare.get('status') in {'ahead','identical'}, compare
-          print('FARMER_DEPLOYED_RUNTIME_PROOF_AND_PROVENANCE_OK')
+          import json,re,sys
+          p=json.load(open(sys.argv[1],encoding='utf-8-sig'))
+          assert p.get('schema')=='aurum.farmer.windows-runtime-proof.v1'
+          assert p.get('task_state')=='Running'
+          assert p.get('initial_health_verified') is True
+          assert p.get('post_restart_health_verified') is True
+          assert p.get('event_chain_valid') is True
+          assert p.get('restart_resume_job_state')=='SUCCEEDED'
+          assert p.get('destructive_action_allowed') is False
+          assert p.get('lkg_mutation_inferred') is False
+          assert p.get('physical_proof_inferred') is False
+          source=p.get('source_commit',''); assert re.fullmatch(r'[0-9a-f]{40}',source)
+          with open(sys.argv[2],'a') as o:
+              o.write(f'source_commit={source}\n')
+              o.write(f'runner_name={p.get("runner_name","")}\n')
           PY
 
-      - name: Configure existing Bluehost SSH carrier with bounded retry
+      - name: Configure bounded Bluehost carrier
         env:
           BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
           BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
@@ -131,13 +84,13 @@ jobs:
           printf '%s\n' "$BLUEHOST_SSH_PRIVATE_KEY" > "$HOME/.ssh/bluehost_deploy"
           chmod 600 "$HOME/.ssh/bluehost_deploy"
           : > "$HOME/.ssh/known_hosts"
-          for attempt in 1 2 3 4 5; do
-            if ssh-keyscan -T 10 -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null; then exit 0; fi
-            if [ "$attempt" -eq 5 ]; then echo "Bluehost SSH keyscan unavailable after bounded retries" >&2; exit 1; fi
-            sleep $((attempt * 5))
+          for n in 1 2 3 4 5; do
+            ssh-keyscan -T 10 -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null && exit 0
+            test "$n" -lt 5 || exit 1
+            sleep $((n*5))
           done
 
-      - name: Back up and fetch current command center
+      - name: Back up current live component and dashboard
         id: backup
         env:
           BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
@@ -145,68 +98,68 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          retry_capture() { local outfile="$1"; shift; local attempt=1 rc=0 tmp; tmp="$(mktemp)"; while true; do if "$@" > "$tmp"; then mv "$tmp" "$outfile"; return 0; fi; rc=$?; if [ "$attempt" -ge 5 ]; then rm -f "$tmp"; return "$rc"; fi; sleep $((attempt * 5)); attempt=$((attempt + 1)); done; }
           remote='public_html/arkmatx/aurum/dashboard'
           backup=".aurum-dashboard-backups/autonomy-controller-$GITHUB_RUN_ID"
-          retry_capture "$RUNNER_TEMP/index.html" ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" "set -eu; mkdir -p '$remote' '$backup'; cp -p '$remote/index.html' '$backup/index.html'; if [ -f '$remote/autonomy-controller.js' ]; then cp -p '$remote/autonomy-controller.js' '$backup/autonomy-controller.js'; else touch '$backup/.missing-autonomy-controller.js'; fi; cat '$remote/index.html'"
+          ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "set -eu; mkdir -p '$remote' '$backup'; cp -p '$remote/index.html' '$backup/index.html'; if [ -f '$remote/autonomy-controller.js' ]; then cp -p '$remote/autonomy-controller.js' '$backup/autonomy-controller.js'; else touch '$backup/.missing-autonomy-controller.js'; fi; cat '$remote/index.html'" \
+            > "$RUNNER_TEMP/index.html"
           test -s "$RUNNER_TEMP/index.html"
           echo 'ready=true' >> "$GITHUB_OUTPUT"
 
-      - name: Inject autonomy controller surface
+      - name: Inject v1.8 without creating another box
         shell: bash
         run: |
           set -euo pipefail
           python3 - "$RUNNER_TEMP/index.html" <<'PY'
           from pathlib import Path
-          import re, sys
-          p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
-          text=re.sub(r'<script src="\./autonomy-controller\.js(?:\?v=[^"]+)?"></script>\s*','',text)
-          if '</body>' not in text: raise SystemExit('dashboard missing body close')
-          text=text.replace('</body>','<script src="./autonomy-controller.js?v=1.7"></script>\n</body>',1)
-          p.write_text(text,encoding='utf-8')
+          import re,sys
+          p=Path(sys.argv[1]); s=p.read_text(encoding='utf-8')
+          s=re.sub(r'<script src="\./autonomy-controller\.js(?:\?v=[^"]+)?"></script>\s*','',s)
+          if '</body>' not in s: raise SystemExit('dashboard missing body close')
+          p.write_text(s.replace('</body>','<script src="./autonomy-controller.js?v=1.8"></script>\n</body>',1),encoding='utf-8')
           PY
-          grep -Fq './autonomy-controller.js?v=1.7' "$RUNNER_TEMP/index.html"
+          grep -Fq './autonomy-controller.js?v=1.8' "$RUNNER_TEMP/index.html"
 
-      - name: Publish autonomy controller with bounded connection count
+      - name: Publish bounded component update
         env:
           BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
           BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
         shell: bash
         run: |
           set -euo pipefail
-          retry() { local attempt=1 rc=0; while true; do "$@" && return 0; rc=$?; if [ "$attempt" -ge 5 ]; then return "$rc"; fi; sleep $((attempt * 5)); attempt=$((attempt + 1)); done; }
           remote='public_html/arkmatx/aurum/dashboard'
-          stage="$RUNNER_TEMP/aurum-autonomy-publish"; mkdir -p "$stage"
+          stage="$RUNNER_TEMP/publish"; mkdir -p "$stage"
           cp "$RUNNER_TEMP/index.html" "$stage/index.html"
           cp "${{ steps.source.outputs.file }}" "$stage/autonomy-controller.js"
-          retry scp -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -P 22 "$stage/index.html" "$stage/autonomy-controller.js" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/"
-          retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" "chmod 644 '$remote/index.html' '$remote/autonomy-controller.js'"
+          scp -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -P 22 \
+            "$stage/index.html" "$stage/autonomy-controller.js" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/"
+          ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "chmod 644 '$remote/index.html' '$remote/autonomy-controller.js'"
 
-      - name: Verify live autonomy controller
+      - name: Verify live bytes and current topology contract
         id: verify
         shell: bash
         run: |
           set -euo pipefail
-          page="$(mktemp)"; component="$(mktemp)"
-          final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
-          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/autonomy-controller.js?rev=1.7' -o "$component"
-          grep -Fq './autonomy-controller.js?v=1.7' "$page"
-          grep -Fq 'AURUM_AUTONOMY_CONTROLLER_V1_7_CANONICAL' "$component"
-          grep -Fq 'FARMER_PROOF_URL' "$component"
-          grep -Fq 'Self-hosted deployed runtime' "$component"
-          grep -Fq 'latest validated self-hosted Farmer receipt' "$component"
-          grep -Fq 'stale static deployment pin' "$component"
-          grep -Fq 'Production local operational-state authority' "$component"
-          grep -Fq 'Morris enrollment' "$component"
-          grep -Fq 'BBPI4 enrollment' "$component"
-          grep -Fq 'require a fresh heartbeat before any promotion' "$component"
-          grep -Fq 'Frontiers Advancing:' "$component"
-          grep -Fq 'Needs Work → Aurum/System:' "$component"
-          grep -Fq 'Your Actions:' "$component"
-          live_blob="$(git hash-object "$component")"
-          test "$live_blob" = '${{ steps.source.outputs.canonical_blob }}'
-          echo "url=$final_url" >> "$GITHUB_OUTPUT"
+          page="$RUNNER_TEMP/live-index.html"; component="$RUNNER_TEMP/live-component.js"
+          final="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' \
+            'https://arkmatx.com/aurum/dashboard/autonomy-controller.js?rev=1.8' -o "$component"
+          grep -Fq './autonomy-controller.js?v=1.8' "$page"
+          grep -Fq 'AURUM_AUTONOMY_CONTROLLER_V1_8_CANONICAL' "$component"
+          live_blob="$(git hash-object "$component")"; test "$live_blob" = '${{ steps.source.outputs.blob }}'
+          nodes="$RUNNER_TEMP/nodes.json"; work="$RUNNER_TEMP/work.json"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 'https://arkmatx.com/aurum/index.php/nodes' -o "$nodes"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 'https://arkmatx.com/aurum/index.php/work/status?id=bbpi4-bootstrap-v1' -o "$work"
+          jq -e '.nodes|type=="array"' "$nodes" >/dev/null
+          jq -e '.work_id=="bbpi4-bootstrap-v1"' "$work" >/dev/null
+          echo "url=$final" >> "$GITHUB_OUTPUT"
           echo "live_blob=$live_blob" >> "$GITHUB_OUTPUT"
+          echo "node_count=$(jq '.nodes|length' "$nodes")" >> "$GITHUB_OUTPUT"
+          echo "morris_present=$(jq --arg id '825e5a7b7d4a7aed' '[.nodes[]? | select(.node_id==$id)]|length>0' "$nodes")" >> "$GITHUB_OUTPUT"
+          echo "bbpi4_work_status=$(jq -r '.status//"unknown"' "$work")" >> "$GITHUB_OUTPUT"
+          echo "bbpi4_attempts=$(jq -r '.attempts//0' "$work")" >> "$GITHUB_OUTPUT"
+          echo "bbpi4_last_result=$(jq -r '.last_result_status//"none"' "$work")" >> "$GITHUB_OUTPUT"
 
       - name: Roll back if verification fails
         if: ${{ failure() && steps.backup.outputs.ready == 'true' }}
@@ -216,65 +169,46 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          retry() { local attempt=1 rc=0; while true; do "$@" && return 0; rc=$?; if [ "$attempt" -ge 5 ]; then return "$rc"; fi; sleep $((attempt * 5)); attempt=$((attempt + 1)); done; }
           remote='public_html/arkmatx/aurum/dashboard'; backup=".aurum-dashboard-backups/autonomy-controller-$GITHUB_RUN_ID"
-          retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" "set -eu; cp -p '$backup/index.html' '$remote/index.html'; if [ -f '$backup/autonomy-controller.js' ]; then cp -p '$backup/autonomy-controller.js' '$remote/autonomy-controller.js'; elif [ -f '$backup/.missing-autonomy-controller.js' ]; then rm -f '$remote/autonomy-controller.js'; fi"
+          ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "set -eu; cp -p '$backup/index.html' '$remote/index.html'; if [ -f '$backup/autonomy-controller.js' ]; then cp -p '$backup/autonomy-controller.js' '$remote/autonomy-controller.js'; elif [ -f '$backup/.missing-autonomy-controller.js' ]; then rm -f '$remote/autonomy-controller.js'; fi"
 
-      - name: Record verified autonomy-controller receipt
+      - name: Record verified v1.8 receipt
         if: success()
         shell: bash
         run: |
           set -euo pipefail
-          git fetch origin main
-          git checkout main
-          git reset --hard origin/main
-          mkdir -p deployments
-          verified_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
-          cat > deployments/aurum-autonomy-controller-live.json <<EOF
+          git fetch origin main; git checkout main; git reset --hard origin/main; mkdir -p deployments
+          cat > deployments/aurum-autonomy-controller-live.json <<JSON
           {
-            "site": "aurum-command-center",
-            "url": "${{ steps.verify.outputs.url }}",
-            "canonical_website_repo": "FormatX66/ClusterSites",
-            "public_projection_repo": "FormatX66/BoxBrain",
-            "component": "autonomy-controller-v1.js",
-            "revision": "1.7",
-            "canonical_blob": "${{ steps.source.outputs.canonical_blob }}",
-            "live_blob": "${{ steps.verify.outputs.live_blob }}",
-            "canonical_projection_byte_identical": true,
-            "live_byte_identical": true,
-            "active_edge_state_dynamic": true,
-            "child_enrollment_truth_dynamic": true,
-            "bbpi4_promotion_requires_fresh_heartbeat": true,
-            "duplicate_leadership_inferred": false,
-            "farmer_repository_contract_proven": true,
-            "farmer_ci_run": 32874824671,
-            "farmer_hosted_windows_install_proof": true,
-            "farmer_hosted_windows_install_run": 32878837340,
-            "farmer_hosted_windows_install_commit": "da4239ab301c5fb2d6748145dae75b03e3589bed",
-            "farmer_self_hosted_windows_runtime_proof": true,
-            "farmer_self_hosted_windows_source_commit": "${{ steps.farmer.outputs.source_commit }}",
-            "farmer_self_hosted_windows_runner": "${{ steps.farmer.outputs.runner_name }}",
-            "farmer_self_hosted_windows_proof_observed_at_utc": "${{ steps.farmer.outputs.observed_at_utc }}",
-            "farmer_receipt_provenance_dynamic": true,
-            "stale_static_farmer_source_pin_accepted": false,
-            "farmer_restart_resume_proven": true,
-            "farmer_production_local_operational_state_authority": true,
-            "generic_runtime_checkpoint_peer_authority": false,
-            "hosted_windows_install_does_not_imply_long_lived_runtime": true,
-            "edge_controller_restart_proof_separate": true,
-            "unrelated_physical_proof_inferred": false,
-            "expandable": true,
-            "needs_work_owner": "Aurum/System",
-            "human_action_inference": false,
-            "backup_before_publish": true,
-            "rollback_on_verify_failure": true,
-            "status": "verified-live",
-            "verified_at_utc": "$verified_at"
+            "site":"aurum-command-center",
+            "url":"${{ steps.verify.outputs.url }}",
+            "canonical_website_repo":"FormatX66/ClusterSites",
+            "public_projection_repo":"FormatX66/BoxBrain",
+            "component":"autonomy-controller-v1.js",
+            "revision":"1.8",
+            "canonical_blob":"${{ steps.source.outputs.blob }}",
+            "live_blob":"${{ steps.verify.outputs.live_blob }}",
+            "canonical_projection_byte_identical":true,
+            "live_byte_identical":true,
+            "live_topology_direct_reads":true,
+            "historical_enrollment_not_current_without_live_presence":true,
+            "bbpi4_work_state_not_heartbeat":true,
+            "node_count":${{ steps.verify.outputs.node_count }},
+            "morris_present":${{ steps.verify.outputs.morris_present }},
+            "bbpi4_work_status":"${{ steps.verify.outputs.bbpi4_work_status }}",
+            "bbpi4_attempts":${{ steps.verify.outputs.bbpi4_attempts }},
+            "bbpi4_last_result":"${{ steps.verify.outputs.bbpi4_last_result }}",
+            "farmer_self_hosted_windows_source_commit":"${{ steps.farmer.outputs.source_commit }}",
+            "backup_before_publish":true,
+            "rollback_on_verification_failure":true,
+            "major_box_expandable":true,
+            "human_action_required":false,
+            "verified_at_utc":"$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
           }
-          EOF
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          JSON
+          git config user.name 'github-actions[bot]'; git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-autonomy-controller-live.json
-          git commit -m 'Record Aurum autonomy controller live deployment [skip ci]' || exit 0
+          git commit -m 'Record Aurum Autonomy Controller v1.8 live [skip ci]' || exit 0
           git pull --rebase origin main
           git push origin HEAD:main

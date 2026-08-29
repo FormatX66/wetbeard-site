@@ -27,9 +27,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          canonical_commit='b55565ada8bc3359d556b431762147653529dcfa'
-          projection_commit='43e3b229f7c8d8a9fc625635d73b2bb1cea3b1e2'
-          expected_blob='f36d939aaa6b64e73d5b36b067381001999f4a21'
+          canonical_commit='522a6e8096f314b45cc7396ec2226d98295c22c4'
+          projection_commit='b2716e0f46496e0d644fc19e754616c53627f862'
+          expected_blob='1628bf648c09a8bacc068d3dfca0d902ea294834'
           projection="$RUNNER_TEMP/generation-seed-ladder-canonical.js"
           current="$RUNNER_TEMP/generation-seed-ladder-current.js"
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
@@ -44,17 +44,13 @@ jobs:
           for token in \
             'AURUM_GENERATION_SEED_LADDER_V1_CANONICAL' \
             "canonicalWebsiteRepo:'FormatX66/ClusterSites'" \
-            "componentRevision:'1.7'" \
+            "componentRevision:'1.8'" \
             "ACTIVE_TRUNK_COMMIT='90fbe875533e1fe106928daf70b48f8aec574bad'" \
-            "ACTIVE_TRUNK_PARENT='4c1ab29487583c12cfaf791a91fb856635b2b658'" \
-            "CURRENT_PC_IMAGE_RUN='33267739225'" \
-            "CURRENT_AUTOBUILD_RUN='33268291177'" \
-            'openCoreShareImplemented:true' \
-            'openCoreBootAutoSyncImplemented:true' \
-            'currentExactHeadAutobuildPassed:false' \
-            "currentExactHeadBlocker:'gui-live-trial-approved-route-contract-regression'" \
-            'liveInstalledOpenCoreReachabilityProven:false' \
-            'liveInstalledBootAutoSyncReceiptProven:false' \
+            'currentNativeCompletedGenerations:65' \
+            "currentNativeExternalEvidenceReason:'gui-live-trial-evidence-expired'" \
+            'guiLiveTrialEvidenceExpired:true' \
+            'routeContractRegressionStillLatent:true' \
+            'physicalPresenceCurrentBlocker:false' \
             'humanActionInferred:false' \
             'Frontiers Advancing:' \
             'Needs Work → Aurum/System:' \
@@ -65,78 +61,58 @@ jobs:
           echo "blob=$blob" >> "$GITHUB_OUTPUT"
           echo "canonical_commit=$canonical_commit" >> "$GITHUB_OUTPUT"
           echo "projection_commit=$projection_commit" >> "$GITHUB_OUTPUT"
-          echo 'CLUSTERSITES_CANONICAL_PROJECTION_OK'
+          echo 'CLUSTERSITES_CANONICAL_PROJECTION_V18_OK'
 
       - name: Verify exact projection CI and current Aurum evidence boundary
         shell: bash
         run: |
           set -euo pipefail
-          projection='43e3b229f7c8d8a9fc625635d73b2bb1cea3b1e2'
-          ci_run='33269246843'
+          projection='b2716e0f46496e0d644fc19e754616c53627f862'
+          ci_run='33277221038'
           active='90fbe875533e1fe106928daf70b48f8aec574bad'
-          parent='4c1ab29487583c12cfaf791a91fb856635b2b658'
-          restored='a4b605b50708252fa945783e619a68b706d29382'
           route_fix='6c9baefd9de4583976d99b3a90ac6a28114986bb'
           pc_run='33267739225'
-          autobuild_run='33268291177'
+          watch_run='33275703470'
           api='https://api.github.com/repos/FormatX66/BoxBrain'
           raw="https://raw.githubusercontent.com/FormatX66/BoxBrain/$active"
           curl -fsSL "$api/actions/runs/$ci_run" -o "$RUNNER_TEMP/ci.json"
-          curl -fsSL "$api/commits/$active" -o "$RUNNER_TEMP/active.json"
-          curl -fsSL "$api/compare/$restored...$active" -o "$RUNNER_TEMP/compare.json"
-          for spec in "$pc_run:pc" "$autobuild_run:autobuild"; do
-            id="${spec%%:*}"; name="${spec##*:}"
-            curl -fsSL "$api/actions/runs/$id" -o "$RUNNER_TEMP/$name-run.json"
-            curl -fsSL "$api/actions/runs/$id/jobs?per_page=100" -o "$RUNNER_TEMP/$name-jobs.json"
-          done
-          curl -fsSL "$raw/Projects/AurumPC/README.md" -o "$RUNNER_TEMP/readme.md"
-          curl -fsSL "$raw/Projects/AurumPC/aurum_core_share.py" -o "$RUNNER_TEMP/core-share.py"
-          curl -fsSL "$raw/Projects/AurumPC/runtime-assets/etc/systemd/system/aurum-auto-sync.service" -o "$RUNNER_TEMP/auto-sync.service"
-          curl -fsSL "$raw/Projects/AurumPC/runtime-assets/etc/systemd/system/aurum-core-share.service" -o "$RUNNER_TEMP/core-share.service"
-          curl -fsSL "$raw/Projects/Codelation/field/external_prerequisite_evidence.py" -o "$RUNNER_TEMP/current-consumer.py"
-          curl -fsSL "$raw/Projects/Codelation/autobuild/external_evidence/adaptive_shell_gui_live_trial.json" -o "$RUNNER_TEMP/current-evidence.json"
-          curl -fsSL "https://raw.githubusercontent.com/FormatX66/BoxBrain/$route_fix/Projects/Codelation/field/external_prerequisite_evidence.py" -o "$RUNNER_TEMP/fixed-consumer.py"
-          curl -fsSL "https://raw.githubusercontent.com/FormatX66/BoxBrain/$route_fix/Projects/Codelation/tests/test_adaptive_shell_gui_deployment.py" -o "$RUNNER_TEMP/fixed-tests.py"
-          grep -Fq 'Open core sharing' "$RUNNER_TEMP/readme.md"
-          grep -Fq 'GET /status' "$RUNNER_TEMP/readme.md"
-          grep -Fq 'POST /seed-sync' "$RUNNER_TEMP/readme.md"
-          grep -Fq '"authentication_required": False' "$RUNNER_TEMP/core-share.py"
-          grep -Fq '"arbitrary_command": False' "$RUNNER_TEMP/core-share.py"
-          grep -Fq '"file_serving": False' "$RUNNER_TEMP/core-share.py"
-          grep -Fq '"directory_listing": False' "$RUNNER_TEMP/core-share.py"
-          grep -Fq '"exported": False' "$RUNNER_TEMP/core-share.py"
-          grep -Fq 'aurum/trunk-v0.01' "$RUNNER_TEMP/core-share.py"
-          grep -Fq 'After=network-online.target aurum-network-bootstrap.service' "$RUNNER_TEMP/auto-sync.service"
-          grep -Fq 'aurum_core_share.py seed-sync' "$RUNNER_TEMP/auto-sync.service"
-          grep -Fq 'aurum_core_share.py serve --bind 0.0.0.0 --port 8765' "$RUNNER_TEMP/core-share.service"
-          grep -Fq 'ProtectHome=yes' "$RUNNER_TEMP/core-share.service"
-          grep -Fq 'InaccessiblePaths=-/var/lib/aurum/slush' "$RUNNER_TEMP/core-share.service"
-          grep -Fq 'USB_SSH_ROUTE = "10.12.194.1"' "$RUNNER_TEMP/current-consumer.py"
-          grep -Fq 'GUI_LIVE_TRIAL_APPROVED_ROUTES' "$RUNNER_TEMP/fixed-consumer.py"
-          grep -Fq 'for approved_route in ("10.12.194.1", "10.42.194.1", "bbpi4.local", "192.168.0.194")' "$RUNNER_TEMP/fixed-tests.py"
-          python3 - "$RUNNER_TEMP/ci.json" "$RUNNER_TEMP/active.json" "$RUNNER_TEMP/compare.json" "$RUNNER_TEMP/pc-run.json" "$RUNNER_TEMP/pc-jobs.json" "$RUNNER_TEMP/autobuild-run.json" "$RUNNER_TEMP/autobuild-jobs.json" "$RUNNER_TEMP/current-evidence.json" "$projection" "$active" "$parent" "$restored" <<'PY'
-          import json,sys
-          ci,active_doc,compare_doc,pc_run,pc_jobs,autobuild,autobuild_jobs,evidence=[json.load(open(p,encoding='utf-8')) for p in sys.argv[1:9]]
-          projection,active,parent,restored=sys.argv[9:13]
+          curl -fsSL "$api/branches/aurum%2Ftrunk-v0.01" -o "$RUNNER_TEMP/branch.json"
+          curl -fsSL "$api/actions/runs/$pc_run" -o "$RUNNER_TEMP/pc.json"
+          curl -fsSL "$api/actions/runs/$watch_run" -o "$RUNNER_TEMP/watch.json"
+          curl -fsSL "$api/compare/$route_fix...$active" -o "$RUNNER_TEMP/compare.json"
+          curl -fsSL "$raw/Projects/Codelation/autobuild/native_chain_state.json" -o "$RUNNER_TEMP/native.json"
+          curl -fsSL "$raw/Projects/Codelation/autobuild/external_evidence/adaptive_shell_gui_live_trial.json" -o "$RUNNER_TEMP/gui.json"
+          curl -fsSL "$raw/Projects/Codelation/field/external_prerequisite_evidence.py" -o "$RUNNER_TEMP/consumer.py"
+          curl -fsSL "https://raw.githubusercontent.com/FormatX66/BoxBrain/$route_fix/Projects/Codelation/field/external_prerequisite_evidence.py" -o "$RUNNER_TEMP/historical-consumer.py"
+          grep -Fq 'USB_SSH_ROUTE = "10.12.194.1"' "$RUNNER_TEMP/consumer.py"
+          ! grep -Fq 'GUI_LIVE_TRIAL_APPROVED_ROUTES' "$RUNNER_TEMP/consumer.py"
+          grep -Fq 'GUI_LIVE_TRIAL_APPROVED_ROUTES' "$RUNNER_TEMP/historical-consumer.py"
+          grep -Fq '"invocation_output": "blocked-candidate-verified"' "$RUNNER_TEMP/native.json"
+          python3 - "$RUNNER_TEMP/ci.json" "$RUNNER_TEMP/branch.json" "$RUNNER_TEMP/pc.json" "$RUNNER_TEMP/watch.json" "$RUNNER_TEMP/compare.json" "$RUNNER_TEMP/native.json" "$RUNNER_TEMP/gui.json" "$projection" "$active" <<'PY'
+          import json,sys,time
+          ci,branch,pc,watch,compare,native,gui=[json.load(open(p,encoding='utf-8')) for p in sys.argv[1:8]]
+          projection,active=sys.argv[8:10]
           assert ci.get('name')=='BoxBrain CI' and ci.get('head_sha')==projection
           assert ci.get('status')=='completed' and ci.get('conclusion')=='success'
-          assert active_doc.get('sha')==active and active_doc.get('parents',[{}])[0].get('sha')==parent
-          assert active_doc.get('commit',{}).get('tree',{}).get('sha')=='8cb50b94a22ca3ee1015bd69d62dfcedec06cdfa'
-          assert compare_doc.get('status')=='ahead' and compare_doc.get('behind_by')==0
-          assert compare_doc.get('merge_base_commit',{}).get('sha')==restored
-          changed={f.get('filename') for f in active_doc.get('files',[])}
-          assert changed and all(p.startswith('Projects/AurumPC/') for p in changed)
-          assert pc_run.get('head_sha')==active and pc_run.get('conclusion')=='success'
-          by={j.get('name'):j for j in pc_jobs.get('jobs',[])}
-          for name in ('validate','build-image','generic-uefi-smoke','hp-twin-smoke','publish-verified-image'):
-              assert by.get(name,{}).get('conclusion')=='success', name
-          assert autobuild.get('head_sha')==active and autobuild.get('conclusion')=='failure'
-          loop=next(j for j in autobuild_jobs.get('jobs',[]) if j.get('name')=='Resume verified native growth')
-          assert [s.get('name') for s in loop.get('steps',[]) if s.get('conclusion')=='failure']==['Verify native self-build contracts']
-          assert evidence.get('route')=='192.168.0.194'
-          assert evidence.get('transport',{}).get('usb_route')=='192.168.0.194'
-          assert evidence.get('verified') is True
-          print('GENERATION_LADDER_V17_EVIDENCE_OK')
+          assert branch.get('commit',{}).get('sha')==active
+          assert pc.get('head_sha')==active and pc.get('conclusion')=='success'
+          assert watch.get('id')==33275703470 and watch.get('conclusion')=='success'
+          assert compare.get('status')=='ahead' and compare.get('behind_by')==0
+          assert compare.get('merge_base_commit',{}).get('sha')=='6c9baefd9de4583976d99b3a90ac6a28114986bb'
+          gens={g.get('generation'):g for g in native.get('generations',[])}
+          assert native.get('latest_completed_gap')=='adaptive_shell_gui_live_trial'
+          assert native.get('next_gap')=='adaptive_shell_gui_live_trial'
+          assert native.get('resumed_from_generations')==65
+          assert gens[63]['invocation_output']=='ready-for-bounded-iteration-observation'
+          assert gens[63]['external_evidence']['route']=='10.12.194.1'
+          assert gens[64]['invocation_output']=='bounded-iteration-observation-complete'
+          assert gens[64]['external_evidence']['route']=='10.12.194.1'
+          assert gens[65]['invocation_output']=='blocked-candidate-verified'
+          assert gens[65]['external_evidence'] is None
+          assert gui.get('verified') is True and gui.get('route')=='192.168.0.194'
+          assert int(gui.get('expires_at',0)) < int(time.time())
+          assert gui.get('authority_granted') is False
+          print('GENERATION_LADDER_V18_EVIDENCE_OK')
           PY
 
       - name: Configure Bluehost SSH with bounded retry
@@ -169,8 +145,7 @@ jobs:
           retry_capture() { local out="$1"; shift; local n=1 tmp; tmp="$(mktemp)"; while true; do if "$@" > "$tmp"; then mv "$tmp" "$out"; return 0; fi; [ "$n" -ge 5 ] && { rm -f "$tmp"; return 1; }; sleep $((n * 5)); n=$((n+1)); done; }
           remote='public_html/arkmatx/aurum/dashboard'
           backup=".aurum-dashboard-backups/generation-seed-ladder-$GITHUB_RUN_ID"
-          retry_capture "$RUNNER_TEMP/index.html" \
-            ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+          retry_capture "$RUNNER_TEMP/index.html" ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
             "set -eu; mkdir -p '$remote' '$backup'; cp -p '$remote/index.html' '$backup/index.html'; if [ -f '$remote/generation-seed-ladder.js' ]; then cp -p '$remote/generation-seed-ladder.js' '$backup/generation-seed-ladder.js'; else touch '$backup/.missing-generation-seed-ladder.js'; fi; cat '$remote/index.html'"
           test -s "$RUNNER_TEMP/index.html"
           echo 'ready=true' >> "$GITHUB_OUTPUT"
@@ -184,7 +159,7 @@ jobs:
           import re,sys
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./generation-seed-ladder\.js(?:\?v=[^"]+)?"></script>\s*','',text)
-          tag='<script src="./generation-seed-ladder.js?v=8"></script>'
+          tag='<script src="./generation-seed-ladder.js?v=9"></script>'
           for pattern in (r'<script src="\./seed-lifecycle\.js(?:\?v=[^"]+)?\"></script>',r'<script src="\./recovery-guardian\.js(?:\?v=[^"]+)?\"></script>',r'</body>'):
               m=re.search(pattern,text)
               if m:
@@ -194,7 +169,7 @@ jobs:
               raise SystemExit('dashboard missing generation ladder injection point')
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './generation-seed-ladder.js?v=8' "$RUNNER_TEMP/index.html"
+          grep -Fq './generation-seed-ladder.js?v=9' "$RUNNER_TEMP/index.html"
 
       - name: Publish with bounded retries
         env:
@@ -205,8 +180,7 @@ jobs:
           set -euo pipefail
           retry() { local n=1; while true; do "$@" && return 0; [ "$n" -ge 5 ] && return 1; sleep $((n * 5)); n=$((n+1)); done; }
           remote='public_html/arkmatx/aurum/dashboard'
-          retry scp -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -P 22 \
-            "$RUNNER_TEMP/index.html" "${{ steps.source.outputs.file }}" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/"
+          retry scp -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -P 22 "$RUNNER_TEMP/index.html" "${{ steps.source.outputs.file }}" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/"
           retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
             "set -eu; mv '$remote/generation-seed-ladder-canonical.js' '$remote/generation-seed-ladder.js'; chmod 644 '$remote/index.html' '$remote/generation-seed-ladder.js'"
 
@@ -217,25 +191,19 @@ jobs:
           set -euo pipefail
           page="$RUNNER_TEMP/live-index.html"; js="$RUNNER_TEMP/live-generation-seed-ladder.js"
           final_url="$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' \
-            'https://arkmatx.com/aurum/dashboard/generation-seed-ladder.js?rev=8' -o "$js"
-          grep -Fq './generation-seed-ladder.js?v=8' "$page"
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/generation-seed-ladder.js?rev=9' -o "$js"
+          grep -Fq './generation-seed-ladder.js?v=9' "$page"
           cmp -s "${{ steps.source.outputs.file }}" "$js"
           for token in \
-            "componentRevision:'1.7'" \
-            "ACTIVE_TRUNK_COMMIT='90fbe875533e1fe106928daf70b48f8aec574bad'" \
-            'openCoreShareImplemented:true' \
-            'openCoreBootAutoSyncImplemented:true' \
-            'liveInstalledOpenCoreReachabilityProven:false' \
-            'liveInstalledBootAutoSyncReceiptProven:false' \
-            'currentExactHeadAutobuildPassed:false' \
-            "currentExactHeadBlocker:'gui-live-trial-approved-route-contract-regression'" \
+            "componentRevision:'1.8'" \
+            'currentNativeCompletedGenerations:65' \
+            "currentNativeExternalEvidenceReason:'gui-live-trial-evidence-expired'" \
+            'routeContractRegressionStillLatent:true' \
+            'physicalPresenceCurrentBlocker:false' \
             'humanActionInferred:false' \
             'Frontiers Advancing:' \
             'Needs Work → Aurum/System:' \
-            'Your Actions:'; do
-            grep -Fq "$token" "$js"
-          done
+            'Your Actions:'; do grep -Fq "$token" "$js"; done
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
 
       - name: Roll back on verification failure
@@ -270,26 +238,28 @@ jobs:
             "canonical_component_commit": "${{ steps.source.outputs.canonical_commit }}",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/generation-seed-ladder-v1.js",
             "deployment_carrier": "FormatX66/wetbeard-site",
-            "component_revision": "1.7",
+            "component_revision": "1.8",
             "approved_blob": "${{ steps.source.outputs.blob }}",
             "boxbrain_projection_commit": "${{ steps.source.outputs.projection_commit }}",
-            "boxbrain_ci_run": 33269246843,
+            "boxbrain_projection_main_commit": "785321d258e5ccf29b15bf72fea3968ecb94839c",
+            "boxbrain_ci_run": 33277221038,
             "boxbrain_ci_proven": true,
             "active_trunk_commit": "90fbe875533e1fe106928daf70b48f8aec574bad",
-            "open_core_share_implemented": true,
-            "open_core_seed_sync_fixed_forward_trunk": true,
-            "open_core_boot_auto_sync_implemented": true,
             "current_pc_image_run": 33267739225,
-            "current_pc_image_validation_passed": true,
-            "current_generic_uefi_smoke_passed": true,
-            "current_hp_twin_smoke_passed": true,
-            "current_verified_image_published": true,
-            "current_autobuild_run": 33268291177,
-            "current_exact_head_autobuild_passed": false,
-            "current_exact_head_blocker": "gui-live-trial-approved-route-contract-regression",
+            "current_native_completed_generations": 65,
+            "current_native_latest_completed_gap": "adaptive_shell_gui_live_trial",
+            "current_native_blocked_output": "blocked-candidate-verified",
+            "current_native_external_evidence_reason": "gui-live-trial-evidence-expired",
+            "iteration_observation_readiness_route": "10.12.194.1",
+            "iteration_observation_route": "10.12.194.1",
+            "gui_live_trial_evidence_route": "192.168.0.194",
+            "current_consumer_required_route": "10.12.194.1",
+            "route_contract_regression_still_latent": true,
             "historical_approved_route_fix_commit": "6c9baefd9de4583976d99b3a90ac6a28114986bb",
-            "live_installed_open_core_reachability_proven": false,
-            "live_installed_boot_auto_sync_receipt_proven": false,
+            "historical_route_fix_is_ancestor": true,
+            "historical_route_allowance_present_current": false,
+            "physical_prerequisite_watch_run": 33275703470,
+            "physical_presence_current_blocker": false,
             "human_action_inference": false,
             "major_box_added": false,
             "seed_lifecycle_remains_expandable": true,
@@ -305,6 +275,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-generation-seed-ladder-live.json
-          git commit -m 'Record Aurum generation seed ladder v1.7 live [skip ci]' || exit 0
+          git commit -m 'Record Aurum generation seed ladder v1.8 live [skip ci]' || exit 0
           git pull --rebase origin main
           git push origin HEAD:main

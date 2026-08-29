@@ -27,13 +27,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Fetch approved projection of canonical ClusterSites Pi3 v1.19 surface
+      - name: Fetch approved projection of canonical ClusterSites Pi3 v1.20 surface
         id: source
         shell: bash
         run: |
           set -euo pipefail
-          projection_commit='9337fc937de3e3590ed4ef2960b0bc43c62b1f60'
-          canonical_blob='58ef92ec4abb7ed461d00159e87e698707a76e95'
+          projection_commit='d326a62dbc9018e0f697a651dc7b0320cd46d270'
+          canonical_blob='609900f6dac0fb0c6995e05ddb60f9dcdbc88798'
           api="https://api.github.com/repos/FormatX66/BoxBrain/contents/Web/Aurum-Arkmatx/pi3-physical-evidence-v1.js?ref=$projection_commit"
           actual_blob="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 "$api" | python3 -c 'import json,sys; print(json.load(sys.stdin)["sha"])')"
           test "$actual_blob" = "$canonical_blob" || { echo "Projection blob $actual_blob does not match approved canonical ClusterSites blob $canonical_blob" >&2; exit 1; }
@@ -43,18 +43,18 @@ jobs:
           test -s "$out"
           node --check "$out"
           require_marker(){ grep -Fq "$1" "$out" || { echo "Missing approved Pi3 marker: $1" >&2; exit 1; }; }
-          require_marker 'AURUM_PI3_PHYSICAL_EVIDENCE_V1_19_CANONICAL'
+          require_marker 'AURUM_PI3_PHYSICAL_EVIDENCE_V1_20_CANONICAL'
           require_marker 'Canonical website owner: FormatX66/ClusterSites.'
-          require_marker "schema:'aurum-command-center-pi3-physical-evidence-v1.19'"
-          require_marker 'workflowRunId:33254824379'
-          require_marker "sourceCommit:'5f15b0f673cdc7c667948a202d4e428d0916c947'"
+          require_marker "schema:'aurum-command-center-pi3-physical-evidence-v1.20'"
+          require_marker 'workflowRunId:33271992592'
+          require_marker "sourceCommit:'90fbe875533e1fe106928daf70b48f8aec574bad'"
           require_marker "'docker-x86_64':'success'"
           require_marker "'docker-arm64':'success'"
           require_marker "'qemu-x86_64-uefi':'success'"
           require_marker "'qemu-pi3-machine-runtime':'success'"
           require_marker 'failedProof:null'
           require_marker "fourTargetConvergence:'verified-on-latest-run'"
-          require_marker "convergenceArtifactDigest:'sha256:728f1b9072b5bbba81d5f52d5158f6f07398a3c25146f2af0f2e14a64a9efed2'"
+          require_marker "convergenceArtifactDigest:'sha256:aa6b79c8d04910e57f39d9e27d1f410a8d17872bae268d4391773d4ff90ea864'"
           require_marker 'historicalVirtualHardwareLabConvergenceRetained:hv'
           require_marker 'latestVirtualPi3MachineRuntimePassed:true'
           require_marker 'latestQemuPcUefiBootProofPassed:true'
@@ -112,7 +112,7 @@ jobs:
           grep -Fq 'Progress is proof, not activity.' "$RUNNER_TEMP/index.html"
           echo 'ready=true' >> "$GITHUB_OUTPUT"
 
-      - name: Inject expandable Pi3 v1.19 evidence surface
+      - name: Inject expandable Pi3 v1.20 evidence surface
         shell: bash
         run: |
           set -euo pipefail
@@ -122,9 +122,9 @@ jobs:
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./pi3-physical-evidence\.js(?:\?v=[^"]+)?"></script>\s*','',text)
           if '</body>' not in text: raise SystemExit('dashboard missing body close')
-          p.write_text(text.replace('</body>','<script src="./pi3-physical-evidence.js?v=21"></script>\n</body>',1),encoding='utf-8')
+          p.write_text(text.replace('</body>','<script src="./pi3-physical-evidence.js?v=22"></script>\n</body>',1),encoding='utf-8')
           PY
-          grep -Fq './pi3-physical-evidence.js?v=21' "$RUNNER_TEMP/index.html"
+          grep -Fq './pi3-physical-evidence.js?v=22' "$RUNNER_TEMP/index.html"
 
       - name: Publish with bounded connection count
         env:
@@ -134,22 +134,22 @@ jobs:
         run: |
           set -euo pipefail
           retry(){ local n=1; while true; do "$@" && return 0; [ "$n" -ge 5 ] && return 1; sleep $((n*5)); n=$((n+1)); done; }
-          remote='public_html/arkmatx/aurum/dashboard'; stage="$RUNNER_TEMP/pi3-v119-publish"; mkdir -p "$stage"
+          remote='public_html/arkmatx/aurum/dashboard'; stage="$RUNNER_TEMP/pi3-v120-publish"; mkdir -p "$stage"
           cp "$RUNNER_TEMP/index.html" "$stage/index.html"; cp "${{ steps.source.outputs.file }}" "$stage/pi3-physical-evidence.js"
           retry scp -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -P 22 "$stage/index.html" "$stage/pi3-physical-evidence.js" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/"
           retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" "chmod 644 '$remote/index.html' '$remote/pi3-physical-evidence.js'"
 
-      - name: Verify live Pi3 v1.19 surface
+      - name: Verify live Pi3 v1.20 surface
         id: verify
         shell: bash
         run: |
           set -euo pipefail
           page="$(mktemp)"; component="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
-          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/pi3-physical-evidence.js?rev=21' -o "$component"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/pi3-physical-evidence.js?rev=22' -o "$component"
           grep -Fq 'Progress is proof, not activity.' "$page"
-          grep -Fq './pi3-physical-evidence.js?v=21' "$page"
-          for marker in 'AURUM_PI3_PHYSICAL_EVIDENCE_V1_19_CANONICAL' "schema:'aurum-command-center-pi3-physical-evidence-v1.19'" 'workflowRunId:33254824379' "sourceCommit:'5f15b0f673cdc7c667948a202d4e428d0916c947'" "'qemu-x86_64-uefi':'success'" "'qemu-pi3-machine-runtime':'success'" 'latestVirtualPi3MachineRuntimePassed:true' 'latestQemuPcUefiBootProofPassed:true' 'latestFourTargetConvergenceProven:true' 'latestFailurePresent:false' 'historicalVirtualHardwareLabConvergenceRetained:hv' 'latestFailureRootCauseInferred:false' 'latestFailureImpliesPi3PhysicalRegression:false' 'latestFailureImpliesGeneralPcImageRegression:false' "nextSafeGate:'nonbinding-pi3-virtual-vs-physical-reference-differential-with-held-authority'" 'Frontiers Advancing:' 'Needs Work → Aurum/System:' 'Your Actions:' 'humanActionInference:false'; do grep -Fq "$marker" "$component" || { echo "Missing live Pi3 marker: $marker" >&2; exit 1; }; done
+          grep -Fq './pi3-physical-evidence.js?v=22' "$page"
+          for marker in 'AURUM_PI3_PHYSICAL_EVIDENCE_V1_20_CANONICAL' "schema:'aurum-command-center-pi3-physical-evidence-v1.20'" 'workflowRunId:33271992592' "sourceCommit:'90fbe875533e1fe106928daf70b48f8aec574bad'" "'qemu-x86_64-uefi':'success'" "'qemu-pi3-machine-runtime':'success'" 'latestVirtualPi3MachineRuntimePassed:true' 'latestQemuPcUefiBootProofPassed:true' 'latestFourTargetConvergenceProven:true' 'latestFailurePresent:false' 'historicalVirtualHardwareLabConvergenceRetained:hv' 'latestFailureRootCauseInferred:false' 'latestFailureImpliesPi3PhysicalRegression:false' 'latestFailureImpliesGeneralPcImageRegression:false' "nextSafeGate:'nonbinding-pi3-virtual-vs-physical-reference-differential-with-held-authority'" 'Frontiers Advancing:' 'Needs Work → Aurum/System:' 'Your Actions:' 'humanActionInference:false'; do grep -Fq "$marker" "$component" || { echo "Missing live Pi3 marker: $marker" >&2; exit 1; }; done
           cmp -s "${{ steps.source.outputs.file }}" "$component"
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
 
@@ -166,7 +166,7 @@ jobs:
           retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
             "set -eu; cp -p '$backup/index.html' '$remote/index.html'; if [ -f '$backup/pi3-physical-evidence.js' ]; then cp -p '$backup/pi3-physical-evidence.js' '$remote/pi3-physical-evidence.js'; elif [ -f '$backup/.missing-pi3-physical-evidence.js' ]; then rm -f '$remote/pi3-physical-evidence.js'; fi"
 
-      - name: Record verified Pi3 v1.19 receipt
+      - name: Record verified Pi3 v1.20 receipt
         if: success()
         shell: bash
         run: |
@@ -179,17 +179,17 @@ jobs:
             "url":"${{ steps.verify.outputs.url }}",
             "canonical_website_repo":"FormatX66/ClusterSites",
             "canonical_component":"services/aurum-arkmatx/pi3-physical-evidence-v1.js",
-            "canonical_component_blob":"58ef92ec4abb7ed461d00159e87e698707a76e95",
-            "approved_projection_commit":"9337fc937de3e3590ed4ef2960b0bc43c62b1f60",
+            "canonical_component_blob":"609900f6dac0fb0c6995e05ddb60f9dcdbc88798",
+            "approved_projection_commit":"d326a62dbc9018e0f697a651dc7b0320cd46d270",
             "public_projection":"FormatX66/BoxBrain:Web/Aurum-Arkmatx/pi3-physical-evidence-v1.js",
             "deployment_carrier":"FormatX66/wetbeard-site",
-            "pi3_physical_evidence_revision":"1.19",
+            "pi3_physical_evidence_revision":"1.20",
             "expandable":true,
             "historical_four_target_convergence_retained":true,
             "historical_virtual_hardware_lab_run_id":33111203166,
-            "latest_virtual_hardware_lab_run_id":33254824379,
-            "latest_virtual_hardware_lab_source_commit":"5f15b0f673cdc7c667948a202d4e428d0916c947",
-            "latest_convergence_artifact_digest":"sha256:728f1b9072b5bbba81d5f52d5158f6f07398a3c25146f2af0f2e14a64a9efed2",
+            "latest_virtual_hardware_lab_run_id":33271992592,
+            "latest_virtual_hardware_lab_source_commit":"90fbe875533e1fe106928daf70b48f8aec574bad",
+            "latest_convergence_artifact_digest":"sha256:aa6b79c8d04910e57f39d9e27d1f410a8d17872bae268d4391773d4ff90ea864",
             "latest_docker_x86_64_passed":true,
             "latest_docker_arm64_passed":true,
             "latest_qemu_pi3_machine_runtime_passed":true,
@@ -221,5 +221,5 @@ jobs:
           EOF2
           git config user.name 'github-actions[bot]'; git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-pi3-physical-evidence-live.json
-          git commit -m 'Record Aurum Pi3 physical evidence v1.19 live [skip ci]' || exit 0
+          git commit -m 'Record Aurum Pi3 physical evidence v1.20 live [skip ci]' || exit 0
           git pull --rebase origin main; git push origin HEAD:main

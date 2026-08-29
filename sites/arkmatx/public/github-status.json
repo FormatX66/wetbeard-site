@@ -20,53 +20,53 @@
   ],
   "recent_commits": [
     {
-      "sha": "7d20ba46",
-      "message": "Record Aurum Pi3 physical evidence v1.18 live [skip ci]",
-      "date": "2026-08-29T01:57:24Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/7d20ba460d1d0be63106c36e4c1da9312bd6b0f7"
+      "sha": "0b7c0c00",
+      "message": "Record Aurum generation seed ladder v1.5 live [skip ci]",
+      "date": "2026-08-29T16:14:19Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/0b7c0c0038c4062d188e4e3706bc8ef9e3ccf03f"
     },
     {
-      "sha": "a6e9f685",
-      "message": "Aurum Command Center: protected Pi3 v1.18 publish",
-      "date": "2026-08-29T01:57:10Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/a6e9f6855552e57ecc1d9f51308b3ba70fc586b3"
+      "sha": "57406b65",
+      "message": "Publish corrected Aurum seed route-regression truth v1.5",
+      "date": "2026-08-29T16:13:59Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/57406b656a3e77cb6a706bef5852c385f17f2463"
     },
     {
-      "sha": "182993cd",
-      "message": "Refresh ArkmatX GitHub status [skip ci]",
-      "date": "2026-08-28T22:19:52Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/182993cd854a9c179ee39e3298131c56e02c18bd"
+      "sha": "a5b50577",
+      "message": "Respect private ClusterSites canonical boundary",
+      "date": "2026-08-29T15:58:47Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/a5b505772db68bb95d5e85c2e2f2eaec0b5d9c59"
     },
     {
-      "sha": "fcfeba6a",
-      "message": "Record Aurum autonomy controller live deployment [skip ci]",
-      "date": "2026-08-28T21:02:33Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/fcfeba6ae9d2f7f5889e109155de3084236b46ee"
+      "sha": "eb02a30b",
+      "message": "Respect private ClusterSites canonical boundary in publisher",
+      "date": "2026-08-29T15:58:23Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/eb02a30be195317315892ba66ac985a7c8ab87ae"
     },
     {
-      "sha": "b43d8718",
-      "message": "Fix Autonomy v1.7 moving Farmer receipt provenance gate",
-      "date": "2026-08-28T21:02:15Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/b43d871832f32a3c04f50b0b45017e2c2147c915"
+      "sha": "e86231cd",
+      "message": "Harden Aurum canonical source fetch",
+      "date": "2026-08-29T15:56:43Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/e86231cd4cec0af726660c374c80370ed9d5fcdf"
     },
     {
-      "sha": "5c56814f",
-      "message": "Deploy Autonomy Controller v1.7 active-edge enrollment truth",
-      "date": "2026-08-28T20:55:18Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/5c56814fc4463dd35c72a6e16e8a22ac14afc75e"
+      "sha": "0fdbf7cd",
+      "message": "Harden canonical source fetch before Aurum publish",
+      "date": "2026-08-29T15:56:29Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/0fdbf7cda0a1adbc028b59948bf61abc5e8bb4f3"
     },
     {
-      "sha": "f92e0a77",
-      "message": "Record preference-trial-aware workflow failsafe live [skip ci]",
-      "date": "2026-08-28T18:49:16Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/f92e0a772e8bc5b62d603a941a4073d727178400"
+      "sha": "b683a43f",
+      "message": "Publish Aurum Generation Seed Ladder v1.5",
+      "date": "2026-08-29T15:54:08Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/b683a43f270604f2f1b8f34898dc5810d6b4a9aa"
     },
     {
-      "sha": "8b621ffb",
-      "message": "Publish Aurum Workflow Failsafe v1.9",
-      "date": "2026-08-28T18:48:59Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/8b621ffb690911c00bc52377b7f52968657148fc"
+      "sha": "183c6c12",
+      "message": "Aurum Command Center: protected seed ladder v1.5 publish",
+      "date": "2026-08-29T15:53:47Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/183c6c12ae7783d35ba40e5508852d7c00b711ec"
     }
   ],
-  "updated_at": "2026-08-29T07:04:35Z"
+  "updated_at": "2026-08-29T16:43:27Z"
 }

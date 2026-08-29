@@ -18,7 +18,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     environment: production
-    timeout-minutes: 12
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -27,62 +27,99 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          expected_canonical_blob='c2931b289d55e0a6de3677ef39219d94e9956c39'
+          expected_canonical_blob='2035b44b557da5b3d61ee09b0a3bccc9d40f54e1'
+          projection_commit='159ac40bba9a6ab17fe72bd3aa5acebf17c590ec'
           projection="$RUNNER_TEMP/generation-seed-ladder-canonical.js"
+          current="$RUNNER_TEMP/generation-seed-ladder-current.js"
           curl --fail-with-body --silent --show-error --location \
-            'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/generation-seed-ladder-v1.js' -o "$projection"
-          test -s "$projection"
+            "https://raw.githubusercontent.com/FormatX66/BoxBrain/$projection_commit/Web/Aurum-Arkmatx/generation-seed-ladder-v1.js" -o "$projection"
+          curl --fail-with-body --silent --show-error --location \
+            'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/generation-seed-ladder-v1.js' -o "$current"
+          test -s "$projection"; test -s "$current"
           node --check "$projection"
+          cmp -s "$projection" "$current"
           blob="$(git hash-object "$projection")"
           test "$blob" = "$expected_canonical_blob"
           grep -Fq 'AURUM_GENERATION_SEED_LADDER_V1_CANONICAL' "$projection"
           grep -Fq "canonicalWebsiteRepo:'FormatX66/ClusterSites'" "$projection"
-          grep -Fq "componentRevision:'1.3'" "$projection"
-          grep -Fq "EVIDENCE_COMMIT='4e99ca094e5e2c4d786ba69adca4c311a8964936'" "$projection"
-          grep -Fq 'gen1WebCapabilityContractPresent:true' "$projection"
-          grep -Fq 'gen1PromptCapabilityContractPresent:true' "$projection"
+          grep -Fq "componentRevision:'1.4'" "$projection"
+          grep -Fq "ACTIVE_TRUNK_COMMIT='a4b605b50708252fa945783e619a68b706d29382'" "$projection"
+          grep -Fq "RESTORE_VALIDATION_COMMIT='bd76bc92f960169ced6edd2b7f895fbbde4b5cce'" "$projection"
+          grep -Fq "BROKEN_HUMAN_SURFACE_COMMIT='0395b2672e006262c4cbe767e3566c81fe9d9b0c'" "$projection"
+          grep -Fq "LAST_KNOWN_GOOD_COMMIT='f3c0a2d3f59a22f496e4bf29dff614136bfe7abd'" "$projection"
+          grep -Fq "LKG_TREE='c0d83736eac27d3ccb94c24a51eea0c4b22bbdeb'" "$projection"
+          grep -Fq 'activeTrunkTreeMatchesLastKnownGood:true' "$projection"
+          grep -Fq 'forwardOnlyRecoveryPreserved:true' "$projection"
+          grep -Fq 'brokenHumanSurfacePayloadQuarantined:true' "$projection"
+          grep -Fq 'gen1WebCapabilityContractHistoricalEvidence:true' "$projection"
+          grep -Fq 'gen1PromptCapabilityContractHistoricalEvidence:true' "$projection"
+          grep -Fq 'gen1WebCapabilityOnActiveTrunk:false' "$projection"
+          grep -Fq 'gen1PromptCapabilityOnActiveTrunk:false' "$projection"
           grep -Fq 'gen1WebRuntimeAcceptanceProven:false' "$projection"
           grep -Fq 'gen1PromptRuntimeAcceptanceProven:false' "$projection"
-          grep -Fq 'gen1PhysicalHumanSurfaceProofProven:false' "$projection"
-          grep -Fq 'TR8:WEB stable launcher/materializer + acceptance contract' "$projection"
-          grep -Fq 'TR8:PROMPT loopback prompt surface + Open Web fallback contract' "$projection"
-          grep -Fq 'gen3SoftwareExchangePreflightProven:true' "$projection"
-          grep -Fq 'gen3ExchangeReceiptChainProven:true' "$projection"
-          grep -Fq 'gen3AntiReplaySequencingProven:true' "$projection"
-          grep -Fq 'gen3QuarantinePreservationProven:true' "$projection"
-          grep -Fq 'gen3ReceiptTamperDetectionProven:true' "$projection"
-          grep -Fq 'gen3LiveMultiNodeExchangeProven:false' "$projection"
-          grep -Fq 'gen3IndependentNodeRecoveryProven:false' "$projection"
-          grep -Fq 'senderIdentityAuthenticated:false' "$projection"
-          grep -Fq 'networkDeliveryProven:false' "$projection"
-          grep -Fq 'peerLivenessProven:false' "$projection"
-          grep -Fq 'generationEarnedBySoftwarePreparation:false' "$projection"
-          grep -Fq 'lkgMutationAllowed:false' "$projection"
-          grep -Fq 'trustWideningAllowed:false' "$projection"
+          grep -Fq 'restoreTreeGenericUefiSmokePassed:true' "$projection"
+          grep -Fq 'restoreTreeHpTwinSmokePassed:true' "$projection"
+          grep -Fq 'restoreTreeVerifiedImagePublished:true' "$projection"
           grep -Fq 'humanActionInferred:false' "$projection"
-          grep -Fq 'append-only exchange receipt chain' "$projection"
-          grep -Fq 'strict anti-replay sequencing' "$projection"
-          grep -Fq 'authenticated live multi-node exchange' "$projection"
           grep -Fq 'Frontiers Advancing:' "$projection"
           grep -Fq 'Needs Work → Aurum/System:' "$projection"
           grep -Fq 'Your Actions:' "$projection"
           echo "file=$projection" >> "$GITHUB_OUTPUT"
           echo "blob=$blob" >> "$GITHUB_OUTPUT"
+          echo "projection_commit=$projection_commit" >> "$GITHUB_OUTPUT"
 
-      - name: Verify pinned BoxBrain CI evidence
+      - name: Verify exact projection CI and restored LKG boot evidence
         shell: bash
         run: |
           set -euo pipefail
-          commit='4e99ca094e5e2c4d786ba69adca4c311a8964936'
+          projection_commit='159ac40bba9a6ab17fe72bd3aa5acebf17c590ec'
+          ci_run='33254043841'
+          active='a4b605b50708252fa945783e619a68b706d29382'
+          restore='bd76bc92f960169ced6edd2b7f895fbbde4b5cce'
+          broken='0395b2672e006262c4cbe767e3566c81fe9d9b0c'
+          lkg='f3c0a2d3f59a22f496e4bf29dff614136bfe7abd'
+          tree='c0d83736eac27d3ccb94c24a51eea0c4b22bbdeb'
+          for attempt in $(seq 1 18); do
+            curl --fail-with-body --silent --show-error --location \
+              "https://api.github.com/repos/FormatX66/BoxBrain/actions/runs/$ci_run" -o "$RUNNER_TEMP/ci.json"
+            status="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("status",""))' "$RUNNER_TEMP/ci.json")"
+            [ "$status" = completed ] && break
+            [ "$attempt" -eq 18 ] && { echo 'exact BoxBrain CI did not reach terminal state'; exit 1; }
+            sleep 10
+          done
+          python3 - "$RUNNER_TEMP/ci.json" "$projection_commit" <<'PY'
+          import json,sys
+          r=json.load(open(sys.argv[1],encoding='utf-8')); expected=sys.argv[2]
+          assert r.get('name')=='BoxBrain CI'
+          assert r.get('head_sha')==expected
+          assert r.get('status')=='completed' and r.get('conclusion')=='success'
+          print('GENERATION_LADDER_PROJECTION_CI_OK run=%s commit=%s' % (r['id'],r['head_sha']))
+          PY
+          for sha in "$active" "$restore" "$lkg"; do
+            curl --fail-with-body --silent --show-error --location \
+              "https://api.github.com/repos/FormatX66/BoxBrain/commits/$sha" -o "$RUNNER_TEMP/$sha.json"
+          done
+          python3 - "$RUNNER_TEMP/$active.json" "$RUNNER_TEMP/$restore.json" "$RUNNER_TEMP/$lkg.json" "$broken" "$tree" <<'PY'
+          import json,sys
+          active,restore,lkg=[json.load(open(p,encoding='utf-8')) for p in sys.argv[1:4]]
+          broken,tree=sys.argv[4],sys.argv[5]
+          assert active['commit']['tree']['sha']==tree
+          assert restore['commit']['tree']['sha']==tree
+          assert lkg['commit']['tree']['sha']==tree
+          assert any(p['sha']==broken for p in restore.get('parents',[]))
+          print('GENERATION_LADDER_LKG_RESTORE_OK tree=%s' % tree)
+          PY
           curl --fail-with-body --silent --show-error --location \
-            "https://api.github.com/repos/FormatX66/BoxBrain/actions/runs?head_sha=$commit&per_page=100" \
-            -o "$RUNNER_TEMP/runs.json"
-          python3 - "$RUNNER_TEMP/runs.json" <<'PY'
-          import json, sys
-          runs=json.load(open(sys.argv[1],encoding='utf-8')).get('workflow_runs',[])
-          good=[r for r in runs if r.get('name')=='BoxBrain CI' and r.get('status')=='completed' and r.get('conclusion')=='success']
-          assert good, 'generation ladder evidence commit lacks successful BoxBrain CI'
-          print('GENERATION_LADDER_BOXBRAIN_CI_OK run=%s' % good[0]['id'])
+            'https://api.github.com/repos/FormatX66/BoxBrain/actions/runs/33253166899/jobs?per_page=100' -o "$RUNNER_TEMP/pc-jobs.json"
+          python3 - "$RUNNER_TEMP/pc-jobs.json" <<'PY'
+          import json,sys
+          jobs=json.load(open(sys.argv[1],encoding='utf-8')).get('jobs',[])
+          by={j.get('name'):j for j in jobs}
+          required=('validate','build-image','generic-uefi-smoke','hp-twin-smoke','publish-verified-image')
+          for name in required:
+            j=by.get(name)
+            assert j and j.get('status')=='completed' and j.get('conclusion')=='success', f'{name} not green'
+          print('GENERATION_LADDER_RESTORE_BOOT_OK run=33253166899')
           PY
 
       - name: Configure Bluehost SSH with bounded retry
@@ -100,7 +137,7 @@ jobs:
           : > "$HOME/.ssh/known_hosts"
           for attempt in 1 2 3 4 5; do
             if ssh-keyscan -T 10 -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null; then exit 0; fi
-            if [ "$attempt" -eq 5 ]; then exit 1; fi
+            [ "$attempt" -eq 5 ] && exit 1
             sleep $((attempt * 5))
           done
 
@@ -112,7 +149,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          retry_capture() { local out="$1"; shift; local n=1 tmp; tmp="$(mktemp)"; while true; do if "$@" > "$tmp"; then mv "$tmp" "$out"; return 0; fi; if [ "$n" -ge 5 ]; then rm -f "$tmp"; return 1; fi; sleep $((n * 5)); n=$((n+1)); done; }
+          retry_capture() { local out="$1"; shift; local n=1 tmp; tmp="$(mktemp)"; while true; do if "$@" > "$tmp"; then mv "$tmp" "$out"; return 0; fi; [ "$n" -ge 5 ] && { rm -f "$tmp"; return 1; }; sleep $((n * 5)); n=$((n+1)); done; }
           remote='public_html/arkmatx/aurum/dashboard'
           backup=".aurum-dashboard-backups/generation-seed-ladder-$GITHUB_RUN_ID"
           retry_capture "$RUNNER_TEMP/index.html" \
@@ -127,10 +164,10 @@ jobs:
           set -euo pipefail
           python3 - "$RUNNER_TEMP/index.html" <<'PY'
           from pathlib import Path
-          import re, sys
+          import re,sys
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./generation-seed-ladder\.js(?:\?v=[^"]+)?"></script>\s*','',text)
-          tag='<script src="./generation-seed-ladder.js?v=4"></script>'
+          tag='<script src="./generation-seed-ladder.js?v=5"></script>'
           markers=[r'<script src="\./seed-lifecycle\.js(?:\?v=[^"]+)?\"></script>',r'<script src="\./recovery-guardian\.js(?:\?v=[^"]+)?\"></script>',r'</body>']
           for pattern in markers:
               m=re.search(pattern,text)
@@ -141,7 +178,7 @@ jobs:
               raise SystemExit('dashboard missing generation ladder injection point')
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './generation-seed-ladder.js?v=4' "$RUNNER_TEMP/index.html"
+          grep -Fq './generation-seed-ladder.js?v=5' "$RUNNER_TEMP/index.html"
 
       - name: Publish with bounded retries
         env:
@@ -150,7 +187,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          retry() { local n=1; while true; do "$@" && return 0; if [ "$n" -ge 5 ]; then return 1; fi; sleep $((n * 5)); n=$((n+1)); done; }
+          retry() { local n=1; while true; do "$@" && return 0; [ "$n" -ge 5 ] && return 1; sleep $((n * 5)); n=$((n+1)); done; }
           remote='public_html/arkmatx/aurum/dashboard'
           retry scp -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -P 22 \
             "$RUNNER_TEMP/index.html" "${{ steps.source.outputs.file }}" \
@@ -166,19 +203,17 @@ jobs:
           page="$RUNNER_TEMP/live-index.html"; js="$RUNNER_TEMP/live-generation-seed-ladder.js"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' \
-            'https://arkmatx.com/aurum/dashboard/generation-seed-ladder.js?rev=4' -o "$js"
-          grep -Fq './generation-seed-ladder.js?v=4' "$page"
+            'https://arkmatx.com/aurum/dashboard/generation-seed-ladder.js?rev=5' -o "$js"
+          grep -Fq './generation-seed-ladder.js?v=5' "$page"
           cmp -s "${{ steps.source.outputs.file }}" "$js"
-          grep -Fq 'AURUM_GENERATION_SEED_LADDER_V1_CANONICAL' "$js"
-          grep -Fq "componentRevision:'1.3'" "$js"
-          grep -Fq 'gen1WebCapabilityContractPresent:true' "$js"
-          grep -Fq 'gen1PromptCapabilityContractPresent:true' "$js"
-          grep -Fq 'gen1WebRuntimeAcceptanceProven:false' "$js"
-          grep -Fq 'gen1PromptRuntimeAcceptanceProven:false' "$js"
-          grep -Fq 'gen1PhysicalHumanSurfaceProofProven:false' "$js"
-          grep -Fq 'gen3ExchangeReceiptChainProven:true' "$js"
-          grep -Fq 'gen3AntiReplaySequencingProven:true' "$js"
-          grep -Fq 'gen3LiveMultiNodeExchangeProven:false' "$js"
+          grep -Fq "componentRevision:'1.4'" "$js"
+          grep -Fq 'activeTrunkTreeMatchesLastKnownGood:true' "$js"
+          grep -Fq 'brokenHumanSurfacePayloadQuarantined:true' "$js"
+          grep -Fq 'gen1WebCapabilityOnActiveTrunk:false' "$js"
+          grep -Fq 'gen1PromptCapabilityOnActiveTrunk:false' "$js"
+          grep -Fq 'restoreTreeGenericUefiSmokePassed:true' "$js"
+          grep -Fq 'restoreTreeHpTwinSmokePassed:true' "$js"
+          grep -Fq 'restoreTreeVerifiedImagePublished:true' "$js"
           grep -Fq 'humanActionInferred:false' "$js"
           grep -Fq 'Frontiers Advancing:' "$js"
           grep -Fq 'Needs Work → Aurum/System:' "$js"
@@ -193,7 +228,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          retry() { local n=1; while true; do "$@" && return 0; if [ "$n" -ge 5 ]; then return 1; fi; sleep $((n * 5)); n=$((n+1)); done; }
+          retry() { local n=1; while true; do "$@" && return 0; [ "$n" -ge 5 ] && return 1; sleep $((n * 5)); n=$((n+1)); done; }
           remote='public_html/arkmatx/aurum/dashboard'; backup=".aurum-dashboard-backups/generation-seed-ladder-$GITHUB_RUN_ID"
           retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
             "set -eu; cp -p '$backup/index.html' '$remote/index.html'; if [ -f '$backup/generation-seed-ladder.js' ]; then cp -p '$backup/generation-seed-ladder.js' '$remote/generation-seed-ladder.js'; elif [ -f '$backup/.missing-generation-seed-ladder.js' ]; then rm -f '$remote/generation-seed-ladder.js'; fi"
@@ -216,30 +251,29 @@ jobs:
             "canonical_component": "services/aurum-arkmatx/generation-seed-ladder-v1.js",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/generation-seed-ladder-v1.js",
             "deployment_carrier": "FormatX66/wetbeard-site",
-            "component_revision": "1.3",
+            "component_revision": "1.4",
             "approved_blob": "${{ steps.source.outputs.blob }}",
-            "boxbrain_evidence_commit": "4e99ca094e5e2c4d786ba69adca4c311a8964936",
+            "boxbrain_projection_commit": "${{ steps.source.outputs.projection_commit }}",
+            "boxbrain_ci_run": 33254043841,
             "boxbrain_ci_proven": true,
-            "gen1_web_capability_contract_present": true,
-            "gen1_prompt_capability_contract_present": true,
+            "active_trunk_commit": "a4b605b50708252fa945783e619a68b706d29382",
+            "restore_validation_commit": "bd76bc92f960169ced6edd2b7f895fbbde4b5cce",
+            "broken_human_surface_commit": "0395b2672e006262c4cbe767e3566c81fe9d9b0c",
+            "last_known_good_commit": "f3c0a2d3f59a22f496e4bf29dff614136bfe7abd",
+            "last_known_good_tree": "c0d83736eac27d3ccb94c24a51eea0c4b22bbdeb",
+            "active_trunk_tree_matches_lkg": true,
+            "forward_only_recovery_preserved": true,
+            "broken_human_surface_payload_quarantined": true,
+            "gen1_web_contract_historical_evidence": true,
+            "gen1_prompt_contract_historical_evidence": true,
+            "gen1_web_capability_on_active_trunk": false,
+            "gen1_prompt_capability_on_active_trunk": false,
             "gen1_web_runtime_acceptance_proven": false,
             "gen1_prompt_runtime_acceptance_proven": false,
-            "gen1_physical_human_surface_proof_proven": false,
-            "future_branch_parallel_preparation": true,
-            "generation_earned_by_software_preparation": false,
-            "gen3_software_exchange_preflight_proven": true,
-            "gen3_exchange_receipt_chain_proven": true,
-            "gen3_anti_replay_sequencing_proven": true,
-            "gen3_quarantine_preservation_proven": true,
-            "gen3_receipt_tamper_detection_proven": true,
-            "gen3_live_multi_node_exchange_proven": false,
-            "gen3_independent_node_recovery_proven": false,
-            "sender_identity_authenticated": false,
-            "network_delivery_proven": false,
-            "peer_liveness_proven": false,
-            "parent_recovery_provenance_gates_required": true,
-            "lkg_mutation_allowed": false,
-            "trust_widening_allowed": false,
+            "restore_tree_pc_image_run": 33253166899,
+            "restore_tree_generic_uefi_smoke_passed": true,
+            "restore_tree_hp_twin_smoke_passed": true,
+            "restore_tree_verified_image_published": true,
             "physical_proof_inferred": false,
             "human_action_inference": false,
             "major_box_added": false,
@@ -254,6 +288,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-generation-seed-ladder-live.json
-          git commit -m 'Record Aurum generation seed ladder live [skip ci]' || exit 0
+          git commit -m 'Record Aurum generation seed ladder v1.4 live [skip ci]' || exit 0
           git pull --rebase origin main
           git push origin HEAD:main

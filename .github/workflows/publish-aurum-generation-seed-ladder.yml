@@ -29,7 +29,7 @@ jobs:
           set -euo pipefail
           canonical_commit='b55565ada8bc3359d556b431762147653529dcfa'
           projection_commit='43e3b229f7c8d8a9fc625635d73b2bb1cea3b1e2'
-          expected_blob='f36d52ee70a3e0838d9c988559bbfd0fc13f36da'
+          expected_blob='f36d939aaa6b64e73d5b36b067381001999f4a21'
           projection="$RUNNER_TEMP/generation-seed-ladder-canonical.js"
           current="$RUNNER_TEMP/generation-seed-ladder-current.js"
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \

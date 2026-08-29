@@ -32,11 +32,11 @@ jobs:
           canonical="$RUNNER_TEMP/generation-seed-ladder-canonical.js"
           projection="$RUNNER_TEMP/generation-seed-ladder-projection.js"
           current="$RUNNER_TEMP/generation-seed-ladder-current.js"
-          curl --fail-with-body --silent --show-error --location \
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 \
             'https://raw.githubusercontent.com/FormatX66/ClusterSites/main/services/aurum-arkmatx/generation-seed-ladder-v1.js' -o "$canonical"
-          curl --fail-with-body --silent --show-error --location \
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 \
             "https://raw.githubusercontent.com/FormatX66/BoxBrain/$projection_commit/Web/Aurum-Arkmatx/generation-seed-ladder-v1.js" -o "$projection"
-          curl --fail-with-body --silent --show-error --location \
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 \
             'https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/generation-seed-ladder-v1.js' -o "$current"
           test -s "$canonical"; test -s "$projection"; test -s "$current"
           node --check "$canonical"

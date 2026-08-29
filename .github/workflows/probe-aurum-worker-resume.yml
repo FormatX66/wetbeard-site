@@ -30,22 +30,40 @@ jobs:
           api='https://arkmatx.com/aurum/index.php'
           curl -sS -L --fail-with-body "$api" > /tmp/status.json
           curl -sS -L --fail-with-body "$api/nodes" > /tmp/nodes.json
-          curl -sS -L --fail-with-body "$api/work/status?id=bbpi4-bootstrap-v1" > /tmp/work.json
+          work_http="$(curl -sS -L -o /tmp/work.json -w '%{http_code}' "$api/work/status?id=bbpi4-bootstrap-v1" || true)"
           jq -e '.node == "Aurum-Arkmatx"' /tmp/status.json >/dev/null
-          jq -e '.work_id == "bbpi4-bootstrap-v1"' /tmp/work.json >/dev/null
+          jq -e '.nodes | type == "array"' /tmp/nodes.json >/dev/null
+
+          work_error=''
+          if [ "$work_http" = '200' ]; then
+            jq -e '.work_id == "bbpi4-bootstrap-v1"' /tmp/work.json >/dev/null
+          elif [ "$work_http" = '409' ]; then
+            jq -e '.error == "work-state"' /tmp/work.json >/dev/null
+            work_error='work-state'
+          else
+            echo "unexpected work/status HTTP $work_http" >&2
+            cat /tmp/work.json >&2 || true
+            exit 1
+          fi
 
           now="$(date +%s)"
-          work_status="$(jq -r '.status // "unknown"' /tmp/work.json)"
-          attempts="$(jq -r '.attempts // 0' /tmp/work.json)"
-          last_result="$(jq -r '.last_result_status // "none"' /tmp/work.json)"
+          if [ "$work_http" = '200' ]; then
+            work_status="$(jq -r '.status // "unknown"' /tmp/work.json)"
+            attempts="$(jq -r '.attempts // 0' /tmp/work.json)"
+            last_result="$(jq -r '.last_result_status // "none"' /tmp/work.json)"
+          else
+            work_status='invalid-state'
+            attempts=-1
+            last_result='unknown'
+          fi
           morris_seen="$(jq -r '[.nodes[]? | select(.node_id == "825e5a7b7d4a7aed")] | length' /tmp/nodes.json)"
           morris_last_seen="$(jq -r '[.nodes[]? | select(.node_id == "825e5a7b7d4a7aed")][0].last_seen // 0' /tmp/nodes.json)"
           if [ "$morris_last_seen" -gt 0 ]; then morris_age=$((now - morris_last_seen)); else morris_age=-1; fi
           morris_fresh=false
           if [ "$morris_age" -ge 0 ] && [ "$morris_age" -le 120 ]; then morris_fresh=true; fi
 
-          printf 'work_status=%s\nattempts=%s\nlast_result=%s\nmorris_seen=%s\nmorris_last_seen=%s\nmorris_age=%s\nmorris_fresh=%s\n' \
-            "$work_status" "$attempts" "$last_result" "$morris_seen" "$morris_last_seen" "$morris_age" "$morris_fresh" >> "$GITHUB_OUTPUT"
+          printf 'work_http=%s\nwork_error=%s\nwork_status=%s\nattempts=%s\nlast_result=%s\nmorris_seen=%s\nmorris_last_seen=%s\nmorris_age=%s\nmorris_fresh=%s\n' \
+            "$work_http" "$work_error" "$work_status" "$attempts" "$last_result" "$morris_seen" "$morris_last_seen" "$morris_age" "$morris_fresh" >> "$GITHUB_OUTPUT"
 
       - name: Record only semantic worker-state changes
         shell: bash
@@ -57,15 +75,17 @@ jobs:
           mkdir -p deployments
           current='deployments/aurum-worker-probe.json'
           semantic="$(jq -nc \
+            --arg wh '${{ steps.probe.outputs.work_http }}' \
+            --arg we '${{ steps.probe.outputs.work_error }}' \
             --arg ws '${{ steps.probe.outputs.work_status }}' \
             --argjson attempts '${{ steps.probe.outputs.attempts }}' \
             --arg lr '${{ steps.probe.outputs.last_result }}' \
             --argjson present '${{ steps.probe.outputs.morris_seen }}' \
             --argjson fresh '${{ steps.probe.outputs.morris_fresh }}' \
-            '{bbpi4_work_status:$ws,bbpi4_attempts:$attempts,bbpi4_last_result:$lr,morris_node_present:($present>0),morris_fresh:$fresh}')"
+            '{bbpi4_work_http:$wh,bbpi4_work_error:$we,bbpi4_work_status:$ws,bbpi4_attempts:$attempts,bbpi4_last_result:$lr,morris_node_present:($present>0),morris_fresh:$fresh}')"
           previous=''
           if [ -f "$current" ]; then
-            previous="$(jq -c '{bbpi4_work_status,bbpi4_attempts,bbpi4_last_result,morris_node_present:(.morris_node_present==true or .morris_node_present==1),morris_fresh:(.morris_fresh // false)}' "$current" 2>/dev/null || true)"
+            previous="$(jq -c '{bbpi4_work_http:(.bbpi4_work_http // ""),bbpi4_work_error:(.bbpi4_work_error // ""),bbpi4_work_status,bbpi4_attempts,bbpi4_last_result,morris_node_present:(.morris_node_present==true or .morris_node_present==1),morris_fresh:(.morris_fresh // false)}' "$current" 2>/dev/null || true)"
           fi
           if [ "$semantic" = "$previous" ]; then
             echo 'AURUM_WORKER_PROBE no-new-semantic-state'
@@ -75,6 +95,8 @@ jobs:
           checked="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
           jq -n \
             --arg controller 'https://arkmatx.com/aurum/index.php' \
+            --arg wh '${{ steps.probe.outputs.work_http }}' \
+            --arg we '${{ steps.probe.outputs.work_error }}' \
             --arg ws '${{ steps.probe.outputs.work_status }}' \
             --argjson attempts '${{ steps.probe.outputs.attempts }}' \
             --arg lr '${{ steps.probe.outputs.last_result }}' \
@@ -83,7 +105,7 @@ jobs:
             --argjson age '${{ steps.probe.outputs.morris_age }}' \
             --argjson fresh '${{ steps.probe.outputs.morris_fresh }}' \
             --arg checked "$checked" \
-            '{controller:$controller,bbpi4_work_status:$ws,bbpi4_attempts:$attempts,bbpi4_last_result:$lr,morris_node_present:($present>0),morris_last_seen_epoch:$last_seen,morris_heartbeat_age_seconds:$age,morris_fresh:$fresh,probe_mode:"read-only-state-driven",checked_at_utc:$checked}' > "$current"
+            '{controller:$controller,bbpi4_work_http:$wh,bbpi4_work_error:$we,bbpi4_work_status:$ws,bbpi4_attempts:$attempts,bbpi4_last_result:$lr,morris_node_present:($present>0),morris_last_seen_epoch:$last_seen,morris_heartbeat_age_seconds:$age,morris_fresh:$fresh,probe_mode:"read-only-state-driven-http-aware",checked_at_utc:$checked}' > "$current"
 
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'

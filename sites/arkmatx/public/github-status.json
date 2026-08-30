@@ -20,6 +20,24 @@
   ],
   "recent_commits": [
     {
+      "sha": "c51c9829",
+      "message": "Record Aurum action ownership v1.10 live [skip ci]",
+      "date": "2026-08-30T12:59:38Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/c51c98291a3ca5d8432ae80f25d61d3334a2bb53"
+    },
+    {
+      "sha": "b906860e",
+      "message": "Publish canonical Aurum action ownership v1.10 safely",
+      "date": "2026-08-30T12:59:26Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/b906860e048be701ae7d1696a5728612431cc142"
+    },
+    {
+      "sha": "8bbbe8ae",
+      "message": "Refresh ArkmatX GitHub status [skip ci]",
+      "date": "2026-08-30T11:54:49Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/8bbbe8ae65caeed95e3a3213c0e54f2d96a78c1d"
+    },
+    {
       "sha": "fd18ea86",
       "message": "Refresh ArkmatX GitHub status [skip ci]",
       "date": "2026-08-30T05:24:31Z",
@@ -48,25 +66,7 @@
       "message": "Publish Aurum generation seed ladder v1.8",
       "date": "2026-08-29T21:56:58Z",
       "html_url": "https://github.com/FormatX66/wetbeard-site/commit/0cb2bc80721a95562eebd2f9b8496e67cccb59b7"
-    },
-    {
-      "sha": "3b227dfe",
-      "message": "Record Aurum Pi3 physical evidence v1.20 live [skip ci]",
-      "date": "2026-08-29T21:00:08Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/3b227dfeda8a66f2b1016eb3d911f26dbb0dc7ac"
-    },
-    {
-      "sha": "aead15b4",
-      "message": "Publish Aurum Pi3 evidence v1.20 safely",
-      "date": "2026-08-29T20:59:52Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/aead15b4e3170e10e5be46848bbab9e6b9044a30"
-    },
-    {
-      "sha": "c87228c2",
-      "message": "Advance protected Pi3 deployment carrier to v1.20",
-      "date": "2026-08-29T20:59:32Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/c87228c240fba6e49746b30d7deb0537d46154c4"
     }
   ],
-  "updated_at": "2026-08-30T11:54:49Z"
+  "updated_at": "2026-08-30T16:40:57Z"
 }

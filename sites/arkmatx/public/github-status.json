@@ -20,6 +20,12 @@
   ],
   "recent_commits": [
     {
+      "sha": "a7649ed0",
+      "message": "Refresh ArkmatX GitHub status [skip ci]",
+      "date": "2026-08-30T16:40:57Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/a7649ed0e24e3e63214316eaf446eade4639f41b"
+    },
+    {
       "sha": "c51c9829",
       "message": "Record Aurum action ownership v1.10 live [skip ci]",
       "date": "2026-08-30T12:59:38Z",
@@ -60,13 +66,7 @@
       "message": "Record Aurum generation seed ladder v1.8 live [skip ci]",
       "date": "2026-08-29T21:57:16Z",
       "html_url": "https://github.com/FormatX66/wetbeard-site/commit/0bfa22033ce65baa2b230ac79db13543edc464e8"
-    },
-    {
-      "sha": "0cb2bc80",
-      "message": "Publish Aurum generation seed ladder v1.8",
-      "date": "2026-08-29T21:56:58Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/0cb2bc80721a95562eebd2f9b8496e67cccb59b7"
     }
   ],
-  "updated_at": "2026-08-30T16:40:57Z"
+  "updated_at": "2026-08-30T21:06:00Z"
 }

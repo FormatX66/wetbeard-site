@@ -147,9 +147,9 @@ jobs:
           assert current_virtual.get('id')==33418433996 and current_virtual.get('head_sha')==active
           assert current_virtual.get('status')=='completed' and current_virtual.get('conclusion')=='success'
           jobs={j.get('name'):j for j in current_virtual_jobs.get('jobs',[])}
-          for name in ('virtual-boot-x86_64','virtual-boot-arm64','virtual-pi3-machine-runtime','virtual-pc-uefi-boot','four-target-convergence-gate'):
+          for name in ('Docker runtime x86_64','Docker runtime ARM64','QEMU Raspberry Pi 3B machine/runtime','QEMU UEFI x86_64 PC','Same-commit four-target convergence gate'):
               assert jobs.get(name,{}).get('conclusion')=='success', (name,jobs.get(name))
-          assert jobs.get('publish-runtime-after-virtual-convergence',{}).get('conclusion')=='skipped'
+          assert jobs.get('Publish gated Pi3 runtime update',{}).get('conclusion')=='skipped'
           assert watch.get('id')==33407936469 and watch.get('status')=='completed' and watch.get('conclusion')=='success'
           assert hopper_run.get('id')==33408390038 and hopper_run.get('status')=='queued' and hopper_run.get('conclusion') is None
           hopper_jobs_list=hopper_jobs.get('jobs',[])

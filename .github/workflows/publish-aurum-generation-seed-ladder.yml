@@ -27,10 +27,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          canonical_commit='99e952361696b0b8867f7dc14bae9ac060dce506'
-          projection_commit='d700bb12e86930c6335a0a2be9d03d6cb0b00625'
-          projection_main_commit='a2d8c1e062a36d31784ba4adf5479dc858037936'
-          expected_blob='f04ef03cdda42b53a6535dc7a9dc8b4e4e49b1c0'
+          canonical_commit='aa60604555a2dc1679e76ab02d62acdc5cfafb05'
+          projection_commit='47458c084963d41d5f2c4d1dc692f8a52b2614ff'
+          projection_main_commit='990f1029329d455e04c0f174cf4f06d3da7c4090'
+          expected_blob='c2b48925f6e97b4044dcf170e1f27a7d57add3c2'
           projection="$RUNNER_TEMP/generation-seed-ladder-canonical.js"
           current="$RUNNER_TEMP/generation-seed-ladder-current.js"
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
@@ -44,9 +44,9 @@ jobs:
           test "$blob" = "$expected_blob"
           for token in \
             'AURUM_GENERATION_SEED_LADDER_V1_CANONICAL' \
-            'AURUM_GENERATION_SEED_LADDER_V1_11_CANONICAL' \
+            'AURUM_GENERATION_SEED_LADDER_V1_12_CANONICAL' \
             "canonicalWebsiteRepo:'FormatX66/ClusterSites'" \
-            "componentRevision:'1.11'" \
+            "componentRevision:'1.12'" \
             "ACTIVE_TRUNK_COMMIT='a0780429b8a1a0372b76d1c19fe98096e5de8a30'" \
             'latestKnownNativeCompletedGenerations:65' \
             "latestKnownNativeExternalEvidenceReason:'gui-live-trial-evidence-expired'" \
@@ -64,7 +64,10 @@ jobs:
             'currentVerifiedPcImagePublished:true' \
             'currentPi3ImageWorkflowPassed:true' \
             'retainedParentFourTargetConvergencePassed:true' \
-            'currentHeadFourTargetConvergencePassed:null' \
+            "currentVirtualLabRunId:CURRENT_VIRTUAL_LAB_RUN" \
+            "currentHeadVirtualLabStatus:'passed'" \
+            'currentHeadFourTargetConvergencePassed:true' \
+            'currentHeadRuntimePublicationPerformed:false' \
             'currentExactHeadAutobuildPassed:false' \
             "currentExactHeadBlocker:'gui-live-trial-route-contract-test-failure'" \
             "currentExactHeadEvidenceApplicationReason:'gui-live-trial-node-binding-invalid'" \
@@ -87,15 +90,15 @@ jobs:
           echo "canonical_commit=$canonical_commit" >> "$GITHUB_OUTPUT"
           echo "projection_commit=$projection_commit" >> "$GITHUB_OUTPUT"
           echo "projection_main_commit=$projection_main_commit" >> "$GITHUB_OUTPUT"
-          echo 'CLUSTERSITES_CANONICAL_PROJECTION_V111_OK'
+          echo 'CLUSTERSITES_CANONICAL_PROJECTION_V112_OK'
 
       - name: Verify exact projection CI and current Aurum evidence boundary
         shell: bash
         run: |
           set -euo pipefail
-          projection='d700bb12e86930c6335a0a2be9d03d6cb0b00625'
-          projection_main='a2d8c1e062a36d31784ba4adf5479dc858037936'
-          ci_run='33416844816'
+          projection='47458c084963d41d5f2c4d1dc692f8a52b2614ff'
+          projection_main='990f1029329d455e04c0f174cf4f06d3da7c4090'
+          ci_run='33421807778'
           active='a0780429b8a1a0372b76d1c19fe98096e5de8a30'
           parent='ad1b618ce0cc1cbc1d09b1881663fa6fbef8a59f'
           route_fix='6c9baefd9de4583976d99b3a90ac6a28114986bb'
@@ -103,6 +106,7 @@ jobs:
           pi3_run='33398872028'
           autobuild_run='33400052429'
           parent_virtual_run='33283128632'
+          current_virtual_run='33418433996'
           prerequisite_watch_run='33407936469'
           hopper_status_run='33408390038'
           api='https://api.github.com/repos/FormatX66/BoxBrain'
@@ -113,6 +117,8 @@ jobs:
           curl -fsSL "$api/actions/runs/$pi3_run" -o "$RUNNER_TEMP/pi3.json"
           curl -fsSL "$api/actions/runs/$autobuild_run" -o "$RUNNER_TEMP/autobuild.json"
           curl -fsSL "$api/actions/runs/$parent_virtual_run" -o "$RUNNER_TEMP/parent-virtual.json"
+          curl -fsSL "$api/actions/runs/$current_virtual_run" -o "$RUNNER_TEMP/current-virtual.json"
+          curl -fsSL "$api/actions/runs/$current_virtual_run/jobs?per_page=100" -o "$RUNNER_TEMP/current-virtual-jobs.json"
           curl -fsSL "$api/actions/runs/$prerequisite_watch_run" -o "$RUNNER_TEMP/prerequisite-watch.json"
           curl -fsSL "$api/actions/runs/$hopper_status_run" -o "$RUNNER_TEMP/hopper-status-run.json"
           curl -fsSL "$api/actions/runs/$hopper_status_run/jobs?per_page=100" -o "$RUNNER_TEMP/hopper-status-jobs.json"
@@ -127,10 +133,10 @@ jobs:
           ! grep -Fq 'GUI_LIVE_TRIAL_APPROVED_ROUTES' "$RUNNER_TEMP/consumer.py"
           grep -Fq 'GUI_LIVE_TRIAL_APPROVED_ROUTES' "$RUNNER_TEMP/historical-consumer.py"
           grep -Fq '"invocation_output": "blocked-candidate-verified"' "$RUNNER_TEMP/native.json"
-          python3 - "$RUNNER_TEMP/ci.json" "$RUNNER_TEMP/branch.json" "$RUNNER_TEMP/pc.json" "$RUNNER_TEMP/pi3.json" "$RUNNER_TEMP/autobuild.json" "$RUNNER_TEMP/parent-virtual.json" "$RUNNER_TEMP/prerequisite-watch.json" "$RUNNER_TEMP/hopper-status-run.json" "$RUNNER_TEMP/hopper-status-jobs.json" "$RUNNER_TEMP/status.json" "$RUNNER_TEMP/compare.json" "$RUNNER_TEMP/native.json" "$RUNNER_TEMP/gui.json" "$RUNNER_TEMP/hopper.json" "$projection" "$active" "$parent" <<'PY'
+          python3 - "$RUNNER_TEMP/ci.json" "$RUNNER_TEMP/branch.json" "$RUNNER_TEMP/pc.json" "$RUNNER_TEMP/pi3.json" "$RUNNER_TEMP/autobuild.json" "$RUNNER_TEMP/parent-virtual.json" "$RUNNER_TEMP/current-virtual.json" "$RUNNER_TEMP/current-virtual-jobs.json" "$RUNNER_TEMP/prerequisite-watch.json" "$RUNNER_TEMP/hopper-status-run.json" "$RUNNER_TEMP/hopper-status-jobs.json" "$RUNNER_TEMP/status.json" "$RUNNER_TEMP/compare.json" "$RUNNER_TEMP/native.json" "$RUNNER_TEMP/gui.json" "$RUNNER_TEMP/hopper.json" "$projection" "$active" "$parent" <<'PY'
           import json,sys,time
-          ci,branch,pc,pi3,autobuild,parent_virtual,watch,hopper_run,hopper_jobs,status,compare,native,gui,hopper=[json.load(open(p,encoding='utf-8')) for p in sys.argv[1:15]]
-          projection,active,parent=sys.argv[15:18]
+          ci,branch,pc,pi3,autobuild,parent_virtual,current_virtual,current_virtual_jobs,watch,hopper_run,hopper_jobs,status,compare,native,gui,hopper=[json.load(open(p,encoding='utf-8')) for p in sys.argv[1:17]]
+          projection,active,parent=sys.argv[17:20]
           assert ci.get('name')=='BoxBrain CI' and ci.get('head_sha')==projection
           assert ci.get('status')=='completed' and ci.get('conclusion')=='success'
           assert branch.get('commit',{}).get('sha')==active
@@ -138,11 +144,17 @@ jobs:
           assert pi3.get('head_sha')==active and pi3.get('conclusion')=='success'
           assert autobuild.get('head_sha')==active and autobuild.get('conclusion')=='failure'
           assert parent_virtual.get('head_sha')==parent and parent_virtual.get('conclusion')=='success'
+          assert current_virtual.get('id')==33418433996 and current_virtual.get('head_sha')==active
+          assert current_virtual.get('status')=='completed' and current_virtual.get('conclusion')=='success'
+          jobs={j.get('name'):j for j in current_virtual_jobs.get('jobs',[])}
+          for name in ('Docker runtime x86_64','Docker runtime ARM64','QEMU Raspberry Pi 3B machine/runtime','QEMU UEFI x86_64 PC','Same-commit four-target convergence gate'):
+              assert jobs.get(name,{}).get('conclusion')=='success', (name,jobs.get(name))
+          assert jobs.get('Publish gated Pi3 runtime update',{}).get('conclusion')=='skipped'
           assert watch.get('id')==33407936469 and watch.get('status')=='completed' and watch.get('conclusion')=='success'
           assert hopper_run.get('id')==33408390038 and hopper_run.get('status')=='queued' and hopper_run.get('conclusion') is None
-          jobs=hopper_jobs.get('jobs',[])
-          assert len(jobs)==1
-          job=jobs[0]
+          hopper_jobs_list=hopper_jobs.get('jobs',[])
+          assert len(hopper_jobs_list)==1
+          job=hopper_jobs_list[0]
           assert job.get('status')=='queued' and int(job.get('runner_id') or 0)==0
           assert job.get('steps') in (None,[])
           assert {'self-hosted','Linux','hopper-status'} <= set(job.get('labels') or [])
@@ -169,7 +181,7 @@ jobs:
           assert hopper.get('endpoint') is None and hopper.get('source_kind') is None
           assert hopper.get('reachable') is False
           assert int(time.time())-int(__import__('datetime').datetime.fromisoformat(hopper['observed_at'].replace('Z','+00:00')).timestamp()) > 3600
-          print('GENERATION_LADDER_V111_EVIDENCE_OK')
+          print('GENERATION_LADDER_V112_EVIDENCE_OK')
           PY
 
       - name: Configure Bluehost SSH with bounded retry
@@ -216,7 +228,7 @@ jobs:
           import re,sys
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./generation-seed-ladder\.js(?:\?v=[^"]+)?"></script>\s*','',text)
-          tag='<script src="./generation-seed-ladder.js?v=12"></script>'
+          tag='<script src="./generation-seed-ladder.js?v=13"></script>'
           for pattern in (r'<script src="\./seed-lifecycle\.js(?:\?v=[^"]+)?"></script>',r'<script src="\./recovery-guardian\.js(?:\?v=[^"]+)?"></script>',r'</body>'):
               m=re.search(pattern,text)
               if m:
@@ -226,7 +238,7 @@ jobs:
               raise SystemExit('dashboard missing generation ladder injection point')
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './generation-seed-ladder.js?v=12' "$RUNNER_TEMP/index.html"
+          grep -Fq './generation-seed-ladder.js?v=13' "$RUNNER_TEMP/index.html"
 
       - name: Publish with bounded retries
         env:
@@ -248,11 +260,11 @@ jobs:
           set -euo pipefail
           page="$RUNNER_TEMP/live-index.html"; js="$RUNNER_TEMP/live-generation-seed-ladder.js"
           final_url="$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/generation-seed-ladder.js?rev=12' -o "$js"
-          grep -Fq './generation-seed-ladder.js?v=12' "$page"
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/generation-seed-ladder.js?rev=13' -o "$js"
+          grep -Fq './generation-seed-ladder.js?v=13' "$page"
           cmp -s "${{ steps.source.outputs.file }}" "$js"
           for token in \
-            "componentRevision:'1.11'" \
+            "componentRevision:'1.12'" \
             'routeContractRegressionStillActive:true' \
             'physicalPresenceCurrentBlocker:null' \
             'currentPrerequisiteWatchConfirmsPhysicalPresenceNotBlocker:true' \
@@ -260,7 +272,10 @@ jobs:
             'currentVerifiedPcImagePublished:true' \
             'currentPi3ImageWorkflowPassed:true' \
             'retainedParentFourTargetConvergencePassed:true' \
-            'currentHeadFourTargetConvergencePassed:null' \
+            "currentVirtualLabRunId:CURRENT_VIRTUAL_LAB_RUN" \
+            "currentHeadVirtualLabStatus:'passed'" \
+            'currentHeadFourTargetConvergencePassed:true' \
+            'currentHeadRuntimePublicationPerformed:false' \
             "currentExactHeadBlocker:'gui-live-trial-route-contract-test-failure'" \
             "hopperStatusLatestRefreshStatus:'queued'" \
             'hopperStatusLatestRefreshRunnerAssigned:false' \
@@ -306,11 +321,11 @@ jobs:
             "canonical_component_commit": "${{ steps.source.outputs.canonical_commit }}",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/generation-seed-ladder-v1.js",
             "deployment_carrier": "FormatX66/wetbeard-site",
-            "component_revision": "1.11",
+            "component_revision": "1.12",
             "approved_blob": "${{ steps.source.outputs.blob }}",
             "boxbrain_projection_commit": "${{ steps.source.outputs.projection_commit }}",
             "boxbrain_projection_main_commit": "${{ steps.source.outputs.projection_main_commit }}",
-            "boxbrain_ci_run": 33416844816,
+            "boxbrain_ci_run": 33421807778,
             "boxbrain_ci_proven": true,
             "active_trunk_commit": "a0780429b8a1a0372b76d1c19fe98096e5de8a30",
             "current_pc_image_run": 33398872010,
@@ -320,7 +335,8 @@ jobs:
             "retained_parent_virtual_lab_run": 33283128632,
             "retained_parent_virtual_lab_head": "ad1b618ce0cc1cbc1d09b1881663fa6fbef8a59f",
             "retained_parent_four_target_virtual_convergence": true,
-            "current_head_four_target_virtual_convergence": null,
+            "current_virtual_lab_run": 33418433996,
+            "current_head_four_target_virtual_convergence": true,
             "current_runtime_publication_performed": false,
             "current_autobuild_run": 33400052429,
             "current_exact_head_autobuild_passed": false,
@@ -366,6 +382,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-generation-seed-ladder-live.json
-          git commit -m 'Record Aurum generation seed ladder v1.11 live [skip ci]' || exit 0
+          git commit -m 'Record Aurum generation seed ladder v1.12 live [skip ci]' || exit 0
           git pull --rebase origin main
           git push origin HEAD:main

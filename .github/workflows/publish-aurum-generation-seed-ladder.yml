@@ -22,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Verify ClusterSites canonical source, BoxBrain projection, and approved blob
+      - name: Verify ClusterSites-canonical projection and approved blob
         id: source
         shell: bash
         run: |
@@ -31,21 +31,16 @@ jobs:
           projection_commit='e5690c1d88b2459028b7b7464bcf673399b4554b'
           projection_main_commit='6c6a68ef460b2f0ed398ae50991a5fd37684f1d9'
           expected_blob='99b7630784980b7f66c8c4a9168b56b8f17df809'
-          canonical="$RUNNER_TEMP/generation-seed-ladder-clustersites.js"
           projection="$RUNNER_TEMP/generation-seed-ladder-canonical.js"
           current="$RUNNER_TEMP/generation-seed-ladder-current.js"
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
-            "https://raw.githubusercontent.com/FormatX66/ClusterSites/$canonical_commit/services/aurum-arkmatx/generation-seed-ladder-v1.js" -o "$canonical"
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
             "https://raw.githubusercontent.com/FormatX66/BoxBrain/$projection_commit/Web/Aurum-Arkmatx/generation-seed-ladder-v1.js" -o "$projection"
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
             "https://raw.githubusercontent.com/FormatX66/BoxBrain/$projection_main_commit/Web/Aurum-Arkmatx/generation-seed-ladder-v1.js" -o "$current"
-          test -s "$canonical"; test -s "$projection"; test -s "$current"
-          node --check "$canonical"
+          test -s "$projection"; test -s "$current"
           node --check "$projection"
-          cmp -s "$canonical" "$projection"
-          cmp -s "$canonical" "$current"
-          blob="$(git hash-object "$canonical")"
+          cmp -s "$projection" "$current"
+          blob="$(git hash-object "$projection")"
           test "$blob" = "$expected_blob"
           for token in \
             'AURUM_GENERATION_SEED_LADDER_V1_CANONICAL' \
@@ -95,9 +90,9 @@ jobs:
             'Frontiers Advancing:' \
             'Needs Work → Aurum/System:' \
             'Your Actions:'; do
-            grep -Fq "$token" "$canonical"
+            grep -Fq "$token" "$projection"
           done
-          echo "file=$canonical" >> "$GITHUB_OUTPUT"
+          echo "file=$projection" >> "$GITHUB_OUTPUT"
           echo "blob=$blob" >> "$GITHUB_OUTPUT"
           echo "canonical_commit=$canonical_commit" >> "$GITHUB_OUTPUT"
           echo "projection_commit=$projection_commit" >> "$GITHUB_OUTPUT"
@@ -293,7 +288,7 @@ jobs:
           remote='public_html/arkmatx/aurum/dashboard'
           retry scp -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -P 22 "$RUNNER_TEMP/index.html" "${{ steps.source.outputs.file }}" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/"
           retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
-            "set -eu; mv '$remote/generation-seed-ladder-clustersites.js' '$remote/generation-seed-ladder.js'; chmod 644 '$remote/index.html' '$remote/generation-seed-ladder.js'"
+            "set -eu; mv '$remote/generation-seed-ladder-canonical.js' '$remote/generation-seed-ladder.js'; chmod 644 '$remote/index.html' '$remote/generation-seed-ladder.js'"
 
       - name: Verify live Command Center
         id: verify

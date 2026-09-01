@@ -1,0 +1,112 @@
+name: Prepare Generation Seed Ladder v1.15 publisher
+
+on:
+  push:
+    branches: [aurum-command-center-v1-15-publish]
+    paths:
+      - '.github/workflows/_prepare-generation-seed-ladder-v1-15.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: aurum-command-center-v1-15-publish
+          fetch-depth: 0
+      - name: Advance existing protected publisher pins and truth assertions
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.github/workflows/publish-aurum-generation-seed-ladder.yml')
+          s=p.read_text(encoding='utf-8')
+          def once(old,new):
+              global s
+              n=s.count(old)
+              if n != 1:
+                  raise SystemExit(f'expected one occurrence, got {n}: {old[:100]!r}')
+              s=s.replace(old,new,1)
+          def all_(old,new,minimum=1):
+              global s
+              n=s.count(old)
+              if n < minimum:
+                  raise SystemExit(f'expected >= {minimum} occurrences, got {n}: {old[:100]!r}')
+              s=s.replace(old,new)
+
+          all_('c779701d2f43b29fe146f112ac6a66f6323f5e59','f5765eca5dc734a433aa98da8b1f2437c162bcc5')
+          all_('1295321b643aa0acf04226020be82b9879d44f92','3887689ac03a7c67fc8523c23473b47a3b9a1d2f')
+          all_('39c32910734e08f729f146f4e015a3207b104492','cabc4e0993067eebe26068b7738544af70e222d6')
+          all_('c7957536f89a991f0686e444071ec981e6884149','965c546cd0e166e037a38c3c0b693efd5a7895cc')
+          all_('33456410760','33510922579')
+          all_('AURUM_GENERATION_SEED_LADDER_V1_14_CANONICAL','AURUM_GENERATION_SEED_LADDER_V1_15_CANONICAL')
+          all_("componentRevision:'1.14'","componentRevision:'1.15'")
+          all_('CLUSTERSITES_CANONICAL_PROJECTION_V114_OK','CLUSTERSITES_CANONICAL_PROJECTION_V115_OK')
+          all_('GENERATION_LADDER_V114_EVIDENCE_OK','GENERATION_LADDER_V115_EVIDENCE_OK')
+          all_('./generation-seed-ladder.js?v=15','./generation-seed-ladder.js?v=16')
+          all_('generation-seed-ladder.js?rev=15','generation-seed-ladder.js?rev=16')
+          all_('"component_revision": "1.14"','"component_revision": "1.15"')
+          all_('Record Aurum generation seed ladder v1.14 live [skip ci]','Record Aurum generation seed ladder v1.15 live [skip ci]')
+
+          once("          hopper_status_run='33454951504'\n          last_successful_hopper_status_run='33438851817'",
+               "          previous_hopper_status_run='33454951504'\n          hopper_status_run='33474010603'\n          last_successful_hopper_status_run='33438851817'")
+          once('          curl -fsSL "$api/actions/runs/$hopper_status_run" -o "$RUNNER_TEMP/hopper-status-run.json"\n          curl -fsSL "$api/actions/runs/$hopper_status_run/jobs?per_page=100" -o "$RUNNER_TEMP/hopper-status-jobs.json"',
+               '          curl -fsSL "$api/actions/runs/$previous_hopper_status_run" -o "$RUNNER_TEMP/previous-hopper-status-run.json"\n          curl -fsSL "$api/actions/runs/$hopper_status_run" -o "$RUNNER_TEMP/hopper-status-run.json"\n          curl -fsSL "$api/actions/runs/$hopper_status_run/jobs?per_page=100" -o "$RUNNER_TEMP/hopper-status-jobs.json"')
+          once('"$RUNNER_TEMP/prerequisite-watch.json" "$RUNNER_TEMP/hopper-status-run.json" "$RUNNER_TEMP/hopper-status-jobs.json" "$RUNNER_TEMP/last-hopper-status-run.json"',
+               '"$RUNNER_TEMP/prerequisite-watch.json" "$RUNNER_TEMP/previous-hopper-status-run.json" "$RUNNER_TEMP/hopper-status-run.json" "$RUNNER_TEMP/hopper-status-jobs.json" "$RUNNER_TEMP/last-hopper-status-run.json"')
+          once("ci,branch,pc,pi3,autobuild,parent_virtual,current_virtual,current_virtual_jobs,watch,hopper_run,hopper_jobs,last_hopper_run,last_hopper_jobs,status,compare,native,gui,hopper=[json.load(open(p,encoding='utf-8')) for p in sys.argv[1:19]]\n          projection,active,parent=sys.argv[19:22]",
+               "ci,branch,pc,pi3,autobuild,parent_virtual,current_virtual,current_virtual_jobs,watch,previous_hopper_run,hopper_run,hopper_jobs,last_hopper_run,last_hopper_jobs,status,compare,native,gui,hopper=[json.load(open(p,encoding='utf-8')) for p in sys.argv[1:20]]\n          projection,active,parent=sys.argv[20:23]")
+          once("          assert hopper_run.get('id')==33454951504 and hopper_run.get('status')=='queued' and hopper_run.get('conclusion') is None\n          hopper_jobs_list=hopper_jobs.get('jobs',[])\n          assert len(hopper_jobs_list)==1\n          job=hopper_jobs_list[0]\n          assert job.get('status')=='queued' and int(job.get('runner_id') or 0)==0\n          assert {'self-hosted','Linux','hopper-status'} <= set(job.get('labels') or [])\n          assert job.get('steps') in (None,[])",
+               "          assert previous_hopper_run.get('id')==33454951504 and previous_hopper_run.get('status')=='completed' and previous_hopper_run.get('conclusion')=='cancelled'\n          assert hopper_run.get('id')==33474010603 and hopper_run.get('status')=='completed' and hopper_run.get('conclusion')=='cancelled'\n          hopper_jobs_list=hopper_jobs.get('jobs',[])\n          assert len(hopper_jobs_list)==1\n          job=hopper_jobs_list[0]\n          assert job.get('status')=='completed' and job.get('conclusion')=='cancelled'\n          assert {'self-hosted','Linux','hopper-status'} <= set(job.get('labels') or [])\n          assert job.get('steps') in (None,[])")
+
+          all_("hopperStatusLatestRefreshStatus:'queued'","hopperStatusLatestRefreshStatus:'completed'")
+          all_('hopperStatusLatestRefreshConclusion:null',"hopperStatusLatestRefreshConclusion:'cancelled'")
+          all_("            'hopperStatusLatestRefreshRunnerAssigned:false' \\\n",'')
+          all_("            'hopperStatusLatestRefreshRunnerId:0' \\\n",'')
+          all_("            'hopperStatusLatestRefreshStepsStarted:false' \\\n",
+               "            'hopperStatusLatestRefreshStepsStarted:false' \\\n            'hopperStatusConsecutiveScheduledCancellations:2' \\\n            'hopperStatusFreshMachineEvidenceAvailable:false' \\\n",minimum=2)
+
+          once('            "hopper_status_refresh_run": 33454951504,\n            "hopper_status_refresh_status": "queued",\n            "hopper_status_refresh_conclusion": null,\n            "hopper_status_refresh_runner_assigned": false,\n            "hopper_status_refresh_runner_id": 0,\n            "hopper_status_refresh_runner_name": null,\n            "hopper_status_refresh_steps_started": false,',
+               '            "hopper_status_previous_refresh_run": 33454951504,\n            "hopper_status_previous_refresh_status": "completed",\n            "hopper_status_previous_refresh_conclusion": "cancelled",\n            "hopper_status_refresh_run": 33474010603,\n            "hopper_status_refresh_status": "completed",\n            "hopper_status_refresh_conclusion": "cancelled",\n            "hopper_status_refresh_steps_started": false,\n            "hopper_status_consecutive_scheduled_cancellations": 2,\n            "hopper_status_fresh_machine_evidence_available": false,')
+
+          p.write_text(s,encoding='utf-8')
+          PY
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('.github/workflows/publish-aurum-generation-seed-ladder.yml').read_text(encoding='utf-8')
+          required=[
+            "canonical_commit='f5765eca5dc734a433aa98da8b1f2437c162bcc5'",
+            "projection='3887689ac03a7c67fc8523c23473b47a3b9a1d2f'",
+            "projection_main='cabc4e0993067eebe26068b7738544af70e222d6'",
+            "ci_run='33510922579'",
+            "previous_hopper_status_run='33454951504'",
+            "hopper_status_run='33474010603'",
+            "componentRevision:'1.15'",
+            "hopperStatusLatestRefreshStatus:'completed'",
+            "hopperStatusLatestRefreshConclusion:'cancelled'",
+            'hopperStatusConsecutiveScheduledCancellations:2',
+            'hopperStatusFreshMachineEvidenceAvailable:false',
+            'backup_before_publish',
+            'rollback_on_verification_failure',
+            'Roll back on verification failure',
+            'Back up current Command Center',
+            'Verify live Command Center',
+          ]
+          for token in required:
+              if token not in s: raise SystemExit(f'missing {token}')
+          forbidden=["componentRevision:'1.14'","hopperStatusLatestRefreshStatus:'queued'","hopperStatusLatestRefreshRunnerId:0",'"component_revision": "1.14"']
+          for token in forbidden:
+              if token in s: raise SystemExit(f'stale {token}')
+          PY
+          git diff --check
+          git rm '.github/workflows/_prepare-generation-seed-ladder-v1-15.yml'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add '.github/workflows/publish-aurum-generation-seed-ladder.yml'
+          git commit -m 'Advance protected Generation Seed Ladder publisher to v1.15'
+          git push origin HEAD:aurum-command-center-v1-15-publish

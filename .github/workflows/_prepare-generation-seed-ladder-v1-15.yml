@@ -18,14 +18,15 @@ jobs:
         with:
           ref: aurum-command-center-v1-15-publish
           fetch-depth: 0
-      - name: Advance existing protected publisher pins and truth assertions
+      - name: Build validated v1.15 publisher staging blob
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
-          p=Path('.github/workflows/publish-aurum-generation-seed-ladder.yml')
-          s=p.read_text(encoding='utf-8')
+          src=Path('.github/workflows/publish-aurum-generation-seed-ladder.yml')
+          dst=Path('deployments/.staging/aurum-generation-seed-ladder-v1.15.yml')
+          s=src.read_text(encoding='utf-8')
           def once(old,new):
               global s
               n=s.count(old)
@@ -74,11 +75,13 @@ jobs:
           once('            "hopper_status_refresh_run": 33454951504,\n            "hopper_status_refresh_status": "queued",\n            "hopper_status_refresh_conclusion": null,\n            "hopper_status_refresh_runner_assigned": false,\n            "hopper_status_refresh_runner_id": 0,\n            "hopper_status_refresh_runner_name": null,\n            "hopper_status_refresh_steps_started": false,',
                '            "hopper_status_previous_refresh_run": 33454951504,\n            "hopper_status_previous_refresh_status": "completed",\n            "hopper_status_previous_refresh_conclusion": "cancelled",\n            "hopper_status_refresh_run": 33474010603,\n            "hopper_status_refresh_status": "completed",\n            "hopper_status_refresh_conclusion": "cancelled",\n            "hopper_status_refresh_steps_started": false,\n            "hopper_status_consecutive_scheduled_cancellations": 2,\n            "hopper_status_fresh_machine_evidence_available": false,')
 
-          p.write_text(s,encoding='utf-8')
+          dst.parent.mkdir(parents=True, exist_ok=True)
+          dst.write_text(s,encoding='utf-8')
           PY
           python3 - <<'PY'
           from pathlib import Path
-          s=Path('.github/workflows/publish-aurum-generation-seed-ladder.yml').read_text(encoding='utf-8')
+          p=Path('deployments/.staging/aurum-generation-seed-ladder-v1.15.yml')
+          s=p.read_text(encoding='utf-8')
           required=[
             "canonical_commit='f5765eca5dc734a433aa98da8b1f2437c162bcc5'",
             "projection='3887689ac03a7c67fc8523c23473b47a3b9a1d2f'",
@@ -91,11 +94,11 @@ jobs:
             "hopperStatusLatestRefreshConclusion:'cancelled'",
             'hopperStatusConsecutiveScheduledCancellations:2',
             'hopperStatusFreshMachineEvidenceAvailable:false',
-            'backup_before_publish',
-            'rollback_on_verification_failure',
-            'Roll back on verification failure',
             'Back up current Command Center',
             'Verify live Command Center',
+            'Roll back on verification failure',
+            '"backup_before_publish": true',
+            '"rollback_on_verification_failure": true',
           ]
           for token in required:
               if token not in s: raise SystemExit(f'missing {token}')
@@ -103,10 +106,9 @@ jobs:
           for token in forbidden:
               if token in s: raise SystemExit(f'stale {token}')
           PY
-          git diff --check
-          git rm '.github/workflows/_prepare-generation-seed-ladder-v1-15.yml'
+          git diff --check -- deployments/.staging/aurum-generation-seed-ladder-v1.15.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add '.github/workflows/publish-aurum-generation-seed-ladder.yml'
-          git commit -m 'Advance protected Generation Seed Ladder publisher to v1.15'
+          git add deployments/.staging/aurum-generation-seed-ladder-v1.15.yml
+          git commit -m 'Stage validated Generation Seed Ladder v1.15 publisher blob'
           git push origin HEAD:aurum-command-center-v1-15-publish

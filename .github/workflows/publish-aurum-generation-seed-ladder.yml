@@ -76,7 +76,7 @@ jobs:
             'hopperStatusFreshAtInspection:false' \
             'hopperStatusLastSuccessfulRefreshRunId:LAST_SUCCESSFUL_HOPPER_STATUS_RUN' \
             "hopperStatusLatestRefreshStatus:'completed'" \
-            'hopperStatusLatestRefreshConclusion:'cancelled'' \
+            "hopperStatusLatestRefreshConclusion:'cancelled'" \
             'hopperStatusLatestRefreshStepsStarted:false' \
             'hopperStatusConsecutiveScheduledCancellations:2' \
             'hopperStatusFreshMachineEvidenceAvailable:false' \
@@ -295,7 +295,7 @@ jobs:
             'currentHeadRuntimePublicationPerformed:false' \
             "currentExactHeadBlocker:'gui-live-trial-route-contract-test-failure'" \
             "hopperStatusLatestRefreshStatus:'completed'" \
-            'hopperStatusLatestRefreshConclusion:'cancelled'' \
+            "hopperStatusLatestRefreshConclusion:'cancelled'" \
             'hopperStatusLatestRefreshStepsStarted:false' \
             'hopperStatusConsecutiveScheduledCancellations:2' \
             'hopperStatusFreshMachineEvidenceAvailable:false' \

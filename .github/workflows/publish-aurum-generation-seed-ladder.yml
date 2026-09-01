@@ -22,31 +22,36 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Verify ClusterSites-canonical projection and approved blob
+      - name: Verify ClusterSites canonical source, BoxBrain projection, and approved blob
         id: source
         shell: bash
         run: |
           set -euo pipefail
-          canonical_commit='f5765eca5dc734a433aa98da8b1f2437c162bcc5'
-          projection_commit='3887689ac03a7c67fc8523c23473b47a3b9a1d2f'
-          projection_main_commit='cabc4e0993067eebe26068b7738544af70e222d6'
-          expected_blob='965c546cd0e166e037a38c3c0b693efd5a7895cc'
+          canonical_commit='b00857e6819481224f6960a346dc562a80782b9a'
+          projection_commit='e5690c1d88b2459028b7b7464bcf673399b4554b'
+          projection_main_commit='6c6a68ef460b2f0ed398ae50991a5fd37684f1d9'
+          expected_blob='99b7630784980b7f66c8c4a9168b56b8f17df809'
+          canonical="$RUNNER_TEMP/generation-seed-ladder-clustersites.js"
           projection="$RUNNER_TEMP/generation-seed-ladder-canonical.js"
           current="$RUNNER_TEMP/generation-seed-ladder-current.js"
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
+            "https://raw.githubusercontent.com/FormatX66/ClusterSites/$canonical_commit/services/aurum-arkmatx/generation-seed-ladder-v1.js" -o "$canonical"
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
             "https://raw.githubusercontent.com/FormatX66/BoxBrain/$projection_commit/Web/Aurum-Arkmatx/generation-seed-ladder-v1.js" -o "$projection"
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
             "https://raw.githubusercontent.com/FormatX66/BoxBrain/$projection_main_commit/Web/Aurum-Arkmatx/generation-seed-ladder-v1.js" -o "$current"
-          test -s "$projection"; test -s "$current"
+          test -s "$canonical"; test -s "$projection"; test -s "$current"
+          node --check "$canonical"
           node --check "$projection"
-          cmp -s "$projection" "$current"
-          blob="$(git hash-object "$projection")"
+          cmp -s "$canonical" "$projection"
+          cmp -s "$canonical" "$current"
+          blob="$(git hash-object "$canonical")"
           test "$blob" = "$expected_blob"
           for token in \
             'AURUM_GENERATION_SEED_LADDER_V1_CANONICAL' \
-            'AURUM_GENERATION_SEED_LADDER_V1_15_CANONICAL' \
+            'AURUM_GENERATION_SEED_LADDER_V1_16_CANONICAL' \
             "canonicalWebsiteRepo:'FormatX66/ClusterSites'" \
-            "componentRevision:'1.15'" \
+            "componentRevision:'1.16'" \
             "ACTIVE_TRUNK_COMMIT='a0780429b8a1a0372b76d1c19fe98096e5de8a30'" \
             'latestKnownNativeCompletedGenerations:65' \
             "latestKnownNativeExternalEvidenceReason:'gui-live-trial-evidence-expired'" \
@@ -75,9 +80,13 @@ jobs:
             'hopperStatusSnapshotCommit:HOPPER_STATUS_SNAPSHOT_COMMIT' \
             'hopperStatusFreshAtInspection:false' \
             'hopperStatusLastSuccessfulRefreshRunId:LAST_SUCCESSFUL_HOPPER_STATUS_RUN' \
-            "hopperStatusLatestRefreshStatus:'completed'" \
-            "hopperStatusLatestRefreshConclusion:'cancelled'" \
+            "hopperStatusLatestRefreshStatus:'pending'" \
+            "hopperStatusLatestRefreshJobStatus:'queued'" \
+            'hopperStatusLatestRefreshRunnerAssigned:false' \
+            'hopperStatusLatestRefreshRunnerId:0' \
             'hopperStatusLatestRefreshStepsStarted:false' \
+            "hopperStatusCurrentBlocker:'no-eligible-runner-assigned'" \
+            'hopperStatusSchedulerDispatchObserved:true' \
             'hopperStatusConsecutiveScheduledCancellations:2' \
             'hopperStatusFreshMachineEvidenceAvailable:false' \
             'hopperStatusEndpointResolved:false' \
@@ -86,22 +95,21 @@ jobs:
             'Frontiers Advancing:' \
             'Needs Work → Aurum/System:' \
             'Your Actions:'; do
-            grep -Fq "$token" "$projection"
+            grep -Fq "$token" "$canonical"
           done
-          echo "file=$projection" >> "$GITHUB_OUTPUT"
+          echo "file=$canonical" >> "$GITHUB_OUTPUT"
           echo "blob=$blob" >> "$GITHUB_OUTPUT"
           echo "canonical_commit=$canonical_commit" >> "$GITHUB_OUTPUT"
           echo "projection_commit=$projection_commit" >> "$GITHUB_OUTPUT"
           echo "projection_main_commit=$projection_main_commit" >> "$GITHUB_OUTPUT"
-          echo 'CLUSTERSITES_CANONICAL_PROJECTION_V115_OK'
+          echo 'CLUSTERSITES_CANONICAL_PROJECTION_V116_OK'
 
       - name: Verify exact projection CI and current Aurum evidence boundary
         shell: bash
         run: |
           set -euo pipefail
-          projection='3887689ac03a7c67fc8523c23473b47a3b9a1d2f'
-          projection_main='cabc4e0993067eebe26068b7738544af70e222d6'
-          ci_run='33510922579'
+          projection='e5690c1d88b2459028b7b7464bcf673399b4554b'
+          ci_run='33534708730'
           active='a0780429b8a1a0372b76d1c19fe98096e5de8a30'
           parent='ad1b618ce0cc1cbc1d09b1881663fa6fbef8a59f'
           route_fix='6c9baefd9de4583976d99b3a90ac6a28114986bb'
@@ -111,8 +119,9 @@ jobs:
           parent_virtual_run='33283128632'
           current_virtual_run='33418433996'
           prerequisite_watch_run='33455559358'
-          previous_hopper_status_run='33454951504'
-          hopper_status_run='33474010603'
+          cancelled_hopper_status_run_1='33454951504'
+          cancelled_hopper_status_run_2='33474010603'
+          current_hopper_status_run='33523121813'
           last_successful_hopper_status_run='33438851817'
           hopper_snapshot='31b248305dc0e35eee0ee4a1f5893775777366fd'
           api='https://api.github.com/repos/FormatX66/BoxBrain'
@@ -126,11 +135,14 @@ jobs:
           curl -fsSL "$api/actions/runs/$current_virtual_run" -o "$RUNNER_TEMP/current-virtual.json"
           curl -fsSL "$api/actions/runs/$current_virtual_run/jobs?per_page=100" -o "$RUNNER_TEMP/current-virtual-jobs.json"
           curl -fsSL "$api/actions/runs/$prerequisite_watch_run" -o "$RUNNER_TEMP/prerequisite-watch.json"
-          curl -fsSL "$api/actions/runs/$previous_hopper_status_run" -o "$RUNNER_TEMP/previous-hopper-status-run.json"
-          curl -fsSL "$api/actions/runs/$hopper_status_run" -o "$RUNNER_TEMP/hopper-status-run.json"
-          curl -fsSL "$api/actions/runs/$hopper_status_run/jobs?per_page=100" -o "$RUNNER_TEMP/hopper-status-jobs.json"
-          curl -fsSL "$api/actions/runs/$last_successful_hopper_status_run" -o "$RUNNER_TEMP/last-hopper-status-run.json"
-          curl -fsSL "$api/actions/runs/$last_successful_hopper_status_run/jobs?per_page=100" -o "$RUNNER_TEMP/last-hopper-status-jobs.json"
+          curl -fsSL "$api/actions/runs/$cancelled_hopper_status_run_1" -o "$RUNNER_TEMP/cancelled-hopper-1.json"
+          curl -fsSL "$api/actions/runs/$cancelled_hopper_status_run_1/jobs?per_page=100" -o "$RUNNER_TEMP/cancelled-hopper-1-jobs.json"
+          curl -fsSL "$api/actions/runs/$cancelled_hopper_status_run_2" -o "$RUNNER_TEMP/cancelled-hopper-2.json"
+          curl -fsSL "$api/actions/runs/$cancelled_hopper_status_run_2/jobs?per_page=100" -o "$RUNNER_TEMP/cancelled-hopper-2-jobs.json"
+          curl -fsSL "$api/actions/runs/$current_hopper_status_run" -o "$RUNNER_TEMP/current-hopper.json"
+          curl -fsSL "$api/actions/runs/$current_hopper_status_run/jobs?per_page=100" -o "$RUNNER_TEMP/current-hopper-jobs.json"
+          curl -fsSL "$api/actions/runs/$last_successful_hopper_status_run" -o "$RUNNER_TEMP/last-hopper.json"
+          curl -fsSL "$api/actions/runs/$last_successful_hopper_status_run/jobs?per_page=100" -o "$RUNNER_TEMP/last-hopper-jobs.json"
           curl -fsSL "$api/commits/$active/status" -o "$RUNNER_TEMP/status.json"
           curl -fsSL "$api/compare/$route_fix...$active" -o "$RUNNER_TEMP/compare.json"
           curl -fsSL "$raw/Projects/Codelation/autobuild/native_chain_state.json" -o "$RUNNER_TEMP/native.json"
@@ -142,10 +154,11 @@ jobs:
           ! grep -Fq 'GUI_LIVE_TRIAL_APPROVED_ROUTES' "$RUNNER_TEMP/consumer.py"
           grep -Fq 'GUI_LIVE_TRIAL_APPROVED_ROUTES' "$RUNNER_TEMP/historical-consumer.py"
           grep -Fq '"invocation_output": "blocked-candidate-verified"' "$RUNNER_TEMP/native.json"
-          python3 - "$RUNNER_TEMP/ci.json" "$RUNNER_TEMP/branch.json" "$RUNNER_TEMP/pc.json" "$RUNNER_TEMP/pi3.json" "$RUNNER_TEMP/autobuild.json" "$RUNNER_TEMP/parent-virtual.json" "$RUNNER_TEMP/current-virtual.json" "$RUNNER_TEMP/current-virtual-jobs.json" "$RUNNER_TEMP/prerequisite-watch.json" "$RUNNER_TEMP/previous-hopper-status-run.json" "$RUNNER_TEMP/hopper-status-run.json" "$RUNNER_TEMP/hopper-status-jobs.json" "$RUNNER_TEMP/last-hopper-status-run.json" "$RUNNER_TEMP/last-hopper-status-jobs.json" "$RUNNER_TEMP/status.json" "$RUNNER_TEMP/compare.json" "$RUNNER_TEMP/native.json" "$RUNNER_TEMP/gui.json" "$RUNNER_TEMP/hopper.json" "$projection" "$active" "$parent" <<'PY'
+          python3 - "$RUNNER_TEMP/ci.json" "$RUNNER_TEMP/branch.json" "$RUNNER_TEMP/pc.json" "$RUNNER_TEMP/pi3.json" "$RUNNER_TEMP/autobuild.json" "$RUNNER_TEMP/parent-virtual.json" "$RUNNER_TEMP/current-virtual.json" "$RUNNER_TEMP/current-virtual-jobs.json" "$RUNNER_TEMP/prerequisite-watch.json" "$RUNNER_TEMP/cancelled-hopper-1.json" "$RUNNER_TEMP/cancelled-hopper-1-jobs.json" "$RUNNER_TEMP/cancelled-hopper-2.json" "$RUNNER_TEMP/cancelled-hopper-2-jobs.json" "$RUNNER_TEMP/current-hopper.json" "$RUNNER_TEMP/current-hopper-jobs.json" "$RUNNER_TEMP/last-hopper.json" "$RUNNER_TEMP/last-hopper-jobs.json" "$RUNNER_TEMP/status.json" "$RUNNER_TEMP/compare.json" "$RUNNER_TEMP/native.json" "$RUNNER_TEMP/gui.json" "$RUNNER_TEMP/hopper.json" "$projection" "$active" "$parent" <<'PY'
           import datetime,json,sys,time
-          ci,branch,pc,pi3,autobuild,parent_virtual,current_virtual,current_virtual_jobs,watch,previous_hopper_run,hopper_run,hopper_jobs,last_hopper_run,last_hopper_jobs,status,compare,native,gui,hopper=[json.load(open(p,encoding='utf-8')) for p in sys.argv[1:20]]
-          projection,active,parent=sys.argv[20:23]
+          paths=sys.argv[1:23]
+          (ci,branch,pc,pi3,autobuild,parent_virtual,current_virtual,current_virtual_jobs,watch,cancel1,cancel1_jobs,cancel2,cancel2_jobs,current_hopper,current_hopper_jobs,last_hopper,last_hopper_jobs,status,compare,native,gui,hopper)=[json.load(open(p,encoding='utf-8')) for p in paths]
+          projection,active,parent=sys.argv[23:26]
           assert ci.get('name')=='BoxBrain CI' and ci.get('head_sha')==projection
           assert ci.get('status')=='completed' and ci.get('conclusion')=='success'
           assert branch.get('commit',{}).get('sha')==active
@@ -160,15 +173,27 @@ jobs:
               assert jobs.get(name,{}).get('conclusion')=='success', (name,jobs.get(name))
           assert jobs.get('Publish gated Pi3 runtime update',{}).get('conclusion')=='skipped'
           assert watch.get('id')==33455559358 and watch.get('status')=='completed' and watch.get('conclusion')=='success'
-          assert previous_hopper_run.get('id')==33454951504 and previous_hopper_run.get('status')=='completed' and previous_hopper_run.get('conclusion')=='cancelled'
-          assert hopper_run.get('id')==33474010603 and hopper_run.get('status')=='completed' and hopper_run.get('conclusion')=='cancelled'
-          hopper_jobs_list=hopper_jobs.get('jobs',[])
-          assert len(hopper_jobs_list)==1
-          job=hopper_jobs_list[0]
-          assert job.get('status')=='completed' and job.get('conclusion')=='cancelled'
-          assert {'self-hosted','Linux','hopper-status'} <= set(job.get('labels') or [])
-          assert job.get('steps') in (None,[])
-          assert last_hopper_run.get('id')==33438851817 and last_hopper_run.get('status')=='completed' and last_hopper_run.get('conclusion')=='success'
+          for run,jobs_doc,run_id in ((cancel1,cancel1_jobs,33454951504),(cancel2,cancel2_jobs,33474010603)):
+              assert run.get('id')==run_id and run.get('status')=='completed' and run.get('conclusion')=='cancelled'
+              job_list=jobs_doc.get('jobs',[])
+              assert len(job_list)==1
+              job=job_list[0]
+              assert job.get('status')=='completed' and job.get('conclusion')=='cancelled'
+              assert {'self-hosted','Linux','hopper-status'} <= set(job.get('labels') or [])
+              assert job.get('steps') in (None,[])
+          assert current_hopper.get('id')==33523121813
+          assert current_hopper.get('event')=='schedule'
+          assert current_hopper.get('status')=='pending' and current_hopper.get('conclusion') is None
+          current_jobs=current_hopper_jobs.get('jobs',[])
+          assert len(current_jobs)==1
+          current_job=current_jobs[0]
+          assert current_job.get('id')==99907075063
+          assert current_job.get('status')=='queued' and current_job.get('conclusion') is None
+          assert current_job.get('labels')==['self-hosted','Linux','hopper-status']
+          assert int(current_job.get('runner_id') or 0)==0
+          assert (current_job.get('runner_name') or '')==''
+          assert current_job.get('steps') in (None,[])
+          assert last_hopper.get('id')==33438851817 and last_hopper.get('status')=='completed' and last_hopper.get('conclusion')=='success'
           last_jobs=last_hopper_jobs.get('jobs',[])
           assert len(last_jobs)==1
           last_job=last_jobs[0]
@@ -198,7 +223,7 @@ jobs:
           assert hopper.get('reachable') is False
           observed=datetime.datetime.fromisoformat(hopper['observed_at'].replace('Z','+00:00')).timestamp()
           assert int(time.time())-int(observed) > 3600
-          print('GENERATION_LADDER_V115_EVIDENCE_OK')
+          print('GENERATION_LADDER_V116_EVIDENCE_OK')
           PY
 
       - name: Configure Bluehost SSH with bounded retry
@@ -245,7 +270,7 @@ jobs:
           import re,sys
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./generation-seed-ladder\.js(?:\?v=[^"]+)?"></script>\s*','',text)
-          tag='<script src="./generation-seed-ladder.js?v=16"></script>'
+          tag='<script src="./generation-seed-ladder.js?v=116"></script>'
           for pattern in (r'<script src="\./seed-lifecycle\.js(?:\?v=[^"]+)?"></script>',r'<script src="\./recovery-guardian\.js(?:\?v=[^"]+)?"></script>',r'</body>'):
               m=re.search(pattern,text)
               if m:
@@ -255,7 +280,7 @@ jobs:
               raise SystemExit('dashboard missing generation ladder injection point')
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './generation-seed-ladder.js?v=16' "$RUNNER_TEMP/index.html"
+          grep -Fq './generation-seed-ladder.js?v=116' "$RUNNER_TEMP/index.html"
 
       - name: Publish with bounded retries
         env:
@@ -268,7 +293,7 @@ jobs:
           remote='public_html/arkmatx/aurum/dashboard'
           retry scp -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -P 22 "$RUNNER_TEMP/index.html" "${{ steps.source.outputs.file }}" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/"
           retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
-            "set -eu; mv '$remote/generation-seed-ladder-canonical.js' '$remote/generation-seed-ladder.js'; chmod 644 '$remote/index.html' '$remote/generation-seed-ladder.js'"
+            "set -eu; mv '$remote/generation-seed-ladder-clustersites.js' '$remote/generation-seed-ladder.js'; chmod 644 '$remote/index.html' '$remote/generation-seed-ladder.js'"
 
       - name: Verify live Command Center
         id: verify
@@ -277,11 +302,11 @@ jobs:
           set -euo pipefail
           page="$RUNNER_TEMP/live-index.html"; js="$RUNNER_TEMP/live-generation-seed-ladder.js"
           final_url="$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/generation-seed-ladder.js?rev=16' -o "$js"
-          grep -Fq './generation-seed-ladder.js?v=16' "$page"
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/generation-seed-ladder.js?rev=116' -o "$js"
+          grep -Fq './generation-seed-ladder.js?v=116' "$page"
           cmp -s "${{ steps.source.outputs.file }}" "$js"
           for token in \
-            "componentRevision:'1.15'" \
+            "componentRevision:'1.16'" \
             'routeContractRegressionStillActive:true' \
             'physicalPresenceCurrentBlocker:null' \
             'currentPrerequisiteWatchConfirmsPhysicalPresenceNotBlocker:true' \
@@ -294,9 +319,13 @@ jobs:
             'currentHeadFourTargetConvergencePassed:true' \
             'currentHeadRuntimePublicationPerformed:false' \
             "currentExactHeadBlocker:'gui-live-trial-route-contract-test-failure'" \
-            "hopperStatusLatestRefreshStatus:'completed'" \
-            "hopperStatusLatestRefreshConclusion:'cancelled'" \
+            "hopperStatusLatestRefreshStatus:'pending'" \
+            "hopperStatusLatestRefreshJobStatus:'queued'" \
+            'hopperStatusLatestRefreshRunnerAssigned:false' \
+            'hopperStatusLatestRefreshRunnerId:0' \
             'hopperStatusLatestRefreshStepsStarted:false' \
+            "hopperStatusCurrentBlocker:'no-eligible-runner-assigned'" \
+            'hopperStatusSchedulerDispatchObserved:true' \
             'hopperStatusConsecutiveScheduledCancellations:2' \
             'hopperStatusFreshMachineEvidenceAvailable:false' \
             'hopperStatusFreshAtInspection:false' \
@@ -340,11 +369,11 @@ jobs:
             "canonical_component_commit": "${{ steps.source.outputs.canonical_commit }}",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/generation-seed-ladder-v1.js",
             "deployment_carrier": "FormatX66/wetbeard-site",
-            "component_revision": "1.15",
+            "component_revision": "1.16",
             "approved_blob": "${{ steps.source.outputs.blob }}",
             "boxbrain_projection_commit": "${{ steps.source.outputs.projection_commit }}",
             "boxbrain_projection_main_commit": "${{ steps.source.outputs.projection_main_commit }}",
-            "boxbrain_ci_run": 33510922579,
+            "boxbrain_ci_run": 33534708730,
             "boxbrain_ci_proven": true,
             "active_trunk_commit": "a0780429b8a1a0372b76d1c19fe98096e5de8a30",
             "current_pc_image_run": 33398872010,
@@ -386,14 +415,21 @@ jobs:
             "hopper_status_last_successful_refresh_conclusion": "success",
             "hopper_status_last_successful_refresh_runner_id": 23,
             "hopper_status_last_successful_refresh_runner_name": "AURUM-HOPPER-STATUS-WSL",
-            "hopper_status_previous_refresh_run": 33454951504,
-            "hopper_status_previous_refresh_status": "completed",
-            "hopper_status_previous_refresh_conclusion": "cancelled",
-            "hopper_status_refresh_run": 33474010603,
-            "hopper_status_refresh_status": "completed",
-            "hopper_status_refresh_conclusion": "cancelled",
-            "hopper_status_refresh_steps_started": false,
+            "hopper_status_cancelled_refresh_runs": [33454951504, 33474010603],
             "hopper_status_consecutive_scheduled_cancellations": 2,
+            "hopper_status_current_refresh_run": 33523121813,
+            "hopper_status_current_refresh_event": "schedule",
+            "hopper_status_current_refresh_status": "pending",
+            "hopper_status_current_refresh_conclusion": null,
+            "hopper_status_current_job_id": 99907075063,
+            "hopper_status_current_job_status": "queued",
+            "hopper_status_current_job_labels": ["self-hosted", "Linux", "hopper-status"],
+            "hopper_status_current_runner_assigned": false,
+            "hopper_status_current_runner_id": 0,
+            "hopper_status_current_runner_name": "",
+            "hopper_status_current_steps_started": false,
+            "hopper_status_scheduler_dispatch_observed": true,
+            "hopper_status_current_blocker": "no-eligible-runner-assigned",
             "hopper_status_fresh_machine_evidence_available": false,
             "hopper_power_state_inferred": false,
             "human_action_inference": false,
@@ -411,6 +447,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-generation-seed-ladder-live.json
-          git commit -m 'Record Aurum generation seed ladder v1.15 live [skip ci]' || exit 0
+          git commit -m 'Record Aurum generation seed ladder v1.16 live [skip ci]' || exit 0
           git pull --rebase origin main
           git push origin HEAD:main

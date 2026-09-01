@@ -26,7 +26,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          expected_blob='cb9edd8f54ddc040330514090e40bae7141085d3'
+          expected_blob='418ca2b2288470c5268b8f258d40e3e2037b7690'
           api='https://api.github.com/repos/FormatX66/BoxBrain/contents/Web/Aurum-Arkmatx/future-branch-experiment-v1.js?ref=main'
           raw='https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/future-branch-experiment-v1.js'
           meta="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 "$api")"
@@ -40,11 +40,16 @@ jobs:
           for marker in \
             'AURUM_FUTURE_BRANCH_EXPERIMENT_V1_CANONICAL' \
             'Canonical website owner: FormatX66/ClusterSites.' \
+            'gha-33513733596-attempt-1' \
             'gha-33472480781-attempt-1' \
             "selectedPath:'current-release-flash-readback-proven-awaiting-physical-boot'" \
             "runId:'33487915033'" \
             "benchmark:'bounded_recovery_v1'" \
-            "surfaceRevision:'v1.1'" \
+            "surfaceRevision:'v1.2'" \
+            'consecutiveCycleSelectionStable:' \
+            'Frontiers Advancing' \
+            'Needs Work → Aurum/System' \
+            'Your Actions' \
             'raceAllSharedBenchmarkPassed:allBenchmark' \
             'raceAutoPromotion:RACE.autoPromotion' \
             "needsWorkOwner:'aurum-system'" \
@@ -123,10 +128,10 @@ jobs:
           text=re.sub(r'<script src="\./future-branch-experiment\.js(?:\?v=[^"]+)?"></script>\s*','',text)
           if '</body>' not in text:
               raise SystemExit('dashboard missing body close')
-          text=text.replace('</body>','<script src="./future-branch-experiment.js?v=2"></script>\n</body>',1)
+          text=text.replace('</body>','<script src="./future-branch-experiment.js?v=3"></script>\n</body>',1)
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './future-branch-experiment.js?v=2' "$RUNNER_TEMP/index.html"
+          grep -Fq './future-branch-experiment.js?v=3' "$RUNNER_TEMP/index.html"
 
       - name: Publish experiment surface with bounded connection count
         env:
@@ -160,22 +165,27 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          expected_blob='cb9edd8f54ddc040330514090e40bae7141085d3'
+          expected_blob='418ca2b2288470c5268b8f258d40e3e2037b7690'
           page="$(mktemp)"
           component="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' \
-            'https://arkmatx.com/aurum/dashboard/future-branch-experiment.js?rev=2' -o "$component"
+            'https://arkmatx.com/aurum/dashboard/future-branch-experiment.js?rev=3' -o "$component"
           grep -Fq 'Progress is proof, not activity.' "$page"
           grep -Fq './command-center.js?v=32' "$page"
-          grep -Fq './future-branch-experiment.js?v=2' "$page"
+          grep -Fq './future-branch-experiment.js?v=3' "$page"
           grep -Fq 'AURUM_FUTURE_BRANCH_EXPERIMENT_V1_CANONICAL' "$component"
           grep -Fq 'Canonical website owner: FormatX66/ClusterSites.' "$component"
+          grep -Fq 'gha-33513733596-attempt-1' "$component"
           grep -Fq 'gha-33472480781-attempt-1' "$component"
           grep -Fq "selectedPath:'current-release-flash-readback-proven-awaiting-physical-boot'" "$component"
           grep -Fq "runId:'33487915033'" "$component"
           grep -Fq "benchmark:'bounded_recovery_v1'" "$component"
-          grep -Fq "surfaceRevision:'v1.1'" "$component"
+          grep -Fq "surfaceRevision:'v1.2'" "$component"
+          grep -Fq 'consecutiveCycleSelectionStable:' "$component"
+          grep -Fq 'Frontiers Advancing' "$component"
+          grep -Fq 'Needs Work → Aurum/System' "$component"
+          grep -Fq 'Your Actions' "$component"
           grep -Fq 'raceAllSharedBenchmarkPassed:allBenchmark' "$component"
           grep -Fq 'raceAutoPromotion:RACE.autoPromotion' "$component"
           grep -Fq "needsWorkOwner:'aurum-system'" "$component"
@@ -225,19 +235,27 @@ jobs:
             "url": "${{ steps.verify.outputs.url }}",
             "canonical_website_repo": "FormatX66/ClusterSites",
             "canonical_component": "services/aurum-arkmatx/future-branch-experiment-v1.js",
-            "canonical_merge_commit": "2eb27cb24ca9f500e70ba539251398ef186f4a05",
+            "canonical_merge_commit": "99ef099fd6a051090ac969b9d247a7b65480ae28",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/future-branch-experiment-v1.js",
-            "projection_merge_commit": "7436f66c2183ff521435574ac181b8c15655400e",
+            "projection_merge_commit": "5bb2bfcb7a9863ad75c1c5e702304b8e3f6c7b75",
             "component_blob_sha": "${{ steps.source.outputs.blob }}",
             "deployment_carrier": "FormatX66/wetbeard-site",
-            "surface_revision": "v1.1",
-            "experiment_run_id": "33472480781",
-            "experiment_id": "gha-33472480781-attempt-1",
+            "surface_revision": "v1.2",
+            "experiment_evidence_source_commit": "c50223e2912406a7c23a1df5dba83c1f70cafb81",
+            "experiment_run_id": "33513733596",
+            "experiment_id": "gha-33513733596-attempt-1",
+            "experiment_cycle": 36,
+            "experiment_effective_cycle": 39,
+            "prior_experiment_run_id": "33472480781",
+            "prior_experiment_id": "gha-33472480781-attempt-1",
+            "prior_experiment_cycle": 35,
+            "consecutive_cycle_selection_stable": true,
             "selected_path": "current-release-flash-readback-proven-awaiting-physical-boot",
             "selected_probability": 0.8888888888888888,
             "selected_count": 1,
             "population_size": 8,
             "provider_sweeps_passed": true,
+            "seed_artifact_fingerprint": "8a67443e3935d64c2d51f2df2785496adeacf56de91863b69fd8d46bfe75c015",
             "experiment_race_run_id": "33487915033",
             "experiment_race_shared_benchmark": "bounded_recovery_v1",
             "experiment_race_lane_count": 4,

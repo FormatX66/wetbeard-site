@@ -21,6 +21,10 @@ const questIdeas = [
   {id:'e10', difficulty:1, stars:5, title:'Spot an animal word in a street name', description:'Look for any real or mythical animal without leaving the route.'},
   {id:'e11', difficulty:1, stars:5, title:'Ride beneath a natural tree arch', description:'Count a canopy where branches meet above the route.'},
   {id:'e12', difficulty:1, stars:5, title:'Hear a bicycle bell that is not your own', description:'Listen for a bell from another bicycle while the crew rolls.'},
+  {id:'e13', difficulty:1, stars:5, title:'Find a circle larger than your bicycle wheel', description:'Spot a round route-side object while continuing along the planned bicycle route.'},
+  {id:'e14', difficulty:1, stars:5, title:'Match one bicycle accessory to your shoe color', description:'Use a bottle, bag, light, grip, bell, or other bicycle accessory you can see safely.'},
+  {id:'e15', difficulty:1, stars:5, title:'Hear your tires change their road song', description:'Notice the sound shift when the bicycle naturally reaches a different surface.'},
+  {id:'e16', difficulty:1, stars:5, title:'Spot a bicycle symbol along the route', description:'Find a bicycle marking or sign without changing the planned ride.'},
   {id:'m01', difficulty:2, stars:10, title:'Introduce two riders who have not met', description:'Help two people in the crew make a new connection.'},
   {id:'m02', difficulty:2, stars:10, title:'Learn the story behind another rider’s bicycle', description:'Ask why they chose it or what makes it special.'},
   {id:'m03', difficulty:2, stars:10, title:'Find three different bicycle styles on the ride', description:'Identify three styles such as road, mountain, cruiser, cargo, BMX, or recumbent.'},
@@ -33,6 +37,10 @@ const questIdeas = [
   {id:'m10', difficulty:2, stars:10, title:'Find three addresses containing the same digit', description:'Use addresses visible from the route; no detour is needed.'},
   {id:'m11', difficulty:2, stars:10, title:'Spot a bicycle carrying an unexpected cargo', description:'Find something unusual that is safely secured to a bicycle.'},
   {id:'m12', difficulty:2, stars:10, title:'Learn another rider’s dream cycling destination', description:'Ask where they would most like to ride and why.'},
+  {id:'m13', difficulty:2, stars:10, title:'Spot three different handlebar shapes', description:'Look across the bicycles for bars such as flat, drop, riser, swept, or bullhorn.'},
+  {id:'m14', difficulty:2, stars:10, title:'Find four ways riders carry water', description:'Count bottle cages, hydration packs, frame bags, handlebar holders, or other secure setups.'},
+  {id:'m15', difficulty:2, stars:10, title:'Identify three bicycle frame materials', description:'Use visible clues or ask riders whether their frames are steel, aluminum, carbon, titanium, or another material.'},
+  {id:'m16', difficulty:2, stars:10, title:'Collect two favorite bicycle accessories', description:'Ask two riders which accessory they would least want to ride without.'},
   {id:'h01', difficulty:3, stars:20, title:'Ride with someone you have never ridden beside before', description:'Make a new riding connection while following safe group-riding etiquette.'},
   {id:'h02', difficulty:3, stars:20, title:'Help a new rider feel included in the crew', description:'Introduce yourself, include them in conversation, and connect them with another rider.'},
   {id:'h03', difficulty:3, stars:20, title:'Learn three riders’ bicycle origin stories', description:'Ask what first inspired each person to ride.'},
@@ -44,7 +52,11 @@ const questIdeas = [
   {id:'h09', difficulty:3, stars:20, title:'Remember six street names in riding order', description:'Recite six consecutive street names in the order the route reached them.'},
   {id:'h10', difficulty:3, stars:20, title:'Collect five one-word ride descriptions', description:'Ask five riders for one word that captures today’s bicycle ride.'},
   {id:'h11', difficulty:3, stars:20, title:'Identify eight distinct sounds of the ride', description:'Use only your ears and memory; no recording or scheduled stop is needed.'},
-  {id:'h12', difficulty:3, stars:20, title:'Spot five bicycle-friendly route features', description:'Look for bike lanes, bicycle signals, repair stands, racks, traffic calming, or trail links.'}
+  {id:'h12', difficulty:3, stars:20, title:'Spot five bicycle-friendly route features', description:'Look for bike lanes, bicycle signals, repair stands, racks, traffic calming, or trail links.'},
+  {id:'h13', difficulty:3, stars:20, title:'Identify six bicycle brands in the crew', description:'Read frame or component branding only when it is safe, or ask each rider.'},
+  {id:'h14', difficulty:3, stars:20, title:'Collect four bicycle maintenance tips', description:'Ask four riders for one practical tip each while normal ride conversation allows.'},
+  {id:'h15', difficulty:3, stars:20, title:'Remember six route landmarks in order', description:'Recite six sights in the same sequence the bicycle route passed them.'},
+  {id:'h16', difficulty:3, stars:20, title:'Find seven reflective details across bicycles', description:'Count distinct reflectors, reflective strips, decals, clothing details, or accessories across the crew.'}
 ];
 
 const cardIdeas = [
@@ -111,7 +123,23 @@ const cardIdeas = [
   {id:'pirates-palette', title:'Pirate’s Palette', quests:[
     {difficulty:1, stars:5, title:'Spot one gold-colored bicycle detail', description:'Look for a gold frame part, accessory, decal, or decoration.'},
     {difficulty:2, stars:10, title:'Find red, blue, and green across three bicycles', description:'Each color must appear on a different bicycle in the crew.'},
-    {difficulty:3, stars:20, title:'Find all seven rainbow colors during the ride', description:'Collect red, orange, yellow, green, blue, indigo, and violet from bicycles or route-side sights.'}]}
+    {difficulty:3, stars:20, title:'Find all seven rainbow colors during the ride', description:'Collect red, orange, yellow, green, blue, indigo, and violet from bicycles or route-side sights.'}]},
+  {id:'reflection-regatta', title:'Reflection Regatta', quests:[
+    {difficulty:1, stars:5, title:'Spot one bicycle reflection on the route', description:'Catch a reflection in glass, water, metal, or another surface while riding safely.'},
+    {difficulty:2, stars:10, title:'Find bicycle reflections on three different surfaces', description:'Count only reflections visible from the planned bicycle route.'},
+    {difficulty:3, stars:20, title:'Collect five bicycle reflections without a detour', description:'Use five separate reflective surfaces encountered as the ride naturally unfolds.'}]},
+  {id:'wheelwrights-wake', title:'Wheelwright’s Wake', quests:[
+    {difficulty:1, stars:5, title:'Find a tire tread unlike your own', description:'Compare a nearby bicycle tire when it is safe to look.'},
+    {difficulty:2, stars:10, title:'Spot three different bicycle wheel profiles', description:'Notice differences in wheel diameter, tire width, rim depth, or spoke layout.'},
+    {difficulty:3, stars:20, title:'Compare five wheel setups across the crew', description:'Name one visible difference for each setup without interrupting the ride.'}]},
+  {id:'compass-crew', title:'Compass Crew', quests:[
+    {difficulty:1, stars:5, title:'Spot one bicycle route arrow', description:'Find a painted arrow, sign, or trail marker along the planned route.'},
+    {difficulty:2, stars:10, title:'Notice three navigation clues the crew follows', description:'Count route arrows, street signs, trail markers, or leader signals as they naturally appear.'},
+    {difficulty:3, stars:20, title:'Reconstruct five consecutive route cues', description:'Recall five turns, signs, markers, or leader signals in the order the bicycle ride followed them.'}]},
+  {id:'patterned-plunder', title:'Patterned Plunder', quests:[
+    {difficulty:1, stars:5, title:'Spot one repeating pattern on bicycle gear', description:'Look for a pattern on clothing, bags, bottles, tape, decals, or another bicycle detail.'},
+    {difficulty:2, stars:10, title:'Find stripes, dots, and checks during the ride', description:'Each pattern may appear on bicycles, riding gear, or route-side sights.'},
+    {difficulty:3, stars:20, title:'Collect six distinct patterns in discovery order', description:'Remember six different patterns in the order they appeared along the bicycle route.'}]}
 ];
 
 const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (character) => ({

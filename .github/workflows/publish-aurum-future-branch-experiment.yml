@@ -26,7 +26,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          expected_blob='b1dd3ce1fba749a840b2141f1df663fa9b1c1611'
+          expected_blob='43539d8b48e59b1255d3eea3df39435c9b39351b'
           api='https://api.github.com/repos/FormatX66/BoxBrain/contents/Web/Aurum-Arkmatx/future-branch-experiment-v1.js?ref=main'
           raw='https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/future-branch-experiment-v1.js'
           meta="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 "$api")"
@@ -46,12 +46,23 @@ jobs:
             "selectedPath:'current-release-flash-readback-proven-awaiting-physical-boot'" \
             "runId:'33487915033'" \
             "benchmark:'bounded_recovery_v1'" \
-            "surfaceRevision:'v1.3'" \
+            "surfaceRevision:'v1.4'" \
             'stabilityWindowCount:3' \
             'stabilityWindowCycles:[35,36,37]' \
             'consecutiveCycleSelectionStable:' \
             'equivalentRepeatSuppression:' \
             'republishOnlyOnSubstantiveEvidenceChange:' \
+            'Prepared handoff process' \
+            "storedStatus:'degraded'" \
+            "storedMissingEvidence:['selected-machine-path']" \
+            "rootCause:'qpu-candidate-envelope-analysis-not-unwrapped'" \
+            "correctionCommit:'a5bae15cde278f07a77068f9af977bf12d9d1b81'" \
+            "correctionTestRunId:'33557714319'" \
+            "correctionTestConclusion:'success'" \
+            'correctionVerified:true' \
+            "nextRefresh:'next-normal-continuous-flow-cycle'" \
+            'manualExperimentRerunRequired:false' \
+            'authorityWidened:false' \
             'Frontiers Advancing' \
             'Evidence-health policy' \
             'Needs Work → Aurum/System' \
@@ -134,10 +145,10 @@ jobs:
           text=re.sub(r'<script src="\./future-branch-experiment\.js(?:\?v=[^"]+)?"></script>\s*','',text)
           if '</body>' not in text:
               raise SystemExit('dashboard missing body close')
-          text=text.replace('</body>','<script src="./future-branch-experiment.js?v=4"></script>\n</body>',1)
+          text=text.replace('</body>','<script src="./future-branch-experiment.js?v=5"></script>\n</body>',1)
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './future-branch-experiment.js?v=4' "$RUNNER_TEMP/index.html"
+          grep -Fq './future-branch-experiment.js?v=5' "$RUNNER_TEMP/index.html"
 
       - name: Publish experiment surface with bounded connection count
         env:
@@ -171,15 +182,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          expected_blob='b1dd3ce1fba749a840b2141f1df663fa9b1c1611'
+          expected_blob='43539d8b48e59b1255d3eea3df39435c9b39351b'
           page="$(mktemp)"
           component="$(mktemp)"
           final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' \
-            'https://arkmatx.com/aurum/dashboard/future-branch-experiment.js?rev=4' -o "$component"
+            'https://arkmatx.com/aurum/dashboard/future-branch-experiment.js?rev=5' -o "$component"
           grep -Fq 'Progress is proof, not activity.' "$page"
           grep -Fq './command-center.js?v=32' "$page"
-          grep -Fq './future-branch-experiment.js?v=4' "$page"
+          grep -Fq './future-branch-experiment.js?v=5' "$page"
           grep -Fq 'AURUM_FUTURE_BRANCH_EXPERIMENT_V1_CANONICAL' "$component"
           grep -Fq 'Canonical website owner: FormatX66/ClusterSites.' "$component"
           grep -Fq 'gha-33549260662-attempt-1' "$component"
@@ -188,12 +199,23 @@ jobs:
           grep -Fq "selectedPath:'current-release-flash-readback-proven-awaiting-physical-boot'" "$component"
           grep -Fq "runId:'33487915033'" "$component"
           grep -Fq "benchmark:'bounded_recovery_v1'" "$component"
-          grep -Fq "surfaceRevision:'v1.3'" "$component"
+          grep -Fq "surfaceRevision:'v1.4'" "$component"
           grep -Fq 'stabilityWindowCount:3' "$component"
           grep -Fq 'stabilityWindowCycles:[35,36,37]' "$component"
           grep -Fq 'consecutiveCycleSelectionStable:' "$component"
           grep -Fq 'equivalentRepeatSuppression:' "$component"
           grep -Fq 'republishOnlyOnSubstantiveEvidenceChange:' "$component"
+          grep -Fq 'Prepared handoff process' "$component"
+          grep -Fq "storedStatus:'degraded'" "$component"
+          grep -Fq "storedMissingEvidence:['selected-machine-path']" "$component"
+          grep -Fq "rootCause:'qpu-candidate-envelope-analysis-not-unwrapped'" "$component"
+          grep -Fq "correctionCommit:'a5bae15cde278f07a77068f9af977bf12d9d1b81'" "$component"
+          grep -Fq "correctionTestRunId:'33557714319'" "$component"
+          grep -Fq "correctionTestConclusion:'success'" "$component"
+          grep -Fq 'correctionVerified:true' "$component"
+          grep -Fq "nextRefresh:'next-normal-continuous-flow-cycle'" "$component"
+          grep -Fq 'manualExperimentRerunRequired:false' "$component"
+          grep -Fq 'authorityWidened:false' "$component"
           grep -Fq 'Frontiers Advancing' "$component"
           grep -Fq 'Evidence-health policy' "$component"
           grep -Fq 'Needs Work → Aurum/System' "$component"
@@ -247,12 +269,13 @@ jobs:
             "url": "${{ steps.verify.outputs.url }}",
             "canonical_website_repo": "FormatX66/ClusterSites",
             "canonical_component": "services/aurum-arkmatx/future-branch-experiment-v1.js",
-            "canonical_merge_commit": "635cce65e259e5d49cf37d7e71427a7bb9df7f3d",
+            "canonical_merge_commit": "eabb63c695e1515aa4e0b23a8ca9bd9bc3fdfc38",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/future-branch-experiment-v1.js",
-            "projection_merge_commit": "241c9f632d2f6c110430929fec4d4b456f576063",
+            "projection_merge_commit": "2eaf8ac925e42a732a22d8b395259aba04fb3d80",
+            "projection_ci_run_id": "33558752816",
             "component_blob_sha": "${{ steps.source.outputs.blob }}",
             "deployment_carrier": "FormatX66/wetbeard-site",
-            "surface_revision": "v1.3",
+            "surface_revision": "v1.4",
             "experiment_evidence_source_commit": "221a8f30a74253ffd9bb0ca091f9fcef86672c06",
             "experiment_run_id": "33549260662",
             "experiment_id": "gha-33549260662-attempt-1",
@@ -275,6 +298,17 @@ jobs:
             "population_size": 8,
             "provider_sweeps_passed": true,
             "seed_artifact_fingerprint": "8a67443e3935d64c2d51f2df2785496adeacf56de91863b69fd8d46bfe75c015",
+            "handoff_source_run_id": "33549260662",
+            "handoff_stored_status": "degraded",
+            "handoff_stored_missing_evidence": ["selected-machine-path"],
+            "handoff_root_cause": "qpu-candidate-envelope-analysis-not-unwrapped",
+            "handoff_correction_commit": "a5bae15cde278f07a77068f9af977bf12d9d1b81",
+            "handoff_correction_test_run_id": "33557714319",
+            "handoff_correction_test_conclusion": "success",
+            "handoff_correction_verified": true,
+            "handoff_next_refresh": "next-normal-continuous-flow-cycle",
+            "handoff_manual_experiment_rerun_required": false,
+            "handoff_authority_widened": false,
             "experiment_race_run_id": "33487915033",
             "experiment_race_shared_benchmark": "bounded_recovery_v1",
             "experiment_race_lane_count": 4,
@@ -297,6 +331,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-future-branch-experiment-live.json
-          git commit -m 'Record Aurum Future Branch experiment live [skip ci]' || exit 0
+          git commit -m 'Record Aurum Future Branch experiment v1.4 live [skip ci]' || exit 0
           git pull --rebase origin main
           git push origin HEAD:main

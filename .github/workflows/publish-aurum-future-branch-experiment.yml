@@ -1,0 +1,248 @@
+name: Publish Aurum Future Branch Experiment
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-aurum-future-branch-experiment.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aurum-future-branch-experiment-production
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch exact public projection of ClusterSites canonical experiment surface
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected_blob='1cd36008aa2e6aef34328e3feecc1c9abf64508d'
+          api='https://api.github.com/repos/FormatX66/BoxBrain/contents/Web/Aurum-Arkmatx/future-branch-experiment-v1.js?ref=main'
+          raw='https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/future-branch-experiment-v1.js'
+          meta="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 "$api")"
+          blob="$(jq -r '.sha' <<<"$meta")"
+          test "$blob" = "$expected_blob"
+          out="$RUNNER_TEMP/future-branch-experiment.js"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 "$raw" -o "$out"
+          test -s "$out"
+          node --check "$out"
+          test "$(git hash-object "$out")" = "$expected_blob"
+          for marker in \
+            'AURUM_FUTURE_BRANCH_EXPERIMENT_V1_CANONICAL' \
+            'Canonical website owner: FormatX66/ClusterSites.' \
+            'gha-33472480781-attempt-1' \
+            "selectedPath:'current-release-flash-readback-proven-awaiting-physical-boot'" \
+            "needsWorkOwner:'aurum-system'" \
+            'humanActionInference:false' \
+            'productionExecutionInferred:false' \
+            'newMajorBoxAdded:false' \
+            'existingFutureBranchBoxRemainsExpandable:true'; do
+            grep -Fq -- "$marker" "$out"
+          done
+          echo "file=$out" >> "$GITHUB_OUTPUT"
+          echo "blob=$blob" >> "$GITHUB_OUTPUT"
+
+      - name: Configure existing Bluehost SSH carrier with bounded retry
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+          BLUEHOST_SSH_PRIVATE_KEY: ${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$BLUEHOST_HOST"
+          test -n "$BLUEHOST_USERNAME"
+          test -n "$BLUEHOST_SSH_PRIVATE_KEY"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$BLUEHOST_SSH_PRIVATE_KEY" > "$HOME/.ssh/bluehost_deploy"
+          chmod 600 "$HOME/.ssh/bluehost_deploy"
+          : > "$HOME/.ssh/known_hosts"
+          for attempt in 1 2 3 4 5; do
+            if ssh-keyscan -T 10 -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null; then exit 0; fi
+            if [ "$attempt" -eq 5 ]; then
+              echo "Bluehost SSH keyscan remained unavailable after $attempt bounded attempts" >&2
+              exit 1
+            fi
+            sleep $((attempt * 5))
+          done
+
+      - name: Back up and fetch current Command Center
+        id: backup
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          retry_capture() {
+            local outfile="$1"; shift
+            local attempt=1 rc=0 tmp
+            tmp="$(mktemp)"
+            while true; do
+              if "$@" > "$tmp"; then mv "$tmp" "$outfile"; return 0; fi
+              rc=$?
+              if [ "$attempt" -ge 5 ]; then rm -f "$tmp"; return "$rc"; fi
+              sleep $((attempt * 5))
+              attempt=$((attempt + 1))
+            done
+          }
+          remote='public_html/arkmatx/aurum/dashboard'
+          backup=".aurum-dashboard-backups/future-branch-experiment-$GITHUB_RUN_ID"
+          retry_capture "$RUNNER_TEMP/index.html" \
+            ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "set -eu; mkdir -p '$remote' '$backup'; cp -p '$remote/index.html' '$backup/index.html'; if [ -f '$remote/future-branch-experiment.js' ]; then cp -p '$remote/future-branch-experiment.js' '$backup/future-branch-experiment.js'; else touch '$backup/.missing-future-branch-experiment.js'; fi; cat '$remote/index.html'"
+          test -s "$RUNNER_TEMP/index.html"
+          grep -Fq 'Progress is proof, not activity.' "$RUNNER_TEMP/index.html"
+          grep -Fq './command-center.js?v=32' "$RUNNER_TEMP/index.html"
+          echo 'ready=true' >> "$GITHUB_OUTPUT"
+
+      - name: Inject experiment augmentation into existing expandable Future Branch surface
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - "$RUNNER_TEMP/index.html" <<'PY'
+          from pathlib import Path
+          import re, sys
+          p=Path(sys.argv[1])
+          text=p.read_text(encoding='utf-8')
+          text=re.sub(r'<script src="\./future-branch-experiment\.js(?:\?v=[^"]+)?"></script>\s*','',text)
+          if '</body>' not in text:
+              raise SystemExit('dashboard missing body close')
+          text=text.replace('</body>','<script src="./future-branch-experiment.js?v=1"></script>\n</body>',1)
+          p.write_text(text,encoding='utf-8')
+          PY
+          grep -Fq './future-branch-experiment.js?v=1' "$RUNNER_TEMP/index.html"
+
+      - name: Publish experiment surface with bounded connection count
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          retry() {
+            local attempt=1 rc=0
+            while true; do
+              "$@" && return 0
+              rc=$?
+              if [ "$attempt" -ge 5 ]; then return "$rc"; fi
+              sleep $((attempt * 5))
+              attempt=$((attempt + 1))
+            done
+          }
+          remote='public_html/arkmatx/aurum/dashboard'
+          stage="$RUNNER_TEMP/aurum-future-branch-experiment-publish"
+          mkdir -p "$stage"
+          cp "$RUNNER_TEMP/index.html" "$stage/index.html"
+          cp "${{ steps.source.outputs.file }}" "$stage/future-branch-experiment.js"
+          retry scp -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -P 22 \
+            "$stage/index.html" "$stage/future-branch-experiment.js" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/"
+          retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "chmod 644 '$remote/index.html' '$remote/future-branch-experiment.js'"
+
+      - name: Verify live experiment surface and canonical bytes
+        id: verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected_blob='1cd36008aa2e6aef34328e3feecc1c9abf64508d'
+          page="$(mktemp)"
+          component="$(mktemp)"
+          final_url="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
+          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' \
+            'https://arkmatx.com/aurum/dashboard/future-branch-experiment.js?rev=1' -o "$component"
+          grep -Fq 'Progress is proof, not activity.' "$page"
+          grep -Fq './command-center.js?v=32' "$page"
+          grep -Fq './future-branch-experiment.js?v=1' "$page"
+          grep -Fq 'AURUM_FUTURE_BRANCH_EXPERIMENT_V1_CANONICAL' "$component"
+          grep -Fq 'Canonical website owner: FormatX66/ClusterSites.' "$component"
+          grep -Fq 'gha-33472480781-attempt-1' "$component"
+          grep -Fq "selectedPath:'current-release-flash-readback-proven-awaiting-physical-boot'" "$component"
+          grep -Fq "needsWorkOwner:'aurum-system'" "$component"
+          grep -Fq 'humanActionInference:false' "$component"
+          grep -Fq 'productionExecutionInferred:false' "$component"
+          grep -Fq 'newMajorBoxAdded:false' "$component"
+          grep -Fq 'existingFutureBranchBoxRemainsExpandable:true' "$component"
+          test "$(git hash-object "$component")" = "$expected_blob"
+          echo "url=$final_url" >> "$GITHUB_OUTPUT"
+
+      - name: Roll back if verification fails
+        if: ${{ failure() && steps.backup.outputs.ready == 'true' }}
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          retry() {
+            local attempt=1 rc=0
+            while true; do
+              "$@" && return 0
+              rc=$?
+              if [ "$attempt" -ge 5 ]; then return "$rc"; fi
+              sleep $((attempt * 5))
+              attempt=$((attempt + 1))
+            done
+          }
+          remote='public_html/arkmatx/aurum/dashboard'
+          backup=".aurum-dashboard-backups/future-branch-experiment-$GITHUB_RUN_ID"
+          retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "set -eu; cp -p '$backup/index.html' '$remote/index.html'; if [ -f '$backup/future-branch-experiment.js' ]; then cp -p '$backup/future-branch-experiment.js' '$remote/future-branch-experiment.js'; elif [ -f '$backup/.missing-future-branch-experiment.js' ]; then rm -f '$remote/future-branch-experiment.js'; fi"
+
+      - name: Record verified experiment deployment receipt
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git checkout main
+          git reset --hard origin/main
+          mkdir -p deployments
+          verified_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          cat > deployments/aurum-future-branch-experiment-live.json <<EOF
+          {
+            "site": "aurum-command-center",
+            "url": "${{ steps.verify.outputs.url }}",
+            "canonical_website_repo": "FormatX66/ClusterSites",
+            "canonical_component": "services/aurum-arkmatx/future-branch-experiment-v1.js",
+            "canonical_merge_commit": "0c954b78d566d839362cc00643a0d4a6b1b3120c",
+            "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/future-branch-experiment-v1.js",
+            "projection_merge_commit": "18f39c0f1979cda8a61fa1e8c7ca935b6038a23f",
+            "component_blob_sha": "${{ steps.source.outputs.blob }}",
+            "deployment_carrier": "FormatX66/wetbeard-site",
+            "experiment_run_id": "33472480781",
+            "experiment_id": "gha-33472480781-attempt-1",
+            "selected_path": "current-release-flash-readback-proven-awaiting-physical-boot",
+            "selected_probability": 0.8888888888888888,
+            "selected_count": 1,
+            "population_size": 8,
+            "provider_sweeps_passed": true,
+            "physical_boot_verified": false,
+            "guardian_forced_rollback_verified": false,
+            "existing_future_branch_box_expandable": true,
+            "major_box_added": false,
+            "needs_work_system_owned": true,
+            "production_execution_inferred": false,
+            "human_action_inference": false,
+            "backup_before_publish": true,
+            "rollback_on_verify_failure": true,
+            "status": "verified-live",
+            "verified_at_utc": "$verified_at"
+          }
+          EOF
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add deployments/aurum-future-branch-experiment-live.json
+          git commit -m 'Record Aurum Future Branch experiment live [skip ci]' || exit 0
+          git pull --rebase origin main
+          git push origin HEAD:main

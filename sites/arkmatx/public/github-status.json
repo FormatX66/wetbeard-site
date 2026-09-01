@@ -20,53 +20,53 @@
   ],
   "recent_commits": [
     {
-      "sha": "69cbd3c9",
+      "sha": "000583c3",
       "message": "Record Aurum Future Branch experiment live [skip ci]",
-      "date": "2026-09-01T08:49:33Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/69cbd3c98a485cbcae42f74173f8ca109a744fab"
+      "date": "2026-09-01T15:02:06Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/000583c36f538afe7e05c5b1c836e57fd0a2ff2a"
     },
     {
-      "sha": "bc8fc673",
-      "message": "Publish verified Aurum Experiment Race evidence",
-      "date": "2026-09-01T08:48:40Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/bc8fc673809d79b1ff89e609b098f7308dac720b"
+      "sha": "fd55efb8",
+      "message": "Publish verified Aurum Future Branch evidence v1.2 safely",
+      "date": "2026-09-01T15:01:50Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/fd55efb8a326ebb9872220ebd1188b75b20c7087"
     },
     {
-      "sha": "50914b5f",
-      "message": "Publish verified Aurum Experiment Race evidence safely",
-      "date": "2026-09-01T08:48:21Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/50914b5f8597ded8756c696201055b53b0960a17"
+      "sha": "f7fc5f76",
+      "message": "Advance Future Branch publisher to verified v1.2 evidence",
+      "date": "2026-09-01T15:01:08Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/f7fc5f766341429a3439ca36c502da97171381ae"
     },
     {
-      "sha": "f7433ae1",
-      "message": "Record Aurum Future Branch experiment live [skip ci]",
-      "date": "2026-09-01T06:52:13Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/f7433ae1f084759aefe327caa3df68d5a4110319"
+      "sha": "fb11dd1b",
+      "message": "Refresh September bicycle quest ideas (#115)",
+      "date": "2026-09-01T13:50:21Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/fb11dd1bf488f07d4372da5d850c88828a6c47a7"
     },
     {
-      "sha": "c207f833",
-      "message": "Merge protected Future Branch experiment publisher",
-      "date": "2026-09-01T06:51:59Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/c207f8330e0b391a7a41867e58fd339fa3d26802"
+      "sha": "7b2ab265",
+      "message": "Record Aurum generation seed ladder v1.15 live [skip ci]",
+      "date": "2026-09-01T13:23:01Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/7b2ab265ac6651568e030955196a92aa8b2bf640"
     },
     {
-      "sha": "ceeb136a",
-      "message": "Add protected Future Branch experiment publisher",
-      "date": "2026-09-01T06:51:12Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/ceeb136af262e908239dcf4f292fbad1360cf9d9"
+      "sha": "a3f46f0c",
+      "message": "Fix v1.15 Hopper conclusion verification quoting",
+      "date": "2026-09-01T13:22:38Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/a3f46f0c81feb3b36278ac02546e9c90db70d43d"
     },
     {
-      "sha": "764204d2",
+      "sha": "5e43388f",
+      "message": "Advance Aurum Generation Seed Ladder publisher to v1.15",
+      "date": "2026-09-01T13:09:33Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/5e43388f0b46bb535ee1d9db2efbaed74e1584c6"
+    },
+    {
+      "sha": "e8ded14d",
       "message": "Refresh ArkmatX GitHub status [skip ci]",
-      "date": "2026-09-01T05:08:16Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/764204d2ff2fdfa56f4323f418dec22e5eff55bb"
-    },
-    {
-      "sha": "783af947",
-      "message": "Record Aurum generation seed ladder v1.14 live [skip ci]",
-      "date": "2026-09-01T00:55:03Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/783af947ea547160344140d885aaf4f83d28ea13"
+      "date": "2026-09-01T11:39:14Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/e8ded14d841926d3d905f11d3f337377365f9038"
     }
   ],
-  "updated_at": "2026-09-01T11:39:13Z"
+  "updated_at": "2026-09-01T16:40:28Z"
 }

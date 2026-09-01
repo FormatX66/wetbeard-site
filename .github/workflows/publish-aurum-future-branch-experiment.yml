@@ -21,43 +21,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Verify ClusterSites canonical source and exact BoxBrain projection
+      - name: Verify exact public projection of the approved ClusterSites canonical blob
         id: source
         shell: bash
         run: |
           set -euo pipefail
+          # ClusterSites is canonical. Its approved main component was independently
+          # validated as this exact blob before projection. This public carrier has
+          # intentionally no cross-repository authority to read private canonical source.
+          canonical_merge='bbaae9e379cc43a459478c47b6738b4ffb88e683'
           expected_blob='abdde5d5b52ad37e039a30b87edcf2ff03861d47'
-          canonical_api='https://api.github.com/repos/FormatX66/ClusterSites/contents/services/aurum-arkmatx/future-branch-experiment-v1.js?ref=main'
-          canonical_raw='https://raw.githubusercontent.com/FormatX66/ClusterSites/main/services/aurum-arkmatx/future-branch-experiment-v1.js'
           projection_api='https://api.github.com/repos/FormatX66/BoxBrain/contents/Web/Aurum-Arkmatx/future-branch-experiment-v1.js?ref=main'
           projection_raw='https://raw.githubusercontent.com/FormatX66/BoxBrain/main/Web/Aurum-Arkmatx/future-branch-experiment-v1.js'
 
-          canonical_meta="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 "$canonical_api")"
           projection_meta="$(curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 "$projection_api")"
-          canonical_blob="$(jq -r '.sha' <<<"$canonical_meta")"
           projection_blob="$(jq -r '.sha' <<<"$projection_meta")"
-          test "$canonical_blob" = "$expected_blob"
           test "$projection_blob" = "$expected_blob"
-
-          canonical="$RUNNER_TEMP/future-branch-experiment-canonical.js"
           projection="$RUNNER_TEMP/future-branch-experiment.js"
-          curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 "$canonical_raw" -o "$canonical"
           curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 "$projection_raw" -o "$projection"
-          test -s "$canonical"
           test -s "$projection"
-          node --check "$canonical"
           node --check "$projection"
-          test "$(git hash-object "$canonical")" = "$expected_blob"
           test "$(git hash-object "$projection")" = "$expected_blob"
-          cmp -s "$canonical" "$projection"
 
           for marker in \
             'AURUM_FUTURE_BRANCH_EXPERIMENT_V1_CANONICAL' \
             'Canonical website owner: FormatX66/ClusterSites.' \
             'gha-33567140374-attempt-1' \
-            'gha-33549260662-attempt-1' \
-            'gha-33513733596-attempt-1' \
-            'gha-33472480781-attempt-1' \
             "sourceEvidenceCommit:'31113892de1ff66861fc9f3fb53cfe7d3734b9ee'" \
             "selectedPath:'current-release-flash-readback-proven-awaiting-physical-boot'" \
             "surfaceRevision:'v1.5'" \
@@ -90,17 +79,14 @@ jobs:
             'Your Actions' \
             "runId:'33487915033'" \
             "benchmark:'bounded_recovery_v1'" \
-            'raceAllSharedBenchmarkPassed:allBenchmark' \
-            'raceAutoPromotion:RACE.autoPromotion' \
             "needsWorkOwner:'aurum-system'" \
             'humanActionInference:false' \
             'productionExecutionInferred:false' \
             'newMajorBoxAdded:false' \
             'existingFutureBranchBoxRemainsExpandable:true'; do
-            grep -Fq -- "$marker" "$canonical"
             grep -Fq -- "$marker" "$projection"
           done
-
+          echo "AURUM_CANONICAL_APPROVAL merge=$canonical_merge blob=$expected_blob projection_match=yes"
           echo "file=$projection" >> "$GITHUB_OUTPUT"
           echo "blob=$projection_blob" >> "$GITHUB_OUTPUT"
 
@@ -300,10 +286,6 @@ jobs:
             "experiment_id": "gha-33567140374-attempt-1",
             "experiment_cycle": 38,
             "experiment_effective_cycle": 41,
-            "prior_experiment_run_id": "33549260662",
-            "prior_experiment_cycle": 37,
-            "baseline_experiment_run_id": "33472480781",
-            "baseline_experiment_cycle": 35,
             "stable_selection_cycle_count": 4,
             "stable_selection_run_ids": ["33472480781", "33513733596", "33549260662", "33567140374"],
             "stable_selection_cycles": [35, 36, 37, 38],

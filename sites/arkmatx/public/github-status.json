@@ -20,6 +20,30 @@
   ],
   "recent_commits": [
     {
+      "sha": "783af947",
+      "message": "Record Aurum generation seed ladder v1.14 live [skip ci]",
+      "date": "2026-09-01T00:55:03Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/783af947ea547160344140d885aaf4f83d28ea13"
+    },
+    {
+      "sha": "be21a0b1",
+      "message": "Merge pull request #111 from FormatX66/automation/publish-aurum-seed-v1-14",
+      "date": "2026-09-01T00:54:33Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/be21a0b188f8e480edd5416e2f854ce700af86bc"
+    },
+    {
+      "sha": "e706eda7",
+      "message": "Publish Aurum seed ladder v1.14 stale Hopper status truth",
+      "date": "2026-09-01T00:54:05Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/e706eda706f234b7bd18dc4e4522c5ebb5f34d6b"
+    },
+    {
+      "sha": "ae74310e",
+      "message": "Refresh ArkmatX GitHub status [skip ci]",
+      "date": "2026-08-31T22:50:40Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/ae74310eb6a763dc84681d015e8f47fb48b8b1f6"
+    },
+    {
       "sha": "994ddc60",
       "message": "Record Aurum generation seed ladder v1.13 live [skip ci]",
       "date": "2026-08-31T21:58:39Z",
@@ -42,31 +66,7 @@
       "message": "Record Aurum generation seed ladder v1.12 live [skip ci]",
       "date": "2026-08-31T18:00:54Z",
       "html_url": "https://github.com/FormatX66/wetbeard-site/commit/ac167e2278b01d64723851b430f539d82e1fd4b5"
-    },
-    {
-      "sha": "f49c179f",
-      "message": "Merge pull request #109 from FormatX66/automation/publish-aurum-seed-v1-12",
-      "date": "2026-08-31T18:00:31Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/f49c179f4fe0515413c30d39331bf18599dcf3ca"
-    },
-    {
-      "sha": "4a1b6ae0",
-      "message": "Correct v1.12 virtual-lab job verification names",
-      "date": "2026-08-31T18:00:09Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/4a1b6ae01c164cc95a6f0a5024f298239e825dff"
-    },
-    {
-      "sha": "b5d66c7b",
-      "message": "Publish Aurum seed ladder v1.12 with current-head convergence proof",
-      "date": "2026-08-31T17:56:43Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/b5d66c7b19f8e879c082a353a84f0bfd90e12d5d"
-    },
-    {
-      "sha": "4b1f06f7",
-      "message": "Record Aurum generation seed ladder v1.11 live [skip ci]",
-      "date": "2026-08-31T17:02:03Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/4b1f06f7104f3506da739f7eacc67e1b8b67e932"
     }
   ],
-  "updated_at": "2026-08-31T22:50:40Z"
+  "updated_at": "2026-09-01T05:08:16Z"
 }

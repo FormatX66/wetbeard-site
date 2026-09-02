@@ -30,12 +30,15 @@ jobs:
           # ClusterSites remains the canonical website owner. The protected carrier
           # accepts only the independently approved canonical blob after it appears
           # byte-identically in the public BoxBrain projection and passes BoxBrain CI.
-          canonical_commit='b2e63be29ac84f177fda8fc19dd377079a649e07'
-          projection_commit='8480a29462feb49c137e6da656ac157cd6d16ab8'
-          projection_main_commit='5c45a941bd75baa9763d2c15b6101355db2f7596'
-          expected_blob='e96cd867909536e7a704fff137a54666840d70c8'
-          projection_ci_run='33651635360'
+          canonical_commit='7f1c74f802322bfbfafab41a9167f2fe0569bdc7'
+          projection_commit='cd2b23601f1e27217754174bd3f10a24ba26b6f8'
+          projection_main_commit='d0438a5b0c711fdf5218062f79a802a2b9ca6f0c'
+          expected_blob='10c288420fe8d33524967a216a6f7c0a742b5528'
+          projection_ci_run='33681895414'
           hopper_snapshot_commit='4ac20ff95617698f3a893f01b5d28a6d728562a1'
+          legacy_autoboot_candidate_commit='ac6b03819e47e7167ba77b2e3a5846f515a88d72'
+          legacy_autoboot_image_run='33677247135'
+          legacy_autoboot_prior_failure_run='33675680912'
 
           projection="$RUNNER_TEMP/generation-seed-ladder-projection.js"
           projection_main="$RUNNER_TEMP/generation-seed-ladder-projection-main.js"
@@ -53,10 +56,16 @@ jobs:
 
           for token in \
             'AURUM_GENERATION_SEED_LADDER_V1_CANONICAL' \
-            'AURUM_GENERATION_SEED_LADDER_V1_19_CANONICAL' \
+            'AURUM_GENERATION_SEED_LADDER_V1_20_CANONICAL' \
             "canonicalWebsiteRepo:'FormatX66/ClusterSites'" \
-            "componentRevision:'1.19'" \
+            "componentRevision:'1.20'" \
             "ACTIVE_TRUNK_COMMIT='e580992ec17ebf959168aa43ca60c59ecfce2629'" \
+            "LEGACY_AUTOBOOT_CANDIDATE_COMMIT='ac6b03819e47e7167ba77b2e3a5846f515a88d72'" \
+            "LEGACY_AUTOBOOT_PC_IMAGE_RUN='33677247135'" \
+            'legacyAutobootLegacyBiosInstallAndBootSmokePassed:true' \
+            'legacyAutobootVerifiedImagePublished:true' \
+            'legacyAutobootPromotedToActiveTrunk:false' \
+            'legacyAutobootPhysicalHopperProofProven:false' \
             'guardedHopperInstallImplemented:true' \
             'guardedInstallVisibleEraseConfirmationRequired:true' \
             'guardedInstallExactlyOneEligibleInternalTargetRequired:true' \
@@ -95,12 +104,25 @@ jobs:
             "$api_boxbrain/actions/runs/$projection_ci_run" -o "$RUNNER_TEMP/projection-ci.json"
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
             "https://raw.githubusercontent.com/FormatX66/BoxBrain/$hopper_snapshot_commit/Web/Aurum-Arkmatx/hopper-status.json" -o "$RUNNER_TEMP/hopper-status.json"
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
+            "$api_boxbrain/commits/$legacy_autoboot_candidate_commit" -o "$RUNNER_TEMP/legacy-candidate-commit.json"
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
+            "$api_boxbrain/actions/runs/$legacy_autoboot_image_run" -o "$RUNNER_TEMP/legacy-candidate-run.json"
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
+            "$api_boxbrain/actions/runs/$legacy_autoboot_image_run/jobs" -o "$RUNNER_TEMP/legacy-candidate-jobs.json"
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
+            "$api_boxbrain/actions/runs/$legacy_autoboot_prior_failure_run" -o "$RUNNER_TEMP/legacy-prior-run.json"
 
-          python3 - "$RUNNER_TEMP/projection-ci.json" "$RUNNER_TEMP/hopper-status.json" "$projection_commit" <<'PY'
+          python3 - "$RUNNER_TEMP/projection-ci.json" "$RUNNER_TEMP/hopper-status.json" "$projection_commit" "$RUNNER_TEMP/legacy-candidate-commit.json" "$RUNNER_TEMP/legacy-candidate-run.json" "$RUNNER_TEMP/legacy-candidate-jobs.json" "$RUNNER_TEMP/legacy-prior-run.json" <<'PY'
           import json,sys
-          ci,hopper=[json.load(open(p,encoding='utf-8')) for p in sys.argv[1:3]]
+          ci=json.load(open(sys.argv[1],encoding='utf-8'))
+          hopper=json.load(open(sys.argv[2],encoding='utf-8'))
           projection=sys.argv[3]
-          assert ci.get('id')==33651635360
+          candidate_commit=json.load(open(sys.argv[4],encoding='utf-8'))
+          candidate_run=json.load(open(sys.argv[5],encoding='utf-8'))
+          candidate_jobs=json.load(open(sys.argv[6],encoding='utf-8'))
+          prior_run=json.load(open(sys.argv[7],encoding='utf-8'))
+          assert ci.get('id')==33681895414
           assert ci.get('name')=='BoxBrain CI'
           assert ci.get('head_sha')==projection
           assert ci.get('status')=='completed' and ci.get('conclusion')=='success'
@@ -110,7 +132,21 @@ jobs:
           assert hopper.get('endpoint') is None and hopper.get('source_kind') is None
           assert hopper.get('reachable') is False and hopper.get('report') is None
           assert (hopper.get('summary') or {}).get('health')=='no-endpoint-candidate'
-          print('GENERATION_LADDER_V119_SOURCE_AND_EVIDENCE_OK')
+          assert candidate_commit.get('sha')=='ac6b03819e47e7167ba77b2e3a5846f515a88d72'
+          assert str(((candidate_commit.get('commit') or {}).get('message') or '')).startswith('fix(aurum): auto-boot legacy live media')
+          assert candidate_run.get('id')==33677247135
+          assert candidate_run.get('head_sha')=='ac6b03819e47e7167ba77b2e3a5846f515a88d72'
+          assert candidate_run.get('head_branch')=='codex/aurum-hopper-open-core-boot-sync-20260829'
+          assert candidate_run.get('status')=='completed' and candidate_run.get('conclusion')=='success'
+          by_name={j.get('name'):j for j in candidate_jobs.get('jobs',[])}
+          for name in ('validate','build-image','generic-uefi-smoke','hp-twin-smoke','publish-verified-image'):
+              assert by_name.get(name,{}).get('conclusion')=='success', (name,by_name.get(name))
+          generic_steps={s.get('name'):s for s in by_name['generic-uefi-smoke'].get('steps',[])}
+          assert generic_steps.get('Generic low-memory UEFI install reboot and self-build smoke',{}).get('conclusion')=='success'
+          assert generic_steps.get('Legacy BIOS install and installed-boot smoke',{}).get('conclusion')=='success'
+          assert prior_run.get('id')==33675680912
+          assert prior_run.get('status')=='completed' and prior_run.get('conclusion')=='failure'
+          print('GENERATION_LADDER_V120_SOURCE_AND_EVIDENCE_OK')
           PY
 
           echo "file=$projection" >> "$GITHUB_OUTPUT"
@@ -119,7 +155,7 @@ jobs:
           echo "projection_commit=$projection_commit" >> "$GITHUB_OUTPUT"
           echo "projection_main_commit=$projection_main_commit" >> "$GITHUB_OUTPUT"
           echo "projection_ci_run=$projection_ci_run" >> "$GITHUB_OUTPUT"
-          echo 'CLUSTERSITES_CANONICAL_PROJECTION_V119_OK'
+          echo 'CLUSTERSITES_CANONICAL_PROJECTION_V120_OK'
 
       - name: Configure Bluehost SSH with bounded retry
         env:
@@ -165,7 +201,7 @@ jobs:
           import re,sys
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./generation-seed-ladder\.js(?:\?v=[^"]+)?"></script>\s*','',text)
-          tag='<script src="./generation-seed-ladder.js?v=119"></script>'
+          tag='<script src="./generation-seed-ladder.js?v=120"></script>'
           for pattern in (r'<script src="\./seed-lifecycle\.js(?:\?v=[^"]+)?"></script>',r'<script src="\./recovery-guardian\.js(?:\?v=[^"]+)?"></script>',r'</body>'):
               m=re.search(pattern,text)
               if m:
@@ -175,7 +211,7 @@ jobs:
               raise SystemExit('dashboard missing generation ladder injection point')
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './generation-seed-ladder.js?v=119' "$RUNNER_TEMP/index.html"
+          grep -Fq './generation-seed-ladder.js?v=120' "$RUNNER_TEMP/index.html"
 
       - name: Publish with bounded retries
         env:
@@ -197,11 +233,15 @@ jobs:
           set -euo pipefail
           page="$RUNNER_TEMP/live-index.html"; js="$RUNNER_TEMP/live-generation-seed-ladder.js"
           final_url="$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/generation-seed-ladder.js?rev=119' -o "$js"
-          grep -Fq './generation-seed-ladder.js?v=119' "$page"
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/generation-seed-ladder.js?rev=120' -o "$js"
+          grep -Fq './generation-seed-ladder.js?v=120' "$page"
           cmp -s "${{ steps.source.outputs.file }}" "$js"
           for token in \
-            "componentRevision:'1.19'" \
+            "componentRevision:'1.20'" \
+            'legacyAutobootLegacyBiosInstallAndBootSmokePassed:true' \
+            'legacyAutobootVerifiedImagePublished:true' \
+            'legacyAutobootPromotedToActiveTrunk:false' \
+            'legacyAutobootPhysicalHopperProofProven:false' \
             'guardedHopperInstallImplemented:true' \
             'guardedInstallPhysicalExecutionProven:false' \
             'guardedInstallPhysicalVerificationProven:false' \
@@ -257,7 +297,7 @@ jobs:
             "canonical_component_commit": "${{ steps.source.outputs.canonical_commit }}",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/generation-seed-ladder-v1.js",
             "deployment_carrier": "FormatX66/wetbeard-site",
-            "component_revision": "1.19",
+            "component_revision": "1.20",
             "approved_blob": "${{ steps.source.outputs.blob }}",
             "boxbrain_projection_commit": "${{ steps.source.outputs.projection_commit }}",
             "boxbrain_projection_main_commit": "${{ steps.source.outputs.projection_main_commit }}",
@@ -265,6 +305,17 @@ jobs:
             "boxbrain_ci_proven": true,
             "cluster_canonical_commit_pinned": true,
             "active_trunk_commit": "e580992ec17ebf959168aa43ca60c59ecfce2629",
+            "legacy_autoboot_candidate_commit": "ac6b03819e47e7167ba77b2e3a5846f515a88d72",
+            "legacy_autoboot_candidate_image_run": 33677247135,
+            "legacy_autoboot_prior_failure_run": 33675680912,
+            "legacy_autoboot_validation_passed": true,
+            "legacy_autoboot_image_build_passed": true,
+            "legacy_autoboot_uefi_install_reboot_self_build_smoke_passed": true,
+            "legacy_autoboot_legacy_bios_install_and_boot_smoke_passed": true,
+            "legacy_autoboot_hp_twin_passed": true,
+            "legacy_autoboot_verified_image_published": true,
+            "legacy_autoboot_promoted_to_active_trunk": false,
+            "legacy_autoboot_physical_hopper_proof": false,
             "guarded_hopper_install_implemented": true,
             "guarded_install_visible_erase_confirmation_required": true,
             "guarded_install_exactly_one_eligible_internal_target_required": true,
@@ -319,6 +370,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-generation-seed-ladder-live.json
-          git commit -m 'Record Aurum generation seed ladder v1.19 live [skip ci]' || exit 0
+          git commit -m 'Record Aurum generation seed ladder v1.20 live [skip ci]' || exit 0
           git pull --rebase origin main
           git push origin HEAD:main

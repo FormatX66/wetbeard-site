@@ -20,53 +20,53 @@
   ],
   "recent_commits": [
     {
-      "sha": "f0948c32",
-      "message": "Record Aurum Future Branch experiment live [skip ci]",
-      "date": "2026-09-01T19:54:01Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/f0948c32bc46a3934728480d64c17e4f6dca3c63"
+      "sha": "e14dfcfe",
+      "message": "Record Aurum Future Branch experiment v1.5 live [skip ci]",
+      "date": "2026-09-01T22:55:01Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/e14dfcfe5f1106abd452f8beeb9e7283020f2b1e"
     },
     {
-      "sha": "61ad6cc8",
-      "message": "Merge protected Future Branch v1.3 publisher",
-      "date": "2026-09-01T19:53:43Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/61ad6cc83fa06acf31faa791ba2f7690a0ac1d72"
+      "sha": "e8fd7090",
+      "message": "Merge private canonical-boundary correction for v1.5 carrier",
+      "date": "2026-09-01T22:54:48Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/e8fd709011d24c9daab7fe86f4d8d443b09014c4"
     },
     {
-      "sha": "c4257c78",
-      "message": "Advance protected Future Branch publisher to v1.3 stability window",
-      "date": "2026-09-01T19:53:12Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/c4257c783c92283fb7a19108276ed09a5500038c"
+      "sha": "fab9f2f8",
+      "message": "Preserve private ClusterSites authority in v1.5 carrier",
+      "date": "2026-09-01T22:54:34Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/fab9f2f812b08a44d5cfc4292f1fc7d3ede2ab66"
     },
     {
-      "sha": "adb36f20",
-      "message": "Record Aurum generation seed ladder v1.17 live [skip ci]",
-      "date": "2026-09-01T18:56:41Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/adb36f207e60d2aa128015145b429fa437a55269"
+      "sha": "9ecd168d",
+      "message": "Merge protected Future Branch handoff readiness v1.5 publisher",
+      "date": "2026-09-01T22:52:46Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/9ecd168d22d334815e06c78db939ca965f98d8b8"
     },
     {
-      "sha": "117e8aee",
-      "message": "Merge protected Generation Seed Ladder v1.17 publisher",
-      "date": "2026-09-01T18:56:13Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/117e8aee3950a67c3b6985ffa8fe271772f75dc1"
+      "sha": "602d9c4b",
+      "message": "Advance protected Future Branch publisher to v1.5",
+      "date": "2026-09-01T22:52:28Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/602d9c4b52da8c8fb052368392a6b2ff0956586a"
     },
     {
-      "sha": "5c093dd4",
-      "message": "Advance safe Generation Seed Ladder publisher to canonical v1.17",
-      "date": "2026-09-01T18:55:39Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/5c093dd4d18bc2b7f49a8af92bceccb62203b337"
+      "sha": "7dc5e6e5",
+      "message": "Record Aurum Future Branch experiment v1.4 live [skip ci]",
+      "date": "2026-09-01T21:14:58Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/7dc5e6e53c153c898fcb259873d4f8a26b4cb425"
     },
     {
-      "sha": "2717e18d",
-      "message": "Record Aurum generation seed ladder v1.16 live [skip ci]",
-      "date": "2026-09-01T17:06:34Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/2717e18dc6920211e07523db3f1ff7d9ff205cb9"
+      "sha": "fd1a73ed",
+      "message": "Merge protected Future Branch v1.4 publisher",
+      "date": "2026-09-01T21:14:44Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/fd1a73edc4489775bc95d05b7ae53bd31e502e1d"
     },
     {
-      "sha": "8aa46cba",
-      "message": "Restore protected v1.16 projection carrier",
-      "date": "2026-09-01T17:06:13Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/8aa46cba2c285358fae6807afd8046a324847780"
+      "sha": "463e8df7",
+      "message": "Advance protected Future Branch publisher to v1.4 handoff correction",
+      "date": "2026-09-01T21:14:23Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/463e8df7b0b3370f512da0640df5b02db619162e"
     }
   ],
-  "updated_at": "2026-09-01T21:02:04Z"
+  "updated_at": "2026-09-02T04:34:09Z"
 }

@@ -20,6 +20,42 @@
   ],
   "recent_commits": [
     {
+      "sha": "6ec5ce26",
+      "message": "Record Aurum generation seed ladder v1.22 live [skip ci]",
+      "date": "2026-09-03T03:10:34Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/6ec5ce261d5f0f4025c7627fc5c5faaf8cd9d091"
+    },
+    {
+      "sha": "0f351952",
+      "message": "Publish Aurum Generation Seed Ladder v1.22 safely",
+      "date": "2026-09-03T03:10:14Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/0f3519523e38a05d9e3ee311cd8f4e1f48933630"
+    },
+    {
+      "sha": "7ecb707e",
+      "message": "Publish Aurum Generation Seed Ladder v1.22 safely",
+      "date": "2026-09-03T03:09:35Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/7ecb707e51869ce81de784b85db2c5bd6b70c67c"
+    },
+    {
+      "sha": "6b61fa0b",
+      "message": "Record Aurum generation seed ladder v1.21 live [skip ci]",
+      "date": "2026-09-02T23:56:30Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/6b61fa0b847c7282a2ece8affe5e2694f76172fd"
+    },
+    {
+      "sha": "6554ac84",
+      "message": "Advance Aurum Generation Seed Ladder carrier to v1.21",
+      "date": "2026-09-02T23:56:14Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/6554ac84b70b2401d55c79b7d08de7b202a9bf5e"
+    },
+    {
+      "sha": "1ca5d510",
+      "message": "Refresh ArkmatX GitHub status [skip ci]",
+      "date": "2026-09-02T21:03:28Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/1ca5d5109b894d9eff1033953063b0b6cfd6436b"
+    },
+    {
       "sha": "3ef0eadf",
       "message": "Record Aurum generation seed ladder v1.20 live [skip ci]",
       "date": "2026-09-02T20:57:01Z",
@@ -30,43 +66,7 @@
       "message": "Advance Aurum Generation Seed Ladder carrier to v1.20",
       "date": "2026-09-02T20:56:44Z",
       "html_url": "https://github.com/FormatX66/wetbeard-site/commit/868ed39ab1eb28babf038a920caebbf780b9a36f"
-    },
-    {
-      "sha": "2f89e470",
-      "message": "Advance protected Aurum generation ladder carrier to v1.20",
-      "date": "2026-09-02T20:56:24Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/2f89e4701a71f606d934ca50e81c8c6534d73435"
-    },
-    {
-      "sha": "590c7d53",
-      "message": "Refresh ArkmatX GitHub status [skip ci]",
-      "date": "2026-09-02T16:34:46Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/590c7d532b18e7bf1adb9ea0d55428cdabf3ddbd"
-    },
-    {
-      "sha": "9df49455",
-      "message": "Record Aurum generation seed ladder v1.19 live [skip ci]",
-      "date": "2026-09-02T15:59:15Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/9df4945581ff9a5e0cb793a7198db939a15b1927"
-    },
-    {
-      "sha": "a5a0fe27",
-      "message": "Merge pull request #126 from FormatX66/aurum/publish-generation-seed-ladder-v1.19-20260902",
-      "date": "2026-09-02T15:58:58Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/a5a0fe272e9c5c8839d5a4e11f5ea993833b0745"
-    },
-    {
-      "sha": "2808b031",
-      "message": "Advance protected Aurum ladder carrier to v1.19",
-      "date": "2026-09-02T15:58:17Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/2808b0315be52ba371c47997bbe90c20100ff4a3"
-    },
-    {
-      "sha": "d6f3c602",
-      "message": "Record Aurum generation seed ladder v1.18 live [skip ci]",
-      "date": "2026-09-02T14:09:34Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/d6f3c60250c281710dac45d26b65796d0a0986d3"
     }
   ],
-  "updated_at": "2026-09-02T21:03:28Z"
+  "updated_at": "2026-09-03T04:33:29Z"
 }

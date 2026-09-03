@@ -27,46 +27,60 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # ClusterSites is canonical. Production accepts only the independently
-          # approved canonical blob after byte-identical BoxBrain projection + green CI.
-          canonical_commit='91b1953bd2439f9452f66e70082df76d8701e319'
-          projection_commit='e52eebc2e6df1b889d66d384f606df2d6f1352a3'
-          projection_main_commit='b0070b1c6e79dbcaa6496784aff0766ecad74f0e'
-          expected_blob='47115ee94b8a44b966aca5284c1ff2f38db70f59'
-          projection_ci_run='33787719268'
+          canonical_commit='bdfa324fb687af52f7657ef6f4871a030d04bd22'
+          projection_commit='6c55a37944954e098d2e0a80b6b22186b4f40791'
+          projection_main_commit='ef2b8350296c7b86a8ab5e4bf71034090e59a53a'
+          expected_blob='bf3ac73d04399a418403c710c76391f67dc10879'
+          projection_ci_run='33805007601'
           active_trunk_commit='ac6b03819e47e7167ba77b2e3a5846f515a88d72'
-          graphical_setup_commit='87891997c71f2de2b744930772643e9b229181c2'
-          graphical_setup_pc_run='33780417804'
-          graphical_setup_native_run='33782031210'
+          graphical_base_commit='87891997c71f2de2b744930772643e9b229181c2'
+          graphical_base_native_run='33782031210'
+          graphical_base_vhl_run='33790778809'
+          fallback_commit='613ce8243c2c3f3dfc744863fc18d10817011435'
+          fallback_parent='d6b70f0f05c734ce2109bd43b0f478c164f8768b'
+          fallback_pc_run='33802701468'
+          input_failure_run='33796286174'
+          shipped_input_failure_run='33800637141'
+          superseded_run='33801740460'
           hopper_status_run='33763963007'
           hopper_status_job='100676947868'
           hopper_snapshot_commit='4536fa54181617724956792e71ee0a8d6ed80abc'
 
+          canonical="$RUNNER_TEMP/generation-seed-ladder-canonical.js"
           projection="$RUNNER_TEMP/generation-seed-ladder-projection.js"
           projection_main="$RUNNER_TEMP/generation-seed-ladder-projection-main.js"
           api='https://api.github.com/repos/FormatX66/BoxBrain'
 
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
+            "https://raw.githubusercontent.com/FormatX66/ClusterSites/$canonical_commit/services/aurum-arkmatx/generation-seed-ladder-v1.js" -o "$canonical"
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
             "https://raw.githubusercontent.com/FormatX66/BoxBrain/$projection_commit/Web/Aurum-Arkmatx/generation-seed-ladder-v1.js" -o "$projection"
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
             "https://raw.githubusercontent.com/FormatX66/BoxBrain/$projection_main_commit/Web/Aurum-Arkmatx/generation-seed-ladder-v1.js" -o "$projection_main"
-          test -s "$projection"; test -s "$projection_main"
-          node --check "$projection"
+          test -s "$canonical"; test -s "$projection"; test -s "$projection_main"
+          node --check "$canonical"; node --check "$projection"
+          cmp -s "$canonical" "$projection"
           cmp -s "$projection" "$projection_main"
           blob="$(git hash-object "$projection")"
           test "$blob" = "$expected_blob"
 
           for token in \
-            'AURUM_GENERATION_SEED_LADDER_V1_26_CANONICAL' \
+            'AURUM_GENERATION_SEED_LADDER_V1_27_CANONICAL' \
             "canonicalWebsiteRepo:'FormatX66/ClusterSites'" \
-            "componentRevision:'1.26'" \
+            "componentRevision:'1.27'" \
             "ACTIVE_TRUNK_COMMIT='ac6b03819e47e7167ba77b2e3a5846f515a88d72'" \
-            "GRAPHICAL_SETUP_CANDIDATE='87891997c71f2de2b744930772643e9b229181c2'" \
+            "GRAPHICAL_SETUP_FALLBACK_COMMIT='613ce8243c2c3f3dfc744863fc18d10817011435'" \
+            "GRAPHICAL_SETUP_FALLBACK_PC_IMAGE_RUN='33802701468'" \
+            "GRAPHICAL_SETUP_BASE_VHL_RUN='33790778809'" \
             'activeTrunkUnchangedByThisDashboardRevision:true' \
-            'graphicalSetupCandidateOneCommitAheadOfActiveTrunk:true' \
-            'graphicalSetupCandidateIntegratedIntoActiveTrunk:false' \
-            'graphicalSetupCandidatePcImageRunPassed:true' \
-            'graphicalSetupMultipleEligibleInternalDrivesSupported:true' \
+            'graphicalSetupFallbackPcImageRunPassed:true' \
+            'graphicalSetupFallbackDisplayControlsUsable:true' \
+            'graphicalSetupFallbackInstallControlsUsable:true' \
+            'graphicalSetupFallbackWifiControlsUsable:true' \
+            'graphicalSetupFallbackExactHeadVirtualLabProven:false' \
+            'graphicalSetupBaseVirtualLabPassed:false' \
+            'graphicalSetupBaseVirtualLabPcUefiPassed:false' \
+            'graphicalSetupBaseFourTargetConvergencePassed:false' \
             'graphicalSetupExactlyOneSelectedTargetRequired:true' \
             'graphicalSetupOpaqueTargetIdOnly:true' \
             'graphicalSetupRawDevicePathHidden:true' \
@@ -75,21 +89,14 @@ jobs:
             'graphicalSetupFreshInstallVisibleEraseConfirmation:true' \
             'graphicalSetupRepairNeverPartitionsOrFormats:true' \
             'graphicalSetupSafePoweroffOnlyAfterVerifiedCompletion:true' \
-            'graphicalSetupPhysicalExecutionProven:false' \
-            'graphicalSetupPhysicalVerificationProven:false' \
             "currentNativeFailureStep:'Verify native self-build contracts'" \
-            "latestKnownNativeExternalEvidenceReason:'gui-live-trial-evidence-expired'" \
-            'hopperStatusRunnerExecutionRecovered:true' \
-            'hopperStatusCurrentRunnerAssigned:true' \
-            'hopperStatusCurrentRunnerId:23' \
-            "hopperStatusCurrentRunnerName:'AURUM-HOPPER-STATUS-WSL'" \
-            "hopperStatusCurrentRunnerHost:'LAPTOP-EBD8CG8P'" \
             "hopperStatusCurrentBlocker:'no-valid-endpoint-candidate'" \
             'hopperStatusEndpoint:null' \
             'hopperStatusSourceKind:null' \
             'hopperStatusHttpStatus:null' \
             'hopperStatusReachable:false' \
             'hopperStatusReport:null' \
+            'hopperStatusEquivalentNullSnapshotIsEvidenceHealth:true' \
             'hopperStatusNoChurnUntilMaterialChange:true' \
             'humanActionInference:false' \
             "needsWorkOwner:'aurum-system'" \
@@ -100,79 +107,93 @@ jobs:
             'Frontiers Advancing:' \
             'Needs Work → Aurum/System:' \
             'Your Actions:' \
-            'Never enter or supply a raw device path or erase code.'; do
+            'None right now.' \
+            'do not manually replay an unchanged lane for activity.'; do
             grep -Fq "$token" "$projection"
           done
 
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$api/actions/runs/$projection_ci_run" -o "$RUNNER_TEMP/projection-ci.json"
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$api/commits/$graphical_setup_commit" -o "$RUNNER_TEMP/graphical-commit.json"
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$api/actions/runs/$graphical_setup_pc_run" -o "$RUNNER_TEMP/graphical-pc.json"
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$api/actions/runs/$graphical_setup_pc_run/jobs?per_page=100" -o "$RUNNER_TEMP/graphical-pc-jobs.json"
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$api/actions/runs/$graphical_setup_native_run" -o "$RUNNER_TEMP/graphical-native.json"
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$api/actions/runs/$graphical_setup_native_run/jobs?per_page=100" -o "$RUNNER_TEMP/graphical-native-jobs.json"
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$api/actions/runs/$hopper_status_run" -o "$RUNNER_TEMP/hopper-run.json"
+          for pair in \
+            "$projection_ci_run projection-ci" \
+            "$fallback_pc_run fallback-pc" \
+            "$graphical_base_native_run graphical-native" \
+            "$graphical_base_vhl_run graphical-vhl" \
+            "$input_failure_run input-failure" \
+            "$shipped_input_failure_run shipped-input-failure" \
+            "$superseded_run superseded" \
+            "$hopper_status_run hopper-run"; do
+            set -- $pair
+            curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$api/actions/runs/$1" -o "$RUNNER_TEMP/$2.json"
+          done
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$api/actions/runs/$fallback_pc_run/jobs?per_page=100" -o "$RUNNER_TEMP/fallback-pc-jobs.json"
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$api/actions/runs/$graphical_base_native_run/jobs?per_page=100" -o "$RUNNER_TEMP/graphical-native-jobs.json"
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$api/actions/runs/$graphical_base_vhl_run/jobs?per_page=100" -o "$RUNNER_TEMP/graphical-vhl-jobs.json"
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$api/actions/runs/$hopper_status_run/jobs?per_page=100" -o "$RUNNER_TEMP/hopper-jobs.json"
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$api/commits/$fallback_commit" -o "$RUNNER_TEMP/fallback-commit.json"
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$api/commits/$hopper_snapshot_commit" -o "$RUNNER_TEMP/hopper-snapshot-commit.json"
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
             "https://raw.githubusercontent.com/FormatX66/BoxBrain/$hopper_snapshot_commit/Web/Aurum-Arkmatx/hopper-status.json" -o "$RUNNER_TEMP/hopper-status.json"
 
-          python3 - "$RUNNER_TEMP" "$projection_commit" <<'PY'
+          python3 - "$RUNNER_TEMP" "$projection_commit" "$fallback_parent" <<'PY'
           import json, pathlib, sys
-          root=pathlib.Path(sys.argv[1]); projection=sys.argv[2]
+          root=pathlib.Path(sys.argv[1]); projection=sys.argv[2]; fallback_parent=sys.argv[3]
           load=lambda n: json.loads((root/n).read_text(encoding='utf-8'))
 
           ci=load('projection-ci.json')
-          assert ci.get('id')==33787719268 and ci.get('name')=='BoxBrain CI'
+          assert ci.get('id')==33805007601 and ci.get('name')=='BoxBrain CI'
           assert ci.get('head_sha')==projection
           assert ci.get('status')=='completed' and ci.get('conclusion')=='success'
 
-          commit=load('graphical-commit.json')
-          assert commit.get('sha')=='87891997c71f2de2b744930772643e9b229181c2'
-          assert len(commit.get('parents') or [])==1
-          assert commit['parents'][0].get('sha')=='ac6b03819e47e7167ba77b2e3a5846f515a88d72'
-          assert ((commit.get('commit') or {}).get('message'))=='Add graphical Aurum install and repair workflow'
+          commit=load('fallback-commit.json')
+          assert commit.get('sha')=='613ce8243c2c3f3dfc744863fc18d10817011435'
+          assert len(commit.get('parents') or [])==1 and commit['parents'][0].get('sha')==fallback_parent
+          assert ((commit.get('commit') or {}).get('message'))=='Keep graphical install and Wi-Fi controls usable in fallback display modes'
           changed={f.get('filename') for f in commit.get('files',[])}
           assert 'Projects/AurumPC/aurum_setup_gui.py' in changed
-          assert 'Projects/AurumPC/runtime-assets/etc/systemd/system/aurum-setup.service' in changed
+          assert 'Projects/AurumPC/tests/test_aurum_setup_gui.py' in changed
 
-          pc=load('graphical-pc.json'); pc_jobs=load('graphical-pc-jobs.json').get('jobs',[])
-          assert pc.get('id')==33780417804 and pc.get('head_sha')=='87891997c71f2de2b744930772643e9b229181c2'
+          pc=load('fallback-pc.json'); jobs=load('fallback-pc-jobs.json').get('jobs',[])
+          assert pc.get('id')==33802701468 and pc.get('head_sha')=='613ce8243c2c3f3dfc744863fc18d10817011435'
           assert pc.get('status')=='completed' and pc.get('conclusion')=='success'
-          by_name={j.get('name'):j for j in pc_jobs}
+          by={j.get('name'):j for j in jobs}
           for name in ('validate','build-image','generic-uefi-smoke','hp-twin-smoke','publish-verified-image'):
-              assert by_name.get(name,{}).get('conclusion')=='success', name
-          generic={s.get('name'):s.get('conclusion') for s in by_name['generic-uefi-smoke'].get('steps',[])}
+              assert by.get(name,{}).get('conclusion')=='success', name
+          generic={s.get('name'):s.get('conclusion') for s in by['generic-uefi-smoke'].get('steps',[])}
           assert generic.get('Generic low-memory UEFI install reboot and self-build smoke')=='success'
           assert generic.get('Legacy BIOS install and installed-boot smoke')=='success'
-          hp={s.get('name'):s.get('conclusion') for s in by_name['hp-twin-smoke'].get('steps',[])}
+          hp={s.get('name'):s.get('conclusion') for s in by['hp-twin-smoke'].get('steps',[])}
           assert hp.get('Hopper HP topology and offline-recovery twin')=='success'
+
+          assert load('input-failure.json').get('conclusion')=='failure'
+          assert load('shipped-input-failure.json').get('conclusion')=='failure'
+          assert load('superseded.json').get('conclusion')=='cancelled'
+
+          vhl=load('graphical-vhl.json'); vjobs=load('graphical-vhl-jobs.json').get('jobs',[])
+          assert vhl.get('id')==33790778809 and vhl.get('head_sha')=='87891997c71f2de2b744930772643e9b229181c2'
+          assert vhl.get('status')=='completed' and vhl.get('conclusion')=='failure'
+          vb={j.get('name'):j for j in vjobs}
+          assert vb['Docker runtime x86_64']['conclusion']=='success'
+          assert vb['Docker runtime ARM64']['conclusion']=='success'
+          assert vb['QEMU Raspberry Pi 3B machine/runtime']['conclusion']=='success'
+          assert vb['QEMU UEFI x86_64 PC']['conclusion']=='failure'
+          assert vb['Same-commit four-target convergence gate']['conclusion']=='skipped'
 
           native=load('graphical-native.json'); njobs=load('graphical-native-jobs.json').get('jobs',[])
           assert native.get('id')==33782031210 and native.get('head_sha')=='87891997c71f2de2b744930772643e9b229181c2'
-          assert native.get('status')=='completed' and native.get('conclusion')=='failure'
+          assert native.get('conclusion')=='failure'
           resume=[j for j in njobs if j.get('name')=='Resume verified native growth']
           assert resume and resume[0].get('conclusion')=='failure'
           nsteps={s.get('name'):s.get('conclusion') for s in resume[0].get('steps',[])}
           assert nsteps.get('Verify native self-build contracts')=='failure'
 
-          run=load('hopper-run.json'); jobs=load('hopper-jobs.json').get('jobs',[])
-          assert run.get('id')==33763963007 and run.get('event')=='schedule'
-          assert run.get('status')=='completed' and run.get('conclusion')=='success'
-          match=[j for j in jobs if j.get('id')==100676947868]
-          assert len(match)==1
-          job=match[0]
-          assert job.get('runner_id')==23 and job.get('runner_name')=='AURUM-HOPPER-STATUS-WSL'
-          steps={s.get('name'):s.get('conclusion') for s in job.get('steps',[])}
-          assert steps.get('Read Hopper health endpoint')=='success'
-
-          snap=load('hopper-snapshot-commit.json'); status=load('hopper-status.json')
-          assert snap.get('sha')=='4536fa54181617724956792e71ee0a8d6ed80abc'
-          assert status.get('schema')=='aurum.hopper.live-status.v2'
-          assert status.get('runner_host')=='LAPTOP-EBD8CG8P'
+          hopper=load('hopper-run.json'); hjobs=load('hopper-jobs.json').get('jobs',[])
+          assert hopper.get('id')==33763963007 and hopper.get('event')=='schedule' and hopper.get('conclusion')=='success'
+          match=[j for j in hjobs if j.get('id')==100676947868]
+          assert len(match)==1 and match[0].get('runner_id')==23 and match[0].get('runner_name')=='AURUM-HOPPER-STATUS-WSL'
+          status=load('hopper-status.json')
           assert status.get('endpoint') is None and status.get('source_kind') is None
           assert status.get('http_status') is None and status.get('reachable') is False and status.get('report') is None
           assert (status.get('summary') or {}).get('health')=='no-endpoint-candidate'
-          print('GENERATION_LADDER_V126_SOURCE_AND_EVIDENCE_OK')
+          print('GENERATION_LADDER_V127_SOURCE_AND_EVIDENCE_OK')
           PY
 
           echo "file=$projection" >> "$GITHUB_OUTPUT"
@@ -182,13 +203,15 @@ jobs:
           echo "projection_main_commit=$projection_main_commit" >> "$GITHUB_OUTPUT"
           echo "projection_ci_run=$projection_ci_run" >> "$GITHUB_OUTPUT"
           echo "active_trunk_commit=$active_trunk_commit" >> "$GITHUB_OUTPUT"
-          echo "graphical_setup_commit=$graphical_setup_commit" >> "$GITHUB_OUTPUT"
-          echo "graphical_setup_pc_run=$graphical_setup_pc_run" >> "$GITHUB_OUTPUT"
-          echo "graphical_setup_native_run=$graphical_setup_native_run" >> "$GITHUB_OUTPUT"
+          echo "graphical_base_commit=$graphical_base_commit" >> "$GITHUB_OUTPUT"
+          echo "graphical_base_native_run=$graphical_base_native_run" >> "$GITHUB_OUTPUT"
+          echo "graphical_base_vhl_run=$graphical_base_vhl_run" >> "$GITHUB_OUTPUT"
+          echo "fallback_commit=$fallback_commit" >> "$GITHUB_OUTPUT"
+          echo "fallback_pc_run=$fallback_pc_run" >> "$GITHUB_OUTPUT"
           echo "hopper_status_run=$hopper_status_run" >> "$GITHUB_OUTPUT"
           echo "hopper_status_job=$hopper_status_job" >> "$GITHUB_OUTPUT"
           echo "hopper_snapshot_commit=$hopper_snapshot_commit" >> "$GITHUB_OUTPUT"
-          echo 'CLUSTERSITES_CANONICAL_PROJECTION_V126_OK'
+          echo 'CLUSTERSITES_CANONICAL_PROJECTION_V127_OK'
 
       - name: Configure Bluehost SSH with bounded retry
         env:
@@ -234,7 +257,7 @@ jobs:
           import re,sys
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./generation-seed-ladder\.js(?:\?v=[^"]+)?"></script>\s*','',text)
-          tag='<script src="./generation-seed-ladder.js?v=126"></script>'
+          tag='<script src="./generation-seed-ladder.js?v=127"></script>'
           for pattern in (r'<script src="\./seed-lifecycle\.js(?:\?v=[^"]+)?"></script>',r'<script src="\./recovery-guardian\.js(?:\?v=[^"]+)?"></script>',r'</body>'):
               m=re.search(pattern,text)
               if m:
@@ -244,7 +267,7 @@ jobs:
               raise SystemExit('dashboard missing generation ladder injection point')
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './generation-seed-ladder.js?v=126' "$RUNNER_TEMP/index.html"
+          grep -Fq './generation-seed-ladder.js?v=127' "$RUNNER_TEMP/index.html"
 
       - name: Publish with bounded retries
         env:
@@ -266,28 +289,29 @@ jobs:
           set -euo pipefail
           page="$RUNNER_TEMP/live-index.html"; js="$RUNNER_TEMP/live-generation-seed-ladder.js"
           final_url="$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/generation-seed-ladder.js?rev=126' -o "$js"
-          grep -Fq './generation-seed-ladder.js?v=126' "$page"
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/generation-seed-ladder.js?rev=127' -o "$js"
+          grep -Fq './generation-seed-ladder.js?v=127' "$page"
           cmp -s "$js" "${{ steps.source.outputs.file }}"
           node --check "$js"
           for token in \
-            'AURUM_GENERATION_SEED_LADDER_V1_26_CANONICAL' \
-            "componentRevision:'1.26'" \
-            'graphicalSetupCandidatePcImageRunPassed:true' \
-            'graphicalSetupMultipleEligibleInternalDrivesSupported:true' \
-            'graphicalSetupExactlyOneSelectedTargetRequired:true' \
-            'graphicalSetupRawDevicePathHidden:true' \
-            'graphicalSetupEraseCodeHidden:true' \
-            'graphicalSetupPhysicalVerificationProven:false' \
+            'AURUM_GENERATION_SEED_LADDER_V1_27_CANONICAL' \
+            "componentRevision:'1.27'" \
+            'graphicalSetupFallbackPcImageRunPassed:true' \
+            'graphicalSetupFallbackDisplayControlsUsable:true' \
+            'graphicalSetupFallbackWifiControlsUsable:true' \
+            'graphicalSetupFallbackExactHeadVirtualLabProven:false' \
+            'graphicalSetupBaseVirtualLabPcUefiPassed:false' \
+            'graphicalSetupBaseFourTargetConvergencePassed:false' \
             "hopperStatusCurrentBlocker:'no-valid-endpoint-candidate'" \
             'hopperStatusEndpoint:null' \
-            'hopperStatusNoChurnUntilMaterialChange:true' \
+            'hopperStatusEquivalentNullSnapshotIsEvidenceHealth:true' \
             'humanActionInference:false' \
             'majorBoxAdded:false' \
             'seedLifecycleRemainsExpandable:true' \
             'Frontiers Advancing:' \
             'Needs Work → Aurum/System:' \
-            'Your Actions:'; do
+            'Your Actions:' \
+            'None right now.'; do
             grep -Fq "$token" "$js"
           done
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
@@ -324,7 +348,7 @@ jobs:
             "canonical_component_commit": "${{ steps.source.outputs.canonical_commit }}",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/generation-seed-ladder-v1.js",
             "deployment_carrier": "FormatX66/wetbeard-site",
-            "component_revision": "1.26",
+            "component_revision": "1.27",
             "approved_blob": "${{ steps.source.outputs.blob }}",
             "boxbrain_projection_commit": "${{ steps.source.outputs.projection_commit }}",
             "boxbrain_projection_main_commit": "${{ steps.source.outputs.projection_main_commit }}",
@@ -332,14 +356,21 @@ jobs:
             "boxbrain_ci_proven": true,
             "cluster_canonical_commit_pinned": true,
             "active_trunk_commit": "${{ steps.source.outputs.active_trunk_commit }}",
-            "graphical_setup_candidate_commit": "${{ steps.source.outputs.graphical_setup_commit }}",
-            "graphical_setup_candidate_one_commit_ahead": true,
-            "graphical_setup_candidate_integrated_into_active_trunk": false,
-            "graphical_setup_pc_image_run": ${{ steps.source.outputs.graphical_setup_pc_run }},
-            "graphical_setup_pc_image_run_passed": true,
-            "graphical_setup_native_run": ${{ steps.source.outputs.graphical_setup_native_run }},
-            "graphical_setup_native_run_passed": false,
-            "graphical_setup_native_failure_step": "Verify native self-build contracts",
+            "graphical_setup_base_commit": "${{ steps.source.outputs.graphical_base_commit }}",
+            "graphical_setup_base_native_run": ${{ steps.source.outputs.graphical_base_native_run }},
+            "graphical_setup_base_native_run_passed": false,
+            "graphical_setup_base_native_failure_step": "Verify native self-build contracts",
+            "graphical_setup_base_vhl_run": ${{ steps.source.outputs.graphical_base_vhl_run }},
+            "graphical_setup_base_vhl_passed": false,
+            "graphical_setup_base_vhl_pc_uefi_passed": false,
+            "graphical_setup_base_four_target_convergence_passed": false,
+            "graphical_setup_fallback_commit": "${{ steps.source.outputs.fallback_commit }}",
+            "graphical_setup_fallback_pc_image_run": ${{ steps.source.outputs.fallback_pc_run }},
+            "graphical_setup_fallback_pc_image_run_passed": true,
+            "graphical_setup_fallback_display_controls_usable": true,
+            "graphical_setup_fallback_install_controls_usable": true,
+            "graphical_setup_fallback_wifi_controls_usable": true,
+            "graphical_setup_fallback_exact_head_vhl_proven": false,
             "graphical_setup_multiple_eligible_internal_drives_supported": true,
             "graphical_setup_exactly_one_selected_target_required": true,
             "graphical_setup_opaque_target_id_only": true,
@@ -348,24 +379,18 @@ jobs:
             "graphical_setup_fresh_target_discovery_before_write": true,
             "graphical_setup_fresh_install_visible_erase_confirmation": true,
             "graphical_setup_repair_never_partitions_or_formats": true,
-            "graphical_setup_safe_poweroff_only_after_verified_completion": true,
             "graphical_setup_physical_execution_proven": false,
             "graphical_setup_physical_verification_proven": false,
             "hopper_status_run": ${{ steps.source.outputs.hopper_status_run }},
             "hopper_status_job": ${{ steps.source.outputs.hopper_status_job }},
             "hopper_status_snapshot_commit": "${{ steps.source.outputs.hopper_snapshot_commit }}",
-            "hopper_status_runner_execution_recovered": true,
-            "hopper_status_runner_assigned": true,
-            "hopper_status_runner_id": 23,
-            "hopper_status_runner_name": "AURUM-HOPPER-STATUS-WSL",
-            "hopper_status_runner_host": "LAPTOP-EBD8CG8P",
             "hopper_status_current_blocker": "no-valid-endpoint-candidate",
             "hopper_status_endpoint": null,
             "hopper_status_source_kind": null,
             "hopper_status_http_status": null,
             "hopper_status_reachable": false,
             "hopper_status_report": null,
-            "hopper_status_no_churn_until_material_change": true,
+            "hopper_status_equivalent_null_snapshot_is_evidence_health": true,
             "physical_hopper_boot_proof_proven": false,
             "guardian_forced_rollback_proof_proven": false,
             "human_action_inference": false,
@@ -383,6 +408,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-generation-seed-ladder-live.json
-          git commit -m 'Record Aurum generation seed ladder v1.26 live [skip ci]' || exit 0
+          git commit -m 'Record Aurum generation seed ladder v1.27 live [skip ci]' || exit 0
           git pull --rebase origin main
           git push origin HEAD:main

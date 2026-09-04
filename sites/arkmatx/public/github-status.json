@@ -20,53 +20,53 @@
   ],
   "recent_commits": [
     {
+      "sha": "6038995b",
+      "message": "Record Aurum generation seed ladder v1.37 live [skip ci]",
+      "date": "2026-09-04T18:22:15Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/6038995b5125424e2823311b4ffb7c30f6527d68"
+    },
+    {
+      "sha": "82e2a6ef",
+      "message": "Publish Aurum Command Center v1.37",
+      "date": "2026-09-04T18:19:19Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/82e2a6ef638ca527ce1a96ca6fb1fe0b079606e0"
+    },
+    {
+      "sha": "79c8b20b",
+      "message": "Advance protected Aurum Command Center carrier to v1.37",
+      "date": "2026-09-04T18:18:35Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/79c8b20bbb98233abfa04b1823a84e8de5f4c432"
+    },
+    {
+      "sha": "8836736c",
+      "message": "Record Aurum generation seed ladder v1.36 live [skip ci]",
+      "date": "2026-09-04T17:16:21Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/8836736ce6039710f8b138b1b36c6b0b32beb2fc"
+    },
+    {
+      "sha": "d2dac7e0",
+      "message": "Publish Aurum Command Center v1.36",
+      "date": "2026-09-04T17:15:59Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/d2dac7e07947cf3b56ea49e60daa83d3e05d7d79"
+    },
+    {
+      "sha": "0e8f3a9e",
+      "message": "Advance protected Aurum Command Center carrier to v1.36",
+      "date": "2026-09-04T17:15:20Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/0e8f3a9e391c63c383c01d4ccb91e00565000f5a"
+    },
+    {
+      "sha": "677cdf6c",
+      "message": "Refresh ArkmatX GitHub status [skip ci]",
+      "date": "2026-09-04T16:21:31Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/677cdf6c3760cb8944ae4444d6274a3f394de7e7"
+    },
+    {
       "sha": "87afab0a",
       "message": "Refresh ArkmatX GitHub status [skip ci]",
       "date": "2026-09-04T11:18:05Z",
       "html_url": "https://github.com/FormatX66/wetbeard-site/commit/87afab0aa8aabac23bf94248fc64bf9b6e099a7b"
-    },
-    {
-      "sha": "71e99d96",
-      "message": "Record Aurum generation seed ladder v1.35 live [skip ci]",
-      "date": "2026-09-04T08:54:29Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/71e99d961704fd925e14d7e9d11be8d1c59cb645"
-    },
-    {
-      "sha": "0e623067",
-      "message": "Merge Aurum Command Center v1.35 carrier",
-      "date": "2026-09-04T08:54:11Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/0e623067c70c88e197e1f6884d225f06af900e36"
-    },
-    {
-      "sha": "ec769248",
-      "message": "Advance protected Aurum Command Center carrier to v1.35",
-      "date": "2026-09-04T08:53:38Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/ec769248f25a4c7aa0bf6aa1c1beb84c1b5d6255"
-    },
-    {
-      "sha": "b2361d0c",
-      "message": "Record Aurum generation seed ladder v1.34 live [skip ci]",
-      "date": "2026-09-04T04:57:56Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/b2361d0c3e77e4fe13ace2750460302489ec0264"
-    },
-    {
-      "sha": "ffbe77bc",
-      "message": "Merge Aurum Command Center v1.34 carrier",
-      "date": "2026-09-04T04:57:03Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/ffbe77bc93b3ac43b448abad89dcce226496ba49"
-    },
-    {
-      "sha": "a5351751",
-      "message": "Advance protected Aurum Command Center carrier to v1.34",
-      "date": "2026-09-04T04:56:47Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/a53517511d6c9459d2b2054e9962dbbea11e5dd4"
-    },
-    {
-      "sha": "7c821b84",
-      "message": "Refresh ArkmatX GitHub status [skip ci]",
-      "date": "2026-09-04T04:33:38Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/7c821b849792e6bcaef5447f6739fc2c9602e925"
     }
   ],
-  "updated_at": "2026-09-04T16:21:31Z"
+  "updated_at": "2026-09-04T20:45:36Z"
 }

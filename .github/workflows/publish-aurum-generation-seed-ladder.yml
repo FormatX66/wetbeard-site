@@ -22,12 +22,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Verify ClusterSites authority, byte-identical projection, and changed evidence
+      - name: Verify ClusterSites authority pin, byte-identical projection, and changed evidence
         id: source
         shell: bash
         run: |
           set -euo pipefail
 
+          # ClusterSites remains canonical. The private canonical merge/blob is pinned
+          # explicitly; publication consumes only the green, byte-identical public
+          # BoxBrain projection. This preserves the established authority boundary
+          # without requiring unauthenticated raw access to the private canonical repo.
           canonical_commit='d27c08cfe83965531c3b2f628350c482b619d531'
           projection_commit='f19076611bdc9378d07b8ac7d9cd59de1ef6e233'
           projection_main_commit='91c1c008183c8b7d633bcff1a991573902207b34'
@@ -43,22 +47,18 @@ jobs:
           current_native_run='33915328066'
           hopper_snapshot_commit='5c047ab0e8fac29b9350fdea1e48c770f50540f8'
 
-          canonical="$RUNNER_TEMP/canonical.js"
           projection="$RUNNER_TEMP/projection.js"
           projection_main="$RUNNER_TEMP/projection-main.js"
           bbapi='https://api.github.com/repos/FormatX66/BoxBrain'
 
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
-            "https://raw.githubusercontent.com/FormatX66/ClusterSites/$canonical_commit/services/aurum-arkmatx/generation-seed-ladder-v1.js" -o "$canonical"
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
             "https://raw.githubusercontent.com/FormatX66/BoxBrain/$projection_commit/Web/Aurum-Arkmatx/generation-seed-ladder-v1.js" -o "$projection"
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
             "https://raw.githubusercontent.com/FormatX66/BoxBrain/$projection_main_commit/Web/Aurum-Arkmatx/generation-seed-ladder-v1.js" -o "$projection_main"
-          test -s "$canonical" && test -s "$projection" && test -s "$projection_main"
-          node --check "$canonical"
-          cmp -s "$canonical" "$projection"
-          cmp -s "$canonical" "$projection_main"
-          blob="$(git hash-object "$canonical")"
+          test -s "$projection" && test -s "$projection_main"
+          node --check "$projection"
+          cmp -s "$projection" "$projection_main"
+          blob="$(git hash-object "$projection")"
           test "$blob" = "$expected_blob"
 
           for token in \
@@ -105,7 +105,7 @@ jobs:
             'One genuine physical-only step is now proven necessary.' \
             'Do not choose install, erase, format, repair, or any destructive option.' \
             'ClusterSites remains canonical for website source.'; do
-            grep -Fq "$token" "$canonical"
+            grep -Fq "$token" "$projection"
           done
 
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$bbapi/actions/runs/$projection_ci_run" -o "$RUNNER_TEMP/projection-ci.json"
@@ -140,8 +140,7 @@ jobs:
           pr=load('promotion-pr.json')
           assert pr.get('state')=='closed' and pr.get('merged_at') and pr.get('merge_commit_sha')==active
           assert (pr.get('head') or {}).get('sha')==candidate and (pr.get('base') or {}).get('ref')=='aurum/trunk-v0.01'
-          body=pr.get('body') or ''
-          assert 'not evidence of physical Wi-Fi, reboot or seed promotion success' in body
+          assert 'not evidence of physical Wi-Fi, reboot or seed promotion success' in (pr.get('body') or '')
 
           vhl=load('promotion-vhl.json')
           assert vhl.get('id')==int(vhl_id) and vhl.get('head_sha')==candidate
@@ -174,7 +173,7 @@ jobs:
           print('GENERATION_LADDER_V138_SOURCE_AND_EVIDENCE_OK')
           PY
 
-          echo "file=$canonical" >> "$GITHUB_OUTPUT"
+          echo "file=$projection" >> "$GITHUB_OUTPUT"
           echo "blob=$blob" >> "$GITHUB_OUTPUT"
           echo "canonical_commit=$canonical_commit" >> "$GITHUB_OUTPUT"
           echo "projection_commit=$projection_commit" >> "$GITHUB_OUTPUT"
@@ -267,7 +266,7 @@ jobs:
           retry scp -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -P 22 \
             "$RUNNER_TEMP/index.html" "${{ steps.source.outputs.file }}" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/"
           retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
-            "set -eu; mv '$remote/canonical.js' '$remote/generation-seed-ladder.js'; chmod 644 '$remote/index.html' '$remote/generation-seed-ladder.js'"
+            "set -eu; mv '$remote/projection.js' '$remote/generation-seed-ladder.js'; chmod 644 '$remote/index.html' '$remote/generation-seed-ladder.js'"
 
       - name: Verify live Command Center
         id: verify
@@ -345,7 +344,7 @@ jobs:
             "boxbrain_ci_run": ${{ steps.source.outputs.projection_ci_run }},
             "boxbrain_ci_proven": true,
             "cluster_canonical_commit_pinned": true,
-            "canonical_direct_fetch_required": true,
+            "canonical_direct_fetch_required": false,
             "active_trunk_commit": "${{ steps.source.outputs.active_trunk_commit }}",
             "active_trunk_tree": "${{ steps.source.outputs.active_trunk_tree }}",
             "hopper_wifi_recovery_pr": ${{ steps.source.outputs.promotion_pr }},

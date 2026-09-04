@@ -32,14 +32,15 @@ jobs:
           # attempt an unauthenticated read of the private canonical repository: it
           # pins the independently approved canonical merge/blob, then requires the
           # exact public BoxBrain projection and its green CI before production access.
-          canonical_commit='7782cfcd69ae9128d45b9d4fd837154eff9c73db'
-          projection_commit='8108ddc52d27d149a34c376fb54abf9d3662924e'
-          projection_main_commit='aed5ddcc16aff9bfa73f95274e1fc9ce7cd4b1ac'
-          expected_blob='fcb2bf65e85177f9acaf3af005dc2f44d907f748'
-          projection_ci_run='33838485954'
+          canonical_commit='dc0c8beab962f5401adce6eb8c067da48065f6f3'
+          projection_commit='76cba8a08c909a0c793e815c31f2c1b50c73b071'
+          projection_main_commit='965265c6685bfde6bddc7279ee804c0f43f3e66f'
+          expected_blob='c2b66b789a8cd02a7648cffe13d100deecf4f8ab'
+          projection_ci_run='33855364972'
 
           active_trunk_commit='51b39a5c9767efb1428fd48621c4855d76962acc'
           current_pc_run='33828601576'
+          current_vhl_run='33842112609'
           current_native_run='33829617010'
           hopper_status_run='33837892970'
           hopper_status_job='100914038192'
@@ -66,11 +67,12 @@ jobs:
           test "$blob" = "$expected_blob"
 
           for token in \
-            'AURUM_GENERATION_SEED_LADDER_V1_34_CANONICAL' \
+            'AURUM_GENERATION_SEED_LADDER_V1_35_CANONICAL' \
             "canonicalWebsiteRepo:'FormatX66/ClusterSites'" \
-            "componentRevision:'1.34'" \
+            "componentRevision:'1.35'" \
             "ACTIVE_TRUNK_COMMIT='$active_trunk_commit'" \
             "CURRENT_PC_IMAGE_RUN='$current_pc_run'" \
+            "CURRENT_VHL_RUN='$current_vhl_run'" \
             "CURRENT_NATIVE_RUN='$current_native_run'" \
             "CURRENT_HOPPER_STATUS_RUN='$hopper_status_run'" \
             "CURRENT_HOPPER_STATUS_SNAPSHOT_COMMIT='$hopper_snapshot_commit'" \
@@ -81,7 +83,13 @@ jobs:
             "FARMER_CONTINUOUS_EXPLORER_COMMIT='$farmer_continuous_explorer_commit'" \
             "FARMER_RUNTIME_PROOF_COMMIT='$farmer_runtime_proof_commit'" \
             'currentPcImageRunPassed:true' \
-            'currentVirtualLabExactHeadAvailable:false' \
+            'currentVirtualLabExactHeadAvailable:true' \
+            'currentVirtualLabDockerX86Passed:true' \
+            'currentVirtualLabArm64Passed:true' \
+            'currentVirtualLabPi3Passed:true' \
+            'currentVirtualLabUefiImageBuilt:true' \
+            'currentVirtualLabUefiBootPassed:false' \
+            "currentVirtualLabFailureStep:'Boot PC image in QEMU UEFI'" \
             'currentFourTargetConvergencePassed:false' \
             'currentNativeRunPassed:false' \
             "hopperStatusCurrentBlocker:'no-valid-endpoint-candidate'" \
@@ -110,6 +118,7 @@ jobs:
             "needsWorkOwner:'aurum-system'" \
             'backupBeforePublishExpected:true' \
             'rollbackOnVerificationFailure:true' \
+            'rerunUnchangedFailedWork:false' \
             'majorBoxAdded:false' \
             'seedLifecycleRemainsExpandable:true' \
             'Frontiers Advancing:' \
@@ -125,12 +134,14 @@ jobs:
           for pair in \
             "$projection_ci_run projection-ci" \
             "$current_pc_run current-pc" \
+            "$current_vhl_run current-vhl" \
             "$current_native_run current-native" \
             "$hopper_status_run hopper-current" \
             "$voice_mirror_run voice-mirror"; do
             set -- $pair
             curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$api/actions/runs/$1" -o "$RUNNER_TEMP/$2.json"
           done
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$api/actions/runs/$current_vhl_run/jobs?per_page=100" -o "$RUNNER_TEMP/current-vhl-jobs.json"
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$api/actions/runs/$current_native_run/jobs?per_page=100" -o "$RUNNER_TEMP/current-native-jobs.json"
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$api/actions/runs/$hopper_status_run/jobs?per_page=100" -o "$RUNNER_TEMP/hopper-current-jobs.json"
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$api/branches/aurum/trunk-v0.01" -o "$RUNNER_TEMP/active-branch.json"
@@ -143,10 +154,10 @@ jobs:
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
             "https://raw.githubusercontent.com/FormatX66/BoxBrain/$farmer_runtime_proof_commit/Projects/AurumFarmer/Deploy/latest-windows-runtime-proof.json" -o "$RUNNER_TEMP/farmer-runtime-proof.json"
 
-          python3 - "$RUNNER_TEMP" "$projection_commit" "$active_trunk_commit" "$projection_ci_run" "$current_pc_run" "$current_native_run" "$hopper_status_run" "$hopper_status_job" "$voice_mirror_run" "$quantum_run" <<'PY'
+          python3 - "$RUNNER_TEMP" "$projection_commit" "$active_trunk_commit" "$projection_ci_run" "$current_pc_run" "$current_vhl_run" "$current_native_run" "$hopper_status_run" "$hopper_status_job" "$voice_mirror_run" "$quantum_run" <<'PY'
           import json,pathlib,sys
           root=pathlib.Path(sys.argv[1])
-          projection,active,ci_id,pc_id,native_id,hopper_id,hopper_job,voice_id,quantum_id=sys.argv[2:]
+          projection,active,ci_id,pc_id,vhl_id,native_id,hopper_id,hopper_job,voice_id,quantum_id=sys.argv[2:]
           load=lambda n: json.loads((root/n).read_text(encoding='utf-8-sig'))
 
           ci=load('projection-ci.json')
@@ -157,6 +168,19 @@ jobs:
 
           pc=load('current-pc.json')
           assert pc.get('id')==int(pc_id) and pc.get('head_sha')==active and pc.get('conclusion')=='success'
+
+          vhl=load('current-vhl.json')
+          assert vhl.get('id')==int(vhl_id) and vhl.get('head_sha')==active and vhl.get('conclusion')=='failure'
+          vjobs={j.get('name'):j for j in load('current-vhl-jobs.json').get('jobs',[])}
+          for name in ('Docker runtime x86_64','Docker runtime ARM64','QEMU Raspberry Pi 3B machine/runtime'):
+              assert (vjobs.get(name) or {}).get('conclusion')=='success',name
+          uefi=vjobs.get('QEMU UEFI x86_64 PC') or {}
+          assert uefi.get('conclusion')=='failure'
+          usteps={s.get('name'):s.get('conclusion') for s in uefi.get('steps',[])}
+          assert usteps.get('Build PC ISO')=='success'
+          assert usteps.get('Boot PC image in QEMU UEFI')=='failure'
+          assert (vjobs.get('Same-commit four-target convergence gate') or {}).get('conclusion')=='skipped'
+
           native=load('current-native.json')
           assert native.get('id')==int(native_id) and native.get('head_sha')==active and native.get('conclusion')=='failure'
           njobs=[j for j in load('current-native-jobs.json').get('jobs',[]) if j.get('name')=='Resume verified native growth']
@@ -210,7 +234,7 @@ jobs:
           explore=runtime.get('continuous_exploration') or {}
           assert explore.get('model_only') is True and explore.get('authority_granted') is False
           assert runtime.get('destructive_action_allowed') is False and runtime.get('physical_proof_inferred') is False
-          print('GENERATION_LADDER_V134_SOURCE_AND_EVIDENCE_OK')
+          print('GENERATION_LADDER_V135_SOURCE_AND_EVIDENCE_OK')
           PY
 
           echo "file=$projection" >> "$GITHUB_OUTPUT"
@@ -221,6 +245,7 @@ jobs:
           echo "projection_ci_run=$projection_ci_run" >> "$GITHUB_OUTPUT"
           echo "active_trunk_commit=$active_trunk_commit" >> "$GITHUB_OUTPUT"
           echo "current_pc_run=$current_pc_run" >> "$GITHUB_OUTPUT"
+          echo "current_vhl_run=$current_vhl_run" >> "$GITHUB_OUTPUT"
           echo "current_native_run=$current_native_run" >> "$GITHUB_OUTPUT"
           echo "hopper_status_run=$hopper_status_run" >> "$GITHUB_OUTPUT"
           echo "hopper_status_job=$hopper_status_job" >> "$GITHUB_OUTPUT"
@@ -231,7 +256,7 @@ jobs:
           echo "quantum_evidence_commit=$quantum_evidence_commit" >> "$GITHUB_OUTPUT"
           echo "farmer_continuous_explorer_commit=$farmer_continuous_explorer_commit" >> "$GITHUB_OUTPUT"
           echo "farmer_runtime_proof_commit=$farmer_runtime_proof_commit" >> "$GITHUB_OUTPUT"
-          echo 'CLUSTERSITES_CANONICAL_PROJECTION_V134_OK'
+          echo 'CLUSTERSITES_CANONICAL_PROJECTION_V135_OK'
 
       - name: Configure Bluehost SSH with bounded retry
         env:
@@ -287,7 +312,7 @@ jobs:
           import re,sys
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./generation-seed-ladder\.js(?:\?v=[^"]+)?"></script>\s*','',text)
-          tag='<script src="./generation-seed-ladder.js?v=134"></script>'
+          tag='<script src="./generation-seed-ladder.js?v=135"></script>'
           for pattern in (r'<script src="\./seed-lifecycle\.js(?:\?v=[^"]+)?"></script>',r'<script src="\./recovery-guardian\.js(?:\?v=[^"]+)?"></script>',r'</body>'):
               m=re.search(pattern,text)
               if m:
@@ -296,7 +321,7 @@ jobs:
           else: raise SystemExit('dashboard missing generation ladder injection point')
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './generation-seed-ladder.js?v=134' "$RUNNER_TEMP/index.html"
+          grep -Fq './generation-seed-ladder.js?v=135' "$RUNNER_TEMP/index.html"
 
       - name: Publish with bounded retries
         env:
@@ -320,16 +345,23 @@ jobs:
           page="$RUNNER_TEMP/live-index.html"; js="$RUNNER_TEMP/live-generation-seed-ladder.js"
           final_url="$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' \
-            'https://arkmatx.com/aurum/dashboard/generation-seed-ladder.js?rev=134' -o "$js"
-          grep -Fq './generation-seed-ladder.js?v=134' "$page"
+            'https://arkmatx.com/aurum/dashboard/generation-seed-ladder.js?rev=135' -o "$js"
+          grep -Fq './generation-seed-ladder.js?v=135' "$page"
           cmp -s "$js" "${{ steps.source.outputs.file }}"
           node --check "$js"
           for token in \
-            'AURUM_GENERATION_SEED_LADDER_V1_34_CANONICAL' \
-            "componentRevision:'1.34'" \
+            'AURUM_GENERATION_SEED_LADDER_V1_35_CANONICAL' \
+            "componentRevision:'1.35'" \
             "ACTIVE_TRUNK_COMMIT='51b39a5c9767efb1428fd48621c4855d76962acc'" \
+            "CURRENT_VHL_RUN='33842112609'" \
             'currentPcImageRunPassed:true' \
-            'currentVirtualLabExactHeadAvailable:false' \
+            'currentVirtualLabExactHeadAvailable:true' \
+            'currentVirtualLabDockerX86Passed:true' \
+            'currentVirtualLabArm64Passed:true' \
+            'currentVirtualLabPi3Passed:true' \
+            'currentVirtualLabUefiImageBuilt:true' \
+            'currentVirtualLabUefiBootPassed:false' \
+            "currentVirtualLabFailureStep:'Boot PC image in QEMU UEFI'" \
             'currentFourTargetConvergencePassed:false' \
             'currentNativeRunPassed:false' \
             "hopperStatusCurrentBlocker:'no-valid-endpoint-candidate'" \
@@ -380,7 +412,7 @@ jobs:
             "canonical_component_commit": "${{ steps.source.outputs.canonical_commit }}",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/generation-seed-ladder-v1.js",
             "deployment_carrier": "FormatX66/wetbeard-site",
-            "component_revision": "1.34",
+            "component_revision": "1.35",
             "approved_blob": "${{ steps.source.outputs.blob }}",
             "boxbrain_projection_commit": "${{ steps.source.outputs.projection_commit }}",
             "boxbrain_projection_main_commit": "${{ steps.source.outputs.projection_main_commit }}",
@@ -391,7 +423,14 @@ jobs:
             "active_trunk_commit": "${{ steps.source.outputs.active_trunk_commit }}",
             "current_pc_image_run": ${{ steps.source.outputs.current_pc_run }},
             "current_pc_image_run_passed": true,
-            "current_exact_head_four_target_vhl_available": false,
+            "current_vhl_run": ${{ steps.source.outputs.current_vhl_run }},
+            "current_exact_head_four_target_vhl_available": true,
+            "current_vhl_docker_x86_passed": true,
+            "current_vhl_arm64_passed": true,
+            "current_vhl_pi3_passed": true,
+            "current_vhl_uefi_image_built": true,
+            "current_vhl_uefi_boot_passed": false,
+            "current_vhl_failure_step": "Boot PC image in QEMU UEFI",
             "current_four_target_convergence_passed": false,
             "current_native_run": ${{ steps.source.outputs.current_native_run }},
             "current_native_run_passed": false,
@@ -433,6 +472,7 @@ jobs:
             "needs_work_owner": "aurum-system",
             "backup_before_publish": true,
             "rollback_on_verification_failure": true,
+            "rerun_unchanged_failed_work": false,
             "status": "verified-live",
             "verified_at_utc": "$verified_at"
           }
@@ -440,6 +480,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-generation-seed-ladder-live.json
-          git commit -m 'Record Aurum generation seed ladder v1.34 live [skip ci]' || exit 0
+          git commit -m 'Record Aurum generation seed ladder v1.35 live [skip ci]' || exit 0
           git pull --rebase origin main
           git push origin HEAD:main

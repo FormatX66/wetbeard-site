@@ -28,15 +28,15 @@ jobs:
         run: |
           set -euo pipefail
 
-          # ClusterSites remains canonical. This public production carrier does not
-          # attempt an unauthenticated read of the private canonical repository: it
-          # pins the independently approved canonical merge/blob, then requires the
-          # exact public BoxBrain projection and its green CI before production access.
-          canonical_commit='dc0c8beab962f5401adce6eb8c067da48065f6f3'
-          projection_commit='76cba8a08c909a0c793e815c31f2c1b50c73b071'
-          projection_main_commit='965265c6685bfde6bddc7279ee804c0f43f3e66f'
-          expected_blob='c2b66b789a8cd02a7648cffe13d100deecf4f8ab'
-          projection_ci_run='33855364972'
+          # ClusterSites remains canonical. This public carrier pins the independently
+          # approved canonical merge/blob, requires the byte-identical public BoxBrain
+          # projection plus green CI, and verifies the changed runtime evidence before
+          # any production connection. Unchanged failed lanes are read, never rerun.
+          canonical_commit='d59d633ed531fe8efe2f13d3fc6d5622550e1355'
+          projection_commit='2517f03fcc3f13cb708d8efc959752a8beb110b8'
+          projection_main_commit='ab205663affa4357806bc53a50d0be1e57631f2c'
+          expected_blob='0b8d06d363b9804c9a7cca807dd6710876840c86'
+          projection_ci_run='33898414688'
 
           active_trunk_commit='51b39a5c9767efb1428fd48621c4855d76962acc'
           current_pc_run='33828601576'
@@ -50,7 +50,14 @@ jobs:
           quantum_run='33837282240'
           quantum_evidence_commit='3606746cf11be4663f8d5873dcdda9a7c227a87b'
           farmer_continuous_explorer_commit='fb3c7f375d200bd8682266c1ab16262cacf7ab6e'
-          farmer_runtime_proof_commit='693259f7298fafa84e84d2d5062e2eb50b473e69'
+          farmer_runtime_proof_commit='73b4f1d02fc01245a2dc84fb2440e6e4d2ea246d'
+          workload_source_commit='6c7b0ca8bc7ae011bde7943b114ea58d8e743380'
+          workload_runtime_proof_commit='73b4f1d02fc01245a2dc84fb2440e6e4d2ea246d'
+          workload_boxbrain_ci='33893044460'
+          workload_farmer_ci='33893044539'
+          supervision_commit='043b84ac0eb5da2c561abb66232282fba26704b8'
+          supervision_boxbrain_ci='33894107962'
+          supervision_farmer_ci='33894107973'
 
           projection="$RUNNER_TEMP/generation-seed-ladder-projection.js"
           projection_main="$RUNNER_TEMP/generation-seed-ladder-projection-main.js"
@@ -67,22 +74,34 @@ jobs:
           test "$blob" = "$expected_blob"
 
           for token in \
-            'AURUM_GENERATION_SEED_LADDER_V1_35_CANONICAL' \
+            'AURUM_GENERATION_SEED_LADDER_V1_36_CANONICAL' \
             "canonicalWebsiteRepo:'FormatX66/ClusterSites'" \
-            "componentRevision:'1.35'" \
+            "componentRevision:'1.36'" \
             "ACTIVE_TRUNK_COMMIT='$active_trunk_commit'" \
             "CURRENT_PC_IMAGE_RUN='$current_pc_run'" \
             "CURRENT_VHL_RUN='$current_vhl_run'" \
             "CURRENT_NATIVE_RUN='$current_native_run'" \
             "CURRENT_HOPPER_STATUS_RUN='$hopper_status_run'" \
             "CURRENT_HOPPER_STATUS_SNAPSHOT_COMMIT='$hopper_snapshot_commit'" \
-            "VOICE_MIRROR_RUN='$voice_mirror_run'" \
-            "VOICE_MIRROR_RECEIPT_COMMIT='$voice_mirror_receipt_commit'" \
-            "QUANTUM_EVIDENCE_COMMIT='$quantum_evidence_commit'" \
-            "QUANTUM_RUN='$quantum_run'" \
-            "FARMER_CONTINUOUS_EXPLORER_COMMIT='$farmer_continuous_explorer_commit'" \
             "FARMER_RUNTIME_PROOF_COMMIT='$farmer_runtime_proof_commit'" \
-            'currentPcImageRunPassed:true' \
+            "WORKLOAD_OBSERVER_SOURCE_COMMIT='$workload_source_commit'" \
+            "WORKLOAD_OBSERVER_RUNTIME_PROOF_COMMIT='$workload_runtime_proof_commit'" \
+            "WORKLOAD_OBSERVER_SUPERVISION_COMMIT='$supervision_commit'" \
+            "workloadObserverRuntime:'verified-read-only-feed'" \
+            'workloadObserverReadOnly:true' \
+            "workloadObserverActivityEvidence:'available-observed'" \
+            "workloadObserverBudgetAuthority:'resident-explorer-only'" \
+            "workloadObserverRemoteCapacityAuthority:'none'" \
+            "workloadObserverFallback:'host-only-on-stale-or-missing'" \
+            'workloadObserverProcessControlAllowed:false' \
+            'workloadObserverRemoteExecutionAuthority:false' \
+            'workloadObserverProviderCpuRamAvailable:false' \
+            'workloadObserverCodexHostedTelemetryAvailable:false' \
+            "workloadObserverSupervisionRuntime:'runtime-proof-pending'" \
+            'farmerContinuousExplorerPathsBefore:1083' \
+            'farmerContinuousExplorerPathsAfter:1099' \
+            'farmerDecisionEngineCalibratedOutcomes:5' \
+            'farmerDecisionEngineDecisions:10' \
             'currentVirtualLabExactHeadAvailable:true' \
             'currentVirtualLabDockerX86Passed:true' \
             'currentVirtualLabArm64Passed:true' \
@@ -93,29 +112,13 @@ jobs:
             'currentFourTargetConvergencePassed:false' \
             'currentNativeRunPassed:false' \
             "hopperStatusCurrentBlocker:'no-valid-endpoint-candidate'" \
-            'hopperStatusEquivalentNullSnapshotsAreEvidenceHealth:true' \
-            'hopperStatusNoChurnUntilMaterialChange:true' \
-            'farmerContinuousExplorationVerified:true' \
-            'farmerContinuousExplorerModelOnly:true' \
-            'farmerContinuousExplorerAuthorityGranted:false' \
             'voiceStaticMirrorVerified:true' \
-            "voiceMirrorState:'WEB_STATIC_MIRROR_OK'" \
-            'voiceMirrorHostedDeploymentConfigured:false' \
             'quantumRunPassed:true' \
-            'quantumPopulationSize:8' \
-            'quantumSelectedCount:1' \
-            'quantumPrunedCount:7' \
-            'quantumSelectedProbability:0.8888888888888888' \
             "quantumSelectedPath:'current-release-flash-readback-proven-awaiting-physical-boot'" \
-            "quantumSelectedStatus:'held-at-real-boundary'" \
-            "tinySeedBuildState:'READY_TO_FLASH'" \
             'tinySeedPhysicalBootPending:true' \
-            'guardianForcedRollbackProofProven:false' \
-            'physicalHopperBootProofProven:false' \
             'humanActionInference:true' \
             "humanActionType:'physical-boot-proof'" \
             'humanActionDestructive:false' \
-            "needsWorkOwner:'aurum-system'" \
             'backupBeforePublishExpected:true' \
             'rollbackOnVerificationFailure:true' \
             'rerunUnchangedFailedWork:false' \
@@ -124,9 +127,13 @@ jobs:
             'Frontiers Advancing:' \
             'Needs Work → Aurum/System:' \
             'Your Actions:' \
+            'The unified workload observer is now verified in the protected Farmer runtime.' \
+            'Fresh corroborated local contention may reduce only the resident failure explorer budget; cloud/provider activity is advisory and never increases local capacity.' \
+            'Stale or missing observer evidence falls back to host-only budgeting.' \
+            'The feed grants no process-control or remote-execution authority.' \
+            'Finish runtime proof for workload-observer supervision before promoting it to live runtime truth.' \
             'One genuine physical-only step is now proven necessary.' \
             'Do not choose install, erase, format, repair, or any destructive option.' \
-            'Equivalent null refreshes remain evidence health, not frontier advancement.' \
             'ClusterSites remains canonical for website source.'; do
             grep -Fq "$token" "$projection"
           done
@@ -137,7 +144,11 @@ jobs:
             "$current_vhl_run current-vhl" \
             "$current_native_run current-native" \
             "$hopper_status_run hopper-current" \
-            "$voice_mirror_run voice-mirror"; do
+            "$voice_mirror_run voice-mirror" \
+            "$workload_boxbrain_ci workload-boxbrain-ci" \
+            "$workload_farmer_ci workload-farmer-ci" \
+            "$supervision_boxbrain_ci supervision-boxbrain-ci" \
+            "$supervision_farmer_ci supervision-farmer-ci"; do
             set -- $pair
             curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$api/actions/runs/$1" -o "$RUNNER_TEMP/$2.json"
           done
@@ -152,23 +163,30 @@ jobs:
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
             "https://raw.githubusercontent.com/FormatX66/BoxBrain/$quantum_evidence_commit/Projects/FutureBranch/results/quantum-experiment-33837282240.json" -o "$RUNNER_TEMP/quantum-evidence.json"
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
-            "https://raw.githubusercontent.com/FormatX66/BoxBrain/$farmer_runtime_proof_commit/Projects/AurumFarmer/Deploy/latest-windows-runtime-proof.json" -o "$RUNNER_TEMP/farmer-runtime-proof.json"
+            "https://raw.githubusercontent.com/FormatX66/BoxBrain/$workload_runtime_proof_commit/Projects/AurumFarmer/Deploy/latest-windows-runtime-proof.json" -o "$RUNNER_TEMP/workload-runtime-proof.json"
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
+            "https://raw.githubusercontent.com/FormatX66/BoxBrain/$workload_source_commit/Projects/AurumFarmer/aurum_farmer/activity_reader.py" -o "$RUNNER_TEMP/activity-reader.py"
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
+            "https://raw.githubusercontent.com/FormatX66/BoxBrain/$workload_source_commit/Projects/AurumFarmer/aurum_farmer/resource_budget.py" -o "$RUNNER_TEMP/resource-budget.py"
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
+            "https://raw.githubusercontent.com/FormatX66/BoxBrain/$supervision_commit/Projects/FutureBranchMonitor/register-startup.ps1" -o "$RUNNER_TEMP/register-startup.ps1"
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
+            "https://raw.githubusercontent.com/FormatX66/BoxBrain/$projection_main_commit/Projects/AurumFarmer/Deploy/latest-windows-runtime-proof.json" -o "$RUNNER_TEMP/latest-runtime-proof.json"
 
-          python3 - "$RUNNER_TEMP" "$projection_commit" "$active_trunk_commit" "$projection_ci_run" "$current_pc_run" "$current_vhl_run" "$current_native_run" "$hopper_status_run" "$hopper_status_job" "$voice_mirror_run" "$quantum_run" <<'PY'
+          python3 - "$RUNNER_TEMP" "$projection_commit" "$active_trunk_commit" "$projection_ci_run" "$current_pc_run" "$current_vhl_run" "$current_native_run" "$hopper_status_run" "$hopper_status_job" "$voice_mirror_run" "$quantum_run" "$workload_source_commit" <<'PY'
           import json,pathlib,sys
           root=pathlib.Path(sys.argv[1])
-          projection,active,ci_id,pc_id,vhl_id,native_id,hopper_id,hopper_job,voice_id,quantum_id=sys.argv[2:]
+          projection,active,ci_id,pc_id,vhl_id,native_id,hopper_id,hopper_job,voice_id,quantum_id,workload_src=sys.argv[2:]
           load=lambda n: json.loads((root/n).read_text(encoding='utf-8-sig'))
+          ok=lambda n: load(n).get('status')=='completed' and load(n).get('conclusion')=='success'
 
           ci=load('projection-ci.json')
           assert ci.get('id')==int(ci_id) and ci.get('name')=='BoxBrain CI'
           assert ci.get('head_sha')==projection and ci.get('status')=='completed' and ci.get('conclusion')=='success'
-          branch=load('active-branch.json')
-          assert (branch.get('commit') or {}).get('sha')==active
+          assert (load('active-branch.json').get('commit') or {}).get('sha')==active
 
           pc=load('current-pc.json')
           assert pc.get('id')==int(pc_id) and pc.get('head_sha')==active and pc.get('conclusion')=='success'
-
           vhl=load('current-vhl.json')
           assert vhl.get('id')==int(vhl_id) and vhl.get('head_sha')==active and vhl.get('conclusion')=='failure'
           vjobs={j.get('name'):j for j in load('current-vhl-jobs.json').get('jobs',[])}
@@ -185,56 +203,53 @@ jobs:
           assert native.get('id')==int(native_id) and native.get('head_sha')==active and native.get('conclusion')=='failure'
           njobs=[j for j in load('current-native-jobs.json').get('jobs',[]) if j.get('name')=='Resume verified native growth']
           assert len(njobs)==1 and njobs[0].get('conclusion')=='failure'
-          nsteps={s.get('name'):s.get('conclusion') for s in njobs[0].get('steps',[])}
-          assert nsteps.get('Verify native self-build contracts')=='failure'
+          assert {s.get('name'):s.get('conclusion') for s in njobs[0].get('steps',[])}.get('Verify native self-build contracts')=='failure'
 
           hopper=load('hopper-current.json')
           assert hopper.get('id')==int(hopper_id) and hopper.get('event')=='schedule' and hopper.get('conclusion')=='success'
           hmatch=[j for j in load('hopper-current-jobs.json').get('jobs',[]) if j.get('id')==int(hopper_job)]
-          assert len(hmatch)==1 and hmatch[0].get('conclusion')=='success'
-          assert hmatch[0].get('runner_name')=='AURUM-HOPPER-STATUS-WSL'
+          assert len(hmatch)==1 and hmatch[0].get('conclusion')=='success' and hmatch[0].get('runner_name')=='AURUM-HOPPER-STATUS-WSL'
           hs=load('hopper-status.json')
-          assert hs.get('schema')=='aurum.hopper.live-status.v2'
-          assert hs.get('endpoint') is None and hs.get('source_kind') is None and hs.get('http_status') is None
-          assert hs.get('reachable') is False and hs.get('report') is None
-          assert (hs.get('summary') or {}).get('health')=='no-endpoint-candidate'
-          assert hs.get('observed_at')=='2026-09-04T04:44:16Z'
+          assert hs.get('endpoint') is None and hs.get('reachable') is False and (hs.get('summary') or {}).get('health')=='no-endpoint-candidate'
 
           voice=load('voice-mirror.json')
-          assert voice.get('id')==int(voice_id) and voice.get('name')=='Deploy Aurum Arkmatx' and voice.get('conclusion')=='success'
-          vr=load('voice-mirror-receipt.json')
-          assert vr.get('state')=='WEB_STATIC_MIRROR_OK'
-          verified=vr.get('verified') or {}
-          for key in ('dashboard_truth_banner','dashboard_reads_static_json','plain_text_voice_status','json_voice_status','browser_static_voice_view','seven_human_capabilities','six_evidence_gates'):
-              assert verified.get(key) is True,key
-          assert verified.get('seeded_floor')=='4/6'
-          assert (vr.get('hosted_deployment') or {}).get('configured') is False
-
+          assert voice.get('id')==int(voice_id) and voice.get('conclusion')=='success'
+          assert load('voice-mirror-receipt.json').get('state')=='WEB_STATIC_MIRROR_OK'
           q=load('quantum-evidence.json')
-          assert q.get('source_run_id')==int(quantum_id) and q.get('overall')=='success' and q.get('router')=='success'
-          sel=q.get('selection') or {}
-          assert sel.get('population_size')==8 and sel.get('selected_count')==1 and sel.get('pruned_count')==7
-          assert abs(sel.get('probability_cutoff')-0.8888888888888888)<1e-12
-          assert sel.get('selected_path')=='current-release-flash-readback-proven-awaiting-physical-boot'
-          assert sel.get('selected_status')=='held-at-real-boundary'
-          for provider in ('google','microsoft'):
-              p=(q.get('provider_sweeps') or {}).get(provider) or {}
-              assert p.get('cases_executed')==9 and p.get('passed') is True and p.get('failed_cases')==[]
-          build=q.get('aurum_seed_build') or {}
-          assert build.get('build_state')=='READY_TO_FLASH'
-          for key in ('x86_build','x86_uefi_boot_smoke','x86_bios_boot_smoke','x86_boot_proof_marker','pi_build','pi_static_recovery_payload','published_artifacts','combined_hash_reverification'):
-              assert build.get(key)=='passed',key
-          assert build.get('physical_boot')=='pending' and build.get('guardian_forced_rollback')=='pending'
-          human=q.get('next_human_boundary') or {}
-          assert human.get('genuine_human_only') is True and human.get('destructive_action_required') is False
-          assert human.get('physical_or_destructive_effect_executed_by_experiment') is False
+          assert q.get('source_run_id')==int(quantum_id) and q.get('overall')=='success'
+          assert (q.get('next_human_boundary') or {}).get('genuine_human_only') is True
+          assert (q.get('next_human_boundary') or {}).get('destructive_action_required') is False
 
-          runtime=load('farmer-runtime-proof.json')
+          for name in ('workload-boxbrain-ci.json','workload-farmer-ci.json','supervision-boxbrain-ci.json','supervision-farmer-ci.json'):
+              assert ok(name),name
+          reader=(root/'activity-reader.py').read_text(encoding='utf-8')
+          governor=(root/'resource-budget.py').read_text(encoding='utf-8')
+          assert 'Local contention may reduce explorer budget only; cloud activity is advisory' in reader
+          assert "data.get('read_only') is not True" in reader and "data.get('authority_granted') is not False" in reader
+          assert 'local_activity_stale_or_disconnected' in reader
+          assert 'Remote CPU/RAM never enters local pressure.' in governor
+          assert "owner': 'Future Branch failure explorer only'" in governor
+          assert "external_process_control': 'not_configured'" in governor and "cloud_routing': 'not_configured'" in governor
+
+          runtime=load('workload-runtime-proof.json')
+          assert runtime.get('schema')=='aurum.farmer.windows-runtime-proof.v1'
+          assert runtime.get('source_commit')==workload_src
           assert runtime.get('continuous_exploration_verified') is True
-          explore=runtime.get('continuous_exploration') or {}
-          assert explore.get('model_only') is True and explore.get('authority_granted') is False
+          assert runtime.get('exploration_paths_before')==1083 and runtime.get('exploration_paths_after')==1099
+          assert (runtime.get('future_branch') or {}).get('calibrated_outcomes')==5 and (runtime.get('future_branch') or {}).get('decisions')==10
+          resource=(runtime.get('continuous_exploration') or {}).get('resource_decision') or {}
+          activity=resource.get('activity_evidence') or {}
+          assert activity.get('available') is True and activity.get('authority_granted') is False and activity.get('github_active_observed')==1
+          assert resource.get('selected')=='normal_local_budget'
+          assert resource.get('owner')=='Future Branch failure explorer only'
+          assert resource.get('external_process_control')=='not_configured' and resource.get('cloud_routing')=='not_configured'
           assert runtime.get('destructive_action_allowed') is False and runtime.get('physical_proof_inferred') is False
-          print('GENERATION_LADDER_V135_SOURCE_AND_EVIDENCE_OK')
+
+          startup=(root/'register-startup.ps1').read_text(encoding='utf-8')
+          assert '-RestartCount 3' in startup and '-RunLevel Limited' in startup and 'MultipleInstances IgnoreNew' in startup
+          latest=load('latest-runtime-proof.json')
+          assert latest.get('source_commit')==workload_src, 'supervision runtime proof boundary changed; reconcile before publish'
+          print('GENERATION_LADDER_V136_SOURCE_AND_EVIDENCE_OK')
           PY
 
           echo "file=$projection" >> "$GITHUB_OUTPUT"
@@ -256,7 +271,14 @@ jobs:
           echo "quantum_evidence_commit=$quantum_evidence_commit" >> "$GITHUB_OUTPUT"
           echo "farmer_continuous_explorer_commit=$farmer_continuous_explorer_commit" >> "$GITHUB_OUTPUT"
           echo "farmer_runtime_proof_commit=$farmer_runtime_proof_commit" >> "$GITHUB_OUTPUT"
-          echo 'CLUSTERSITES_CANONICAL_PROJECTION_V135_OK'
+          echo "workload_source_commit=$workload_source_commit" >> "$GITHUB_OUTPUT"
+          echo "workload_runtime_proof_commit=$workload_runtime_proof_commit" >> "$GITHUB_OUTPUT"
+          echo "workload_boxbrain_ci=$workload_boxbrain_ci" >> "$GITHUB_OUTPUT"
+          echo "workload_farmer_ci=$workload_farmer_ci" >> "$GITHUB_OUTPUT"
+          echo "supervision_commit=$supervision_commit" >> "$GITHUB_OUTPUT"
+          echo "supervision_boxbrain_ci=$supervision_boxbrain_ci" >> "$GITHUB_OUTPUT"
+          echo "supervision_farmer_ci=$supervision_farmer_ci" >> "$GITHUB_OUTPUT"
+          echo 'CLUSTERSITES_CANONICAL_PROJECTION_V136_OK'
 
       - name: Configure Bluehost SSH with bounded retry
         env:
@@ -312,7 +334,7 @@ jobs:
           import re,sys
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./generation-seed-ladder\.js(?:\?v=[^"]+)?"></script>\s*','',text)
-          tag='<script src="./generation-seed-ladder.js?v=135"></script>'
+          tag='<script src="./generation-seed-ladder.js?v=136"></script>'
           for pattern in (r'<script src="\./seed-lifecycle\.js(?:\?v=[^"]+)?"></script>',r'<script src="\./recovery-guardian\.js(?:\?v=[^"]+)?"></script>',r'</body>'):
               m=re.search(pattern,text)
               if m:
@@ -321,7 +343,7 @@ jobs:
           else: raise SystemExit('dashboard missing generation ladder injection point')
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './generation-seed-ladder.js?v=135' "$RUNNER_TEMP/index.html"
+          grep -Fq './generation-seed-ladder.js?v=136' "$RUNNER_TEMP/index.html"
 
       - name: Publish with bounded retries
         env:
@@ -345,29 +367,27 @@ jobs:
           page="$RUNNER_TEMP/live-index.html"; js="$RUNNER_TEMP/live-generation-seed-ladder.js"
           final_url="$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' \
-            'https://arkmatx.com/aurum/dashboard/generation-seed-ladder.js?rev=135' -o "$js"
-          grep -Fq './generation-seed-ladder.js?v=135' "$page"
+            'https://arkmatx.com/aurum/dashboard/generation-seed-ladder.js?rev=136' -o "$js"
+          grep -Fq './generation-seed-ladder.js?v=136' "$page"
           cmp -s "$js" "${{ steps.source.outputs.file }}"
           node --check "$js"
           for token in \
-            'AURUM_GENERATION_SEED_LADDER_V1_35_CANONICAL' \
-            "componentRevision:'1.35'" \
-            "ACTIVE_TRUNK_COMMIT='51b39a5c9767efb1428fd48621c4855d76962acc'" \
-            "CURRENT_VHL_RUN='33842112609'" \
-            'currentPcImageRunPassed:true' \
-            'currentVirtualLabExactHeadAvailable:true' \
+            'AURUM_GENERATION_SEED_LADDER_V1_36_CANONICAL' \
+            "componentRevision:'1.36'" \
+            "workloadObserverRuntime:'verified-read-only-feed'" \
+            'workloadObserverReadOnly:true' \
+            "workloadObserverBudgetAuthority:'resident-explorer-only'" \
+            "workloadObserverRemoteCapacityAuthority:'none'" \
+            'workloadObserverProcessControlAllowed:false' \
+            'workloadObserverRemoteExecutionAuthority:false' \
+            "workloadObserverSupervisionRuntime:'runtime-proof-pending'" \
             'currentVirtualLabDockerX86Passed:true' \
             'currentVirtualLabArm64Passed:true' \
             'currentVirtualLabPi3Passed:true' \
-            'currentVirtualLabUefiImageBuilt:true' \
             'currentVirtualLabUefiBootPassed:false' \
             "currentVirtualLabFailureStep:'Boot PC image in QEMU UEFI'" \
-            'currentFourTargetConvergencePassed:false' \
             'currentNativeRunPassed:false' \
             "hopperStatusCurrentBlocker:'no-valid-endpoint-candidate'" \
-            'voiceStaticMirrorVerified:true' \
-            'quantumRunPassed:true' \
-            'tinySeedPhysicalBootPending:true' \
             'humanActionInference:true' \
             "humanActionType:'physical-boot-proof'" \
             'humanActionDestructive:false' \
@@ -376,7 +396,8 @@ jobs:
             'Frontiers Advancing:' \
             'Needs Work → Aurum/System:' \
             'Your Actions:' \
-            'One genuine physical-only step is now proven necessary.' \
+            'The unified workload observer is now verified in the protected Farmer runtime.' \
+            'Finish runtime proof for workload-observer supervision before promoting it to live runtime truth.' \
             'Do not choose install, erase, format, repair, or any destructive option.'; do grep -Fq "$token" "$js"; done
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
 
@@ -412,7 +433,7 @@ jobs:
             "canonical_component_commit": "${{ steps.source.outputs.canonical_commit }}",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/generation-seed-ladder-v1.js",
             "deployment_carrier": "FormatX66/wetbeard-site",
-            "component_revision": "1.35",
+            "component_revision": "1.36",
             "approved_blob": "${{ steps.source.outputs.blob }}",
             "boxbrain_projection_commit": "${{ steps.source.outputs.projection_commit }}",
             "boxbrain_projection_main_commit": "${{ steps.source.outputs.projection_main_commit }}",
@@ -443,23 +464,33 @@ jobs:
             "voice_mirror_run": ${{ steps.source.outputs.voice_mirror_run }},
             "voice_mirror_receipt_commit": "${{ steps.source.outputs.voice_mirror_receipt_commit }}",
             "voice_static_mirror_verified": true,
-            "voice_mirror_state": "WEB_STATIC_MIRROR_OK",
-            "voice_mirror_hosted_deployment_configured": false,
             "quantum_run": ${{ steps.source.outputs.quantum_run }},
             "quantum_evidence_commit": "${{ steps.source.outputs.quantum_evidence_commit }}",
             "quantum_run_passed": true,
-            "quantum_population_size": 8,
-            "quantum_selected_count": 1,
-            "quantum_pruned_count": 7,
-            "quantum_selected_probability": 0.8888888888888888,
-            "quantum_selected_path": "current-release-flash-readback-proven-awaiting-physical-boot",
-            "tinyseed_build_state": "READY_TO_FLASH",
             "tinyseed_physical_boot_pending": true,
             "farmer_continuous_explorer_commit": "${{ steps.source.outputs.farmer_continuous_explorer_commit }}",
             "farmer_runtime_proof_commit": "${{ steps.source.outputs.farmer_runtime_proof_commit }}",
             "farmer_continuous_exploration_verified": true,
             "farmer_continuous_explorer_model_only": true,
             "farmer_continuous_explorer_authority_granted": false,
+            "farmer_continuous_explorer_paths_before": 1083,
+            "farmer_continuous_explorer_paths_after": 1099,
+            "farmer_decision_engine_calibrated_outcomes": 5,
+            "farmer_decision_engine_decisions": 10,
+            "workload_observer_source_commit": "${{ steps.source.outputs.workload_source_commit }}",
+            "workload_observer_runtime_proof_commit": "${{ steps.source.outputs.workload_runtime_proof_commit }}",
+            "workload_observer_boxbrain_ci": ${{ steps.source.outputs.workload_boxbrain_ci }},
+            "workload_observer_farmer_ci": ${{ steps.source.outputs.workload_farmer_ci }},
+            "workload_observer_runtime": "verified-read-only-feed",
+            "workload_observer_read_only": true,
+            "workload_observer_budget_authority": "resident-explorer-only",
+            "workload_observer_remote_capacity_authority": "none",
+            "workload_observer_process_control_allowed": false,
+            "workload_observer_remote_execution_authority": false,
+            "workload_observer_supervision_commit": "${{ steps.source.outputs.supervision_commit }}",
+            "workload_observer_supervision_boxbrain_ci": ${{ steps.source.outputs.supervision_boxbrain_ci }},
+            "workload_observer_supervision_farmer_ci": ${{ steps.source.outputs.supervision_farmer_ci }},
+            "workload_observer_supervision_runtime": "runtime-proof-pending",
             "physical_hopper_boot_proof_proven": false,
             "guardian_forced_rollback_proof_proven": false,
             "human_action_inference": true,
@@ -480,6 +511,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-generation-seed-ladder-live.json
-          git commit -m 'Record Aurum generation seed ladder v1.35 live [skip ci]' || exit 0
+          git commit -m 'Record Aurum generation seed ladder v1.36 live [skip ci]' || exit 0
           git pull --rebase origin main
           git push origin HEAD:main

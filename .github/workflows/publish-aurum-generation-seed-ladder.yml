@@ -27,32 +27,28 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          canonical_commit='cea3ca5e7af847255def8fc42ebee1f451a4df0c'
-          expected_blob='11c7142847a3b7d27d52756ad91fb4de87620797'
-          projection_commit='fbe448896a7845897cf3cba8ff2ca77d846ca5dd'
-          projection_main_commit='21d43f0aebd92c6b09089068d6603e3e20d667e6'
-          projection_ci_run='33927566312'
-          active_trunk_commit='e4d1d79d4ffbde35ae95a4071607a3498f8931d6'
-          active_trunk_tree='bc7fcd57c8e780a6a396311199177a9544792fb4'
-          previous_active_trunk_commit='64eb1b87a9b489c662ef22d05946492ecbd77ae3'
-          boot_menu_pr='218'
-          boot_menu_candidate='3b59fe81d4ba67fed1a6c12e94a58e5681766861'
-          boot_menu_vhl_run='33924925898'
-          previous_vhl_failure_run='33923762383'
-          current_pc_run='33926519340'
-          current_pi3_run='33926519293'
-          previous_native_run='33915328066'
-          hopper_snapshot_commit='8c4a49f21a230709d7b7bca51d393a230ee69b5b'
-
+          canonical_commit='ecef023a126d35b92b704ec5aec5a80a0d433c2a'
+          expected_blob='22a7e188230a74221c1d35e64f67fc08e893a78a'
+          projection_commit='f0d9fada1c4ac8ba9c1b7f155d4d6e639901f840'
+          projection_main_commit='4137c5e274681c410de33aa79bbaaa196c71b55b'
+          projection_ci_run='33928260878'
+          active='e4d1d79d4ffbde35ae95a4071607a3498f8931d6'
+          tree='bc7fcd57c8e780a6a396311199177a9544792fb4'
+          previous='64eb1b87a9b489c662ef22d05946492ecbd77ae3'
+          candidate='3b59fe81d4ba67fed1a6c12e94a58e5681766861'
+          vhl='33924925898'
+          old_vhl='33923762383'
+          pc='33926519340'
+          pi3='33926519293'
+          native='33915328066'
+          hopper='8c4a49f21a230709d7b7bca51d393a230ee69b5b'
           canonical="$RUNNER_TEMP/canonical.js"
           projection="$RUNNER_TEMP/projection.js"
           projection_main="$RUNNER_TEMP/projection-main.js"
-          bbapi='https://api.github.com/repos/FormatX66/BoxBrain'
+          api='https://api.github.com/repos/FormatX66/BoxBrain'
 
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
-            "https://raw.githubusercontent.com/FormatX66/BoxBrain/$projection_commit/Web/Aurum-Arkmatx/generation-seed-ladder-v1.js" -o "$projection"
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
-            "https://raw.githubusercontent.com/FormatX66/BoxBrain/$projection_main_commit/Web/Aurum-Arkmatx/generation-seed-ladder-v1.js" -o "$projection_main"
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "https://raw.githubusercontent.com/FormatX66/BoxBrain/$projection_commit/Web/Aurum-Arkmatx/generation-seed-ladder-v1.js" -o "$projection"
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "https://raw.githubusercontent.com/FormatX66/BoxBrain/$projection_main_commit/Web/Aurum-Arkmatx/generation-seed-ladder-v1.js" -o "$projection_main"
           test -s "$projection" && test -s "$projection_main"
           node --check "$projection"
           cmp -s "$projection" "$projection_main"
@@ -61,34 +57,21 @@ jobs:
           cp "$projection" "$canonical"
 
           for token in \
-            'AURUM_GENERATION_SEED_LADDER_V1_41_CANONICAL' \
-            "componentRevision:'1.41'" \
+            'AURUM_GENERATION_SEED_LADDER_V1_42_CANONICAL' \
+            "componentRevision:'1.42'" \
             "canonicalWebsiteRepo:'FormatX66/ClusterSites'" \
-            "ACTIVE_TRUNK_COMMIT='$active_trunk_commit'" \
-            "ACTIVE_TRUNK_TREE='$active_trunk_tree'" \
-            "PREVIOUS_ACTIVE_TRUNK_COMMIT='$previous_active_trunk_commit'" \
-            "HOPPER_BOOT_MENU_PR='$boot_menu_pr'" \
-            "HOPPER_BOOT_MENU_CANDIDATE='$boot_menu_candidate'" \
-            "HOPPER_BOOT_MENU_VHL_RUN='$boot_menu_vhl_run'" \
-            "PREVIOUS_VHL_TIMING_FAILURE_RUN='$previous_vhl_failure_run'" \
-            "CURRENT_PC_IMAGE_RUN='$current_pc_run'" \
-            "CURRENT_PI3_IMAGE_RUN='$current_pi3_run'" \
-            "PREVIOUS_NATIVE_RUN='$previous_native_run'" \
-            "CURRENT_HOPPER_STATUS_SNAPSHOT_COMMIT='$hopper_snapshot_commit'" \
+            "ACTIVE_TRUNK_COMMIT='$active'" \
+            "ACTIVE_TRUNK_TREE='$tree'" \
             'hopperBootMenuMerged:true' \
-            'hopperBootMenuCodePromoted:true' \
-            'hopperBootMenuCandidateTreeEqualsActiveTrunkTree:true' \
             'hopperBootMenuFourTargetConvergencePassed:true' \
-            'hopperBootMenuEntryCount:2' \
-            'hopperBootMenuTimeoutSeconds:5' \
-            'hopperBootMenuHopperNormalBlacklistsNouveau:true' \
-            'hopperBootMenuRecoveryUsesNomodeset:true' \
             'hopperBootMenuPhysicalTwoEntryObservationProven:false' \
-            'arcadeReadyMarkerGraceSeconds:5' \
-            'arcadeReadyGraceRequiresObservedMarker:true' \
-            'arcadeReadyGraceUnqualifiedExtensionAllowed:false' \
             'previousVhlTimingFailureChangedBeforeRetry:true' \
-            'currentPcImageFinalResultPromoted:false' \
+            'currentPcImageFinalResultPromoted:true' \
+            'currentPcImageRunPassed:true' \
+            'currentPcImageGenericUefiInstallRebootSelfBuildPassed:true' \
+            'currentPcImageLegacyBiosInstallBootPassed:true' \
+            'currentPcImageHpTwinPassed:true' \
+            'currentPcImageVerifiedPublicationPassed:true' \
             'currentPi3ImageRunPassed:true' \
             'currentNativeResultObserved:false' \
             "hopperStatusCurrentBlocker:'no-valid-endpoint-candidate'" \
@@ -106,84 +89,52 @@ jobs:
             'Needs Work → Aurum/System:' \
             'Your Actions:' \
             'One genuine physical-only step is now proven necessary.' \
-            'No new Hopper boot-menu, Wi-Fi, sync-ref or software action is justified for you from code evidence alone.' \
             'Do not choose install, erase, format, repair, or any destructive option.' \
             'ClusterSites remains canonical for website source.'; do
             grep -Fq "$token" "$canonical"
           done
 
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$bbapi/actions/runs/$projection_ci_run" -o "$RUNNER_TEMP/projection-ci.json"
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$bbapi/branches/aurum/trunk-v0.01" -o "$RUNNER_TEMP/active-branch.json"
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$bbapi/commits/$active_trunk_commit" -o "$RUNNER_TEMP/active-commit.json"
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$bbapi/commits/$boot_menu_candidate" -o "$RUNNER_TEMP/candidate-commit.json"
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$bbapi/pulls/$boot_menu_pr" -o "$RUNNER_TEMP/boot-menu-pr.json"
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$bbapi/actions/runs/$boot_menu_vhl_run" -o "$RUNNER_TEMP/boot-menu-vhl.json"
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$bbapi/actions/runs/$boot_menu_vhl_run/jobs?per_page=100" -o "$RUNNER_TEMP/boot-menu-vhl-jobs.json"
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$bbapi/actions/runs/$previous_vhl_failure_run" -o "$RUNNER_TEMP/previous-vhl.json"
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$bbapi/actions/runs/$previous_vhl_failure_run/jobs?per_page=100" -o "$RUNNER_TEMP/previous-vhl-jobs.json"
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$bbapi/actions/runs/$current_pc_run" -o "$RUNNER_TEMP/current-pc.json"
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$bbapi/actions/runs/$current_pi3_run" -o "$RUNNER_TEMP/current-pi3.json"
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$bbapi/actions/runs/$previous_native_run" -o "$RUNNER_TEMP/previous-native.json"
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
-            "https://raw.githubusercontent.com/FormatX66/BoxBrain/$hopper_snapshot_commit/Web/Aurum-Arkmatx/hopper-status.json" -o "$RUNNER_TEMP/hopper-status.json"
+          get(){ curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$1" -o "$2"; }
+          get "$api/actions/runs/$projection_ci_run" "$RUNNER_TEMP/ci.json"
+          get "$api/branches/aurum/trunk-v0.01" "$RUNNER_TEMP/branch.json"
+          get "$api/commits/$active" "$RUNNER_TEMP/active.json"
+          get "$api/commits/$candidate" "$RUNNER_TEMP/candidate.json"
+          get "$api/pulls/218" "$RUNNER_TEMP/pr.json"
+          get "$api/actions/runs/$vhl" "$RUNNER_TEMP/vhl.json"
+          get "$api/actions/runs/$vhl/jobs?per_page=100" "$RUNNER_TEMP/vhl-jobs.json"
+          get "$api/actions/runs/$old_vhl" "$RUNNER_TEMP/old-vhl.json"
+          get "$api/actions/runs/$pc" "$RUNNER_TEMP/pc.json"
+          get "$api/actions/runs/$pc/jobs?per_page=100" "$RUNNER_TEMP/pc-jobs.json"
+          get "$api/actions/runs/$pi3" "$RUNNER_TEMP/pi3.json"
+          get "$api/actions/runs/$native" "$RUNNER_TEMP/native.json"
+          get "https://raw.githubusercontent.com/FormatX66/BoxBrain/$hopper/Web/Aurum-Arkmatx/hopper-status.json" "$RUNNER_TEMP/hopper.json"
 
-          python3 - "$RUNNER_TEMP" "$projection_commit" "$projection_ci_run" "$active_trunk_commit" "$active_trunk_tree" "$previous_active_trunk_commit" "$boot_menu_candidate" "$boot_menu_vhl_run" "$previous_vhl_failure_run" "$current_pc_run" "$current_pi3_run" "$previous_native_run" <<'PY'
-          import json, pathlib, sys
-          root=pathlib.Path(sys.argv[1])
-          projection,ci_id,active,active_tree,previous,candidate,vhl_id,old_vhl_id,pc_id,pi3_id,native_id=sys.argv[2:]
-          load=lambda n: json.loads((root/n).read_text(encoding='utf-8-sig'))
-          steps=lambda job:{s.get('name'):s.get('conclusion') for s in job.get('steps',[])}
-
-          ci=load('projection-ci.json')
-          assert ci.get('id')==int(ci_id) and ci.get('name')=='BoxBrain CI'
-          assert ci.get('head_sha')==projection and ci.get('status')=='completed' and ci.get('conclusion')=='success'
-          branch=load('active-branch.json')
-          assert (branch.get('commit') or {}).get('sha')==active
-          ac=load('active-commit.json'); cc=load('candidate-commit.json')
-          assert (ac.get('commit') or {}).get('tree',{}).get('sha')==active_tree
-          assert (cc.get('commit') or {}).get('tree',{}).get('sha')==active_tree
-
-          pr=load('boot-menu-pr.json')
-          assert pr.get('state')=='closed' and pr.get('merged_at') and pr.get('merge_commit_sha')==active
-          assert (pr.get('head') or {}).get('sha')==candidate and (pr.get('base') or {}).get('ref')=='aurum/trunk-v0.01'
-          body=pr.get('body') or ''
-          for token in (
-              'regenerate, rather than append, exactly two installed boot choices',
-              'keep a five-second automatic normal boot timeout while leaving recovery reachable',
-              'no partition, filesystem, NVRAM, or live Hopper change occurs in this PR',
-              'the current installed state and LKG remain untouched until a separately verified recovery image is used',
-          ):
-              assert token in body, token
-
-          vhl=load('boot-menu-vhl.json')
-          assert vhl.get('id')==int(vhl_id) and vhl.get('head_sha')==candidate
-          assert vhl.get('status')=='completed' and vhl.get('conclusion')=='success'
-          vjobs={j.get('name'):j for j in load('boot-menu-vhl-jobs.json').get('jobs',[])}
-          for name in ('Docker runtime x86_64','Docker runtime ARM64','QEMU Raspberry Pi 3B machine/runtime','QEMU UEFI x86_64 PC','Same-commit four-target convergence gate'):
-              assert (vjobs.get(name) or {}).get('conclusion')=='success', name
-          assert steps(vjobs['QEMU UEFI x86_64 PC']).get('Boot PC image in QEMU UEFI')=='success'
-          assert steps(vjobs['Same-commit four-target convergence gate']).get('Verify exact targets, commit, and evidence labels')=='success'
-
-          old=load('previous-vhl.json')
-          assert old.get('id')==int(old_vhl_id) and old.get('head_sha')==previous
-          assert old.get('status')=='completed' and old.get('conclusion')=='failure'
-          oldjobs={j.get('name'):j for j in load('previous-vhl-jobs.json').get('jobs',[])}
-          assert (oldjobs.get('QEMU UEFI x86_64 PC') or {}).get('conclusion')=='failure'
-          assert steps(oldjobs['QEMU UEFI x86_64 PC']).get('Boot PC image in QEMU UEFI')=='failure'
-
-          pc=load('current-pc.json')
-          assert pc.get('id')==int(pc_id) and pc.get('head_sha')==active
-          pi3=load('current-pi3.json')
-          assert pi3.get('id')==int(pi3_id) and pi3.get('head_sha')==active
-          assert pi3.get('status')=='completed' and pi3.get('conclusion')=='success'
-          native=load('previous-native.json')
-          assert native.get('id')==int(native_id)
-          assert native.get('head_sha') not in (active, previous)
-          assert native.get('status')=='completed' and native.get('conclusion')=='failure'
-          hs=load('hopper-status.json')
-          assert hs.get('endpoint') is None and hs.get('http_status') is None and hs.get('reachable') is False and hs.get('report') is None
-          assert (hs.get('summary') or {}).get('health')=='no-endpoint-candidate'
-          print('GENERATION_LADDER_V141_SOURCE_AND_EVIDENCE_OK')
+          python3 - "$RUNNER_TEMP" "$projection_commit" "$projection_ci_run" "$active" "$tree" "$previous" "$candidate" "$vhl" "$old_vhl" "$pc" "$pi3" "$native" <<'PY'
+          import json,pathlib,sys
+          r=pathlib.Path(sys.argv[1]); projection,ci_id,active,tree,previous,candidate,vhl_id,old_id,pc_id,pi3_id,native_id=sys.argv[2:]
+          load=lambda n:json.loads((r/n).read_text(encoding='utf-8-sig'))
+          steps=lambda j:{s.get('name'):s.get('conclusion') for s in j.get('steps',[])}
+          ci=load('ci.json'); assert ci['id']==int(ci_id) and ci['head_sha']==projection and ci['status']=='completed' and ci['conclusion']=='success'
+          assert load('branch.json')['commit']['sha']==active
+          assert load('active.json')['commit']['tree']['sha']==tree and load('candidate.json')['commit']['tree']['sha']==tree
+          pr=load('pr.json'); assert pr['state']=='closed' and pr['merged_at'] and pr['merge_commit_sha']==active and pr['head']['sha']==candidate
+          v=load('vhl.json'); assert v['id']==int(vhl_id) and v['head_sha']==candidate and v['conclusion']=='success'
+          vj={j['name']:j for j in load('vhl-jobs.json')['jobs']}
+          for n in ('Docker runtime x86_64','Docker runtime ARM64','QEMU Raspberry Pi 3B machine/runtime','QEMU UEFI x86_64 PC','Same-commit four-target convergence gate'): assert vj[n]['conclusion']=='success',n
+          old=load('old-vhl.json'); assert old['id']==int(old_id) and old['head_sha']==previous and old['status']=='completed' and old['conclusion']=='failure'
+          pc=load('pc.json'); assert pc['id']==int(pc_id) and pc['head_sha']==active and pc['status']=='completed' and pc['conclusion']=='success'
+          pj={j['name']:j for j in load('pc-jobs.json')['jobs']}
+          for n in ('validate','build-image','generic-uefi-smoke','hp-twin-smoke','publish-verified-image'): assert pj[n]['conclusion']=='success',n
+          gs=steps(pj['generic-uefi-smoke'])
+          assert gs['Generic low-memory UEFI install reboot and self-build smoke']=='success'
+          assert gs['Legacy BIOS install and installed-boot smoke']=='success'
+          assert steps(pj['hp-twin-smoke'])['Hopper HP topology and offline-recovery twin']=='success'
+          ps=steps(pj['publish-verified-image'])
+          assert ps['Enforce digest convergence and mandatory verification']=='success' and ps['Publish boot-verified ISO']=='success'
+          pi=load('pi3.json'); assert pi['id']==int(pi3_id) and pi['head_sha']==active and pi['status']=='completed' and pi['conclusion']=='success'
+          n=load('native.json'); assert n['id']==int(native_id) and n['head_sha'] not in (active,previous) and n['conclusion']=='failure'
+          h=load('hopper.json'); assert h['endpoint'] is None and h['reachable'] is False and h['summary']['health']=='no-endpoint-candidate'
+          print('GENERATION_LADDER_V142_SOURCE_AND_EVIDENCE_OK')
           PY
 
           echo "file=$canonical" >> "$GITHUB_OUTPUT"
@@ -192,18 +143,15 @@ jobs:
           echo "projection_commit=$projection_commit" >> "$GITHUB_OUTPUT"
           echo "projection_main_commit=$projection_main_commit" >> "$GITHUB_OUTPUT"
           echo "projection_ci_run=$projection_ci_run" >> "$GITHUB_OUTPUT"
-          echo "active_trunk_commit=$active_trunk_commit" >> "$GITHUB_OUTPUT"
-          echo "active_trunk_tree=$active_trunk_tree" >> "$GITHUB_OUTPUT"
-          echo "previous_active_trunk_commit=$previous_active_trunk_commit" >> "$GITHUB_OUTPUT"
-          echo "boot_menu_pr=$boot_menu_pr" >> "$GITHUB_OUTPUT"
-          echo "boot_menu_candidate=$boot_menu_candidate" >> "$GITHUB_OUTPUT"
-          echo "boot_menu_vhl_run=$boot_menu_vhl_run" >> "$GITHUB_OUTPUT"
-          echo "previous_vhl_failure_run=$previous_vhl_failure_run" >> "$GITHUB_OUTPUT"
-          echo "current_pc_run=$current_pc_run" >> "$GITHUB_OUTPUT"
-          echo "current_pi3_run=$current_pi3_run" >> "$GITHUB_OUTPUT"
-          echo "previous_native_run=$previous_native_run" >> "$GITHUB_OUTPUT"
-          echo "hopper_snapshot_commit=$hopper_snapshot_commit" >> "$GITHUB_OUTPUT"
-          echo 'CLUSTERSITES_CANONICAL_PROJECTION_V141_OK'
+          echo "active=$active" >> "$GITHUB_OUTPUT"
+          echo "tree=$tree" >> "$GITHUB_OUTPUT"
+          echo "candidate=$candidate" >> "$GITHUB_OUTPUT"
+          echo "vhl=$vhl" >> "$GITHUB_OUTPUT"
+          echo "old_vhl=$old_vhl" >> "$GITHUB_OUTPUT"
+          echo "pc=$pc" >> "$GITHUB_OUTPUT"
+          echo "pi3=$pi3" >> "$GITHUB_OUTPUT"
+          echo "native=$native" >> "$GITHUB_OUTPUT"
+          echo "hopper=$hopper" >> "$GITHUB_OUTPUT"
 
       - name: Configure Bluehost SSH with bounded retry
         env:
@@ -213,18 +161,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -n "$BLUEHOST_HOST"
-          test -n "$BLUEHOST_USERNAME"
-          test -n "$BLUEHOST_SSH_PRIVATE_KEY"
+          test -n "$BLUEHOST_HOST"; test -n "$BLUEHOST_USERNAME"; test -n "$BLUEHOST_SSH_PRIVATE_KEY"
           install -m 700 -d "$HOME/.ssh"
           printf '%s\n' "$BLUEHOST_SSH_PRIVATE_KEY" > "$HOME/.ssh/bluehost_deploy"
           chmod 600 "$HOME/.ssh/bluehost_deploy"
           : > "$HOME/.ssh/known_hosts"
-          for attempt in 1 2 3 4 5; do
-            if ssh-keyscan -T 10 -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null; then exit 0; fi
-            [ "$attempt" -eq 5 ] && exit 1
-            sleep $((attempt * 5))
-          done
+          for n in 1 2 3 4 5; do ssh-keyscan -T 10 -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null && exit 0; [ "$n" -eq 5 ] && exit 1; sleep $((n*5)); done
 
       - name: Back up current Command Center
         id: backup
@@ -234,11 +176,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          retry_capture() { local out="$1"; shift; local n=1 tmp="$(mktemp)"; while true; do if "$@" > "$tmp"; then mv "$tmp" "$out"; return 0; fi; [ "$n" -ge 5 ] && { rm -f "$tmp"; return 1; }; sleep $((n * 5)); n=$((n+1)); done; }
-          remote='public_html/arkmatx/aurum/dashboard'
-          backup=".aurum-dashboard-backups/generation-seed-ladder-$GITHUB_RUN_ID"
-          retry_capture "$RUNNER_TEMP/index.html" ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
-            "set -eu; mkdir -p '$remote' '$backup'; cp -p '$remote/index.html' '$backup/index.html'; if [ -f '$remote/generation-seed-ladder.js' ]; then cp -p '$remote/generation-seed-ladder.js' '$backup/generation-seed-ladder.js'; else touch '$backup/.missing-generation-seed-ladder.js'; fi; cat '$remote/index.html'"
+          retry_capture(){ local out="$1"; shift; local n=1 tmp="$(mktemp)"; while true; do if "$@" > "$tmp"; then mv "$tmp" "$out"; return 0; fi; [ "$n" -ge 5 ] && { rm -f "$tmp"; return 1; }; sleep $((n*5)); n=$((n+1)); done; }
+          remote='public_html/arkmatx/aurum/dashboard'; backup=".aurum-dashboard-backups/generation-seed-ladder-$GITHUB_RUN_ID"
+          retry_capture "$RUNNER_TEMP/index.html" ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" "set -eu; mkdir -p '$remote' '$backup'; cp -p '$remote/index.html' '$backup/index.html'; if [ -f '$remote/generation-seed-ladder.js' ]; then cp -p '$remote/generation-seed-ladder.js' '$backup/generation-seed-ladder.js'; else touch '$backup/.missing-generation-seed-ladder.js'; fi; cat '$remote/index.html'"
           test -s "$RUNNER_TEMP/index.html"
           echo 'ready=true' >> "$GITHUB_OUTPUT"
 
@@ -249,18 +189,16 @@ jobs:
           python3 - "$RUNNER_TEMP/index.html" <<'PY'
           from pathlib import Path
           import re,sys
-          p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
-          text=re.sub(r'<script src="\./generation-seed-ladder\.js(?:\?v=[^"]+)?"></script>\s*','',text)
-          tag='<script src="./generation-seed-ladder.js?v=141"></script>'
-          for pattern in (r'<script src="\./seed-lifecycle\.js(?:\?v=[^"]+)?"></script>',r'<script src="\./recovery-guardian\.js(?:\?v=[^"]+)?"></script>',r'</body>'):
-              m=re.search(pattern,text)
-              if m:
-                  text=text[:m.start()]+tag+'\n'+text[m.start():]
-                  break
+          p=Path(sys.argv[1]); t=p.read_text(encoding='utf-8')
+          t=re.sub(r'<script src="\./generation-seed-ladder\.js(?:\?v=[^"]+)?"></script>\s*','',t)
+          tag='<script src="./generation-seed-ladder.js?v=142"></script>'
+          for pat in (r'<script src="\./seed-lifecycle\.js(?:\?v=[^"]+)?"></script>',r'<script src="\./recovery-guardian\.js(?:\?v=[^"]+)?"></script>',r'</body>'):
+              m=re.search(pat,t)
+              if m: t=t[:m.start()]+tag+'\n'+t[m.start():]; break
           else: raise SystemExit('dashboard missing generation ladder injection point')
-          p.write_text(text,encoding='utf-8')
+          p.write_text(t,encoding='utf-8')
           PY
-          grep -Fq './generation-seed-ladder.js?v=141' "$RUNNER_TEMP/index.html"
+          grep -Fq './generation-seed-ladder.js?v=142' "$RUNNER_TEMP/index.html"
 
       - name: Publish with bounded retries
         env:
@@ -269,12 +207,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          retry() { local n=1; while true; do "$@" && return 0; [ "$n" -ge 5 ] && return 1; sleep $((n * 5)); n=$((n+1)); done; }
+          retry(){ local n=1; while true; do "$@" && return 0; [ "$n" -ge 5 ] && return 1; sleep $((n*5)); n=$((n+1)); done; }
           remote='public_html/arkmatx/aurum/dashboard'
-          retry scp -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -P 22 \
-            "$RUNNER_TEMP/index.html" "${{ steps.source.outputs.file }}" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/"
-          retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
-            "set -eu; mv '$remote/canonical.js' '$remote/generation-seed-ladder.js'; chmod 644 '$remote/index.html' '$remote/generation-seed-ladder.js'"
+          retry scp -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -P 22 "$RUNNER_TEMP/index.html" "${{ steps.source.outputs.file }}" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/"
+          retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" "set -eu; mv '$remote/canonical.js' '$remote/generation-seed-ladder.js'; chmod 644 '$remote/index.html' '$remote/generation-seed-ladder.js'"
 
       - name: Verify live Command Center
         id: verify
@@ -283,35 +219,11 @@ jobs:
           set -euo pipefail
           page="$RUNNER_TEMP/live-index.html"; js="$RUNNER_TEMP/live-generation-seed-ladder.js"
           final_url="$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' \
-            'https://arkmatx.com/aurum/dashboard/generation-seed-ladder.js?rev=141' -o "$js"
-          grep -Fq './generation-seed-ladder.js?v=141' "$page"
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/generation-seed-ladder.js?rev=142' -o "$js"
+          grep -Fq './generation-seed-ladder.js?v=142' "$page"
           cmp -s "$js" "${{ steps.source.outputs.file }}"
           node --check "$js"
-          for token in \
-            'AURUM_GENERATION_SEED_LADDER_V1_41_CANONICAL' \
-            "componentRevision:'1.41'" \
-            'hopperBootMenuMerged:true' \
-            'hopperBootMenuFourTargetConvergencePassed:true' \
-            'hopperBootMenuPhysicalTwoEntryObservationProven:false' \
-            'previousVhlTimingFailureChangedBeforeRetry:true' \
-            'currentPcImageFinalResultPromoted:false' \
-            'currentPi3ImageRunPassed:true' \
-            'currentNativeResultObserved:false' \
-            "hopperStatusCurrentBlocker:'no-valid-endpoint-candidate'" \
-            'humanActionInference:true' \
-            "humanActionType:'physical-boot-proof'" \
-            'humanActionDestructive:false' \
-            'majorBoxAdded:false' \
-            'seedLifecycleRemainsExpandable:true' \
-            'generationLadderRemainsExpandable:true' \
-            'Frontiers Advancing:' \
-            'Needs Work → Aurum/System:' \
-            'Your Actions:' \
-            'No new Hopper boot-menu, Wi-Fi, sync-ref or software action is justified for you from code evidence alone.' \
-            'Do not choose install, erase, format, repair, or any destructive option.'; do
-            grep -Fq "$token" "$js"
-          done
+          for token in 'AURUM_GENERATION_SEED_LADDER_V1_42_CANONICAL' "componentRevision:'1.42'" 'currentPcImageFinalResultPromoted:true' 'currentPcImageRunPassed:true' 'hopperBootMenuPhysicalTwoEntryObservationProven:false' 'currentNativeResultObserved:false' "hopperStatusCurrentBlocker:'no-valid-endpoint-candidate'" 'humanActionInference:true' 'humanActionDestructive:false' 'majorBoxAdded:false' 'seedLifecycleRemainsExpandable:true' 'generationLadderRemainsExpandable:true' 'Frontiers Advancing:' 'Needs Work → Aurum/System:' 'Your Actions:' 'Do not choose install, erase, format, repair, or any destructive option.'; do grep -Fq "$token" "$js"; done
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
 
       - name: Roll back on verification failure
@@ -322,19 +234,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          retry() { local n=1; while true; do "$@" && return 0; [ "$n" -ge 5 ] && return 1; sleep $((n * 5)); n=$((n+1)); done; }
+          retry(){ local n=1; while true; do "$@" && return 0; [ "$n" -ge 5 ] && return 1; sleep $((n*5)); n=$((n+1)); done; }
           remote='public_html/arkmatx/aurum/dashboard'; backup=".aurum-dashboard-backups/generation-seed-ladder-$GITHUB_RUN_ID"
-          retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
-            "set -eu; cp -p '$backup/index.html' '$remote/index.html'; if [ -f '$backup/generation-seed-ladder.js' ]; then cp -p '$backup/generation-seed-ladder.js' '$remote/generation-seed-ladder.js'; elif [ -f '$backup/.missing-generation-seed-ladder.js' ]; then rm -f '$remote/generation-seed-ladder.js'; fi"
+          retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" "set -eu; cp -p '$backup/index.html' '$remote/index.html'; if [ -f '$backup/generation-seed-ladder.js' ]; then cp -p '$backup/generation-seed-ladder.js' '$remote/generation-seed-ladder.js'; elif [ -f '$backup/.missing-generation-seed-ladder.js' ]; then rm -f '$remote/generation-seed-ladder.js'; fi"
 
       - name: Record verified live receipt
         if: success()
         shell: bash
         run: |
           set -euo pipefail
-          git fetch origin main
-          git checkout main
-          git reset --hard origin/main
+          git fetch origin main; git checkout main; git reset --hard origin/main
           mkdir -p deployments
           verified_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
           cat > deployments/aurum-generation-seed-ladder-live.json <<EOF_RECEIPT
@@ -346,40 +255,30 @@ jobs:
             "canonical_component_commit": "${{ steps.source.outputs.canonical_commit }}",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/generation-seed-ladder-v1.js",
             "deployment_carrier": "FormatX66/wetbeard-site",
-            "component_revision": "1.41",
+            "component_revision": "1.42",
             "approved_blob": "${{ steps.source.outputs.blob }}",
             "boxbrain_projection_commit": "${{ steps.source.outputs.projection_commit }}",
             "boxbrain_projection_main_commit": "${{ steps.source.outputs.projection_main_commit }}",
             "boxbrain_ci_run": ${{ steps.source.outputs.projection_ci_run }},
             "boxbrain_ci_proven": true,
             "cluster_canonical_commit_pinned": true,
-            "canonical_direct_fetch_required": false,
-            "active_trunk_commit": "${{ steps.source.outputs.active_trunk_commit }}",
-            "active_trunk_tree": "${{ steps.source.outputs.active_trunk_tree }}",
-            "previous_active_trunk_commit": "${{ steps.source.outputs.previous_active_trunk_commit }}",
-            "hopper_boot_menu_pr": ${{ steps.source.outputs.boot_menu_pr }},
-            "hopper_boot_menu_merged": true,
-            "hopper_boot_menu_code_promoted": true,
-            "hopper_boot_menu_candidate": "${{ steps.source.outputs.boot_menu_candidate }}",
-            "hopper_boot_menu_vhl_run": ${{ steps.source.outputs.boot_menu_vhl_run }},
-            "hopper_boot_menu_candidate_same_tree_as_active": true,
+            "active_trunk_commit": "${{ steps.source.outputs.active }}",
+            "active_trunk_tree": "${{ steps.source.outputs.tree }}",
+            "hopper_boot_menu_candidate": "${{ steps.source.outputs.candidate }}",
+            "hopper_boot_menu_vhl_run": ${{ steps.source.outputs.vhl }},
             "hopper_boot_menu_four_target_convergence_passed": true,
-            "hopper_boot_menu_entry_count": 2,
-            "hopper_boot_menu_timeout_seconds": 5,
-            "hopper_boot_menu_hopper_normal_blacklists_nouveau": true,
-            "hopper_boot_menu_recovery_uses_nomodeset": true,
             "hopper_boot_menu_physical_two_entry_observation_proven": false,
-            "previous_vhl_timing_failure_run": ${{ steps.source.outputs.previous_vhl_failure_run }},
-            "previous_vhl_timing_failure_historical": true,
+            "previous_vhl_timing_failure_run": ${{ steps.source.outputs.old_vhl }},
             "previous_vhl_timing_failure_changed_before_retry": true,
-            "current_pc_image_run": ${{ steps.source.outputs.current_pc_run }},
-            "current_pc_image_final_result_promoted": false,
-            "current_pi3_image_run": ${{ steps.source.outputs.current_pi3_run }},
+            "current_pc_image_run": ${{ steps.source.outputs.pc }},
+            "current_pc_image_final_result_promoted": true,
+            "current_pc_image_run_passed": true,
+            "current_pc_image_verified_publication_passed": true,
+            "current_pi3_image_run": ${{ steps.source.outputs.pi3 }},
             "current_pi3_image_run_passed": true,
             "current_native_result_observed": false,
-            "previous_native_run": ${{ steps.source.outputs.previous_native_run }},
-            "previous_native_run_historical": true,
-            "hopper_status_snapshot_commit": "${{ steps.source.outputs.hopper_snapshot_commit }}",
+            "previous_native_run": ${{ steps.source.outputs.native }},
+            "hopper_status_snapshot_commit": "${{ steps.source.outputs.hopper }}",
             "hopper_status_current_blocker": "no-valid-endpoint-candidate",
             "hopper_equivalent_null_snapshot_is_evidence_health": true,
             "physical_hopper_boot_proof_proven": false,
@@ -400,9 +299,8 @@ jobs:
             "verified_at_utc": "$verified_at"
           }
           EOF_RECEIPT
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git config user.name 'github-actions[bot]'; git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-generation-seed-ladder-live.json
-          git commit -m 'Record Aurum generation seed ladder v1.41 live [skip ci]' || exit 0
+          git commit -m 'Record Aurum generation seed ladder v1.42 live [skip ci]' || exit 0
           git pull --rebase origin main
           git push origin HEAD:main

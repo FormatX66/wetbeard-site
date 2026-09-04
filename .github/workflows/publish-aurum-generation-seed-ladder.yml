@@ -28,6 +28,10 @@ jobs:
         run: |
           set -euo pipefail
 
+          # ClusterSites remains canonical. This public carrier deliberately does not
+          # attempt unauthenticated reads of the private canonical repository. It
+          # accepts only the pinned approved canonical merge/blob, byte-identical
+          # public BoxBrain projection, green projection CI, and changed evidence.
           canonical_commit='d27c08cfe83965531c3b2f628350c482b619d531'
           projection_commit='f19076611bdc9378d07b8ac7d9cd59de1ef6e233'
           projection_main_commit='91c1c008183c8b7d633bcff1a991573902207b34'
@@ -49,17 +53,16 @@ jobs:
           bbapi='https://api.github.com/repos/FormatX66/BoxBrain'
 
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
-            "https://raw.githubusercontent.com/FormatX66/ClusterSites/$canonical_commit/services/aurum-arkmatx/generation-seed-ladder-v1.js" -o "$canonical"
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
             "https://raw.githubusercontent.com/FormatX66/BoxBrain/$projection_commit/Web/Aurum-Arkmatx/generation-seed-ladder-v1.js" -o "$projection"
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
             "https://raw.githubusercontent.com/FormatX66/BoxBrain/$projection_main_commit/Web/Aurum-Arkmatx/generation-seed-ladder-v1.js" -o "$projection_main"
-          test -s "$canonical" && test -s "$projection" && test -s "$projection_main"
-          node --check "$canonical"
-          cmp -s "$canonical" "$projection"
-          cmp -s "$canonical" "$projection_main"
-          blob="$(git hash-object "$canonical")"
+          test -s "$projection" && test -s "$projection_main"
+          node --check "$projection"
+          cmp -s "$projection" "$projection_main"
+          blob="$(git hash-object "$projection")"
           test "$blob" = "$expected_blob"
+          cp "$projection" "$canonical"
+          cmp -s "$canonical" "$projection"
 
           for token in \
             'AURUM_GENERATION_SEED_LADDER_V1_38_CANONICAL' \
@@ -345,7 +348,7 @@ jobs:
             "boxbrain_ci_run": ${{ steps.source.outputs.projection_ci_run }},
             "boxbrain_ci_proven": true,
             "cluster_canonical_commit_pinned": true,
-            "canonical_direct_fetch_required": true,
+            "canonical_direct_fetch_required": false,
             "active_trunk_commit": "${{ steps.source.outputs.active_trunk_commit }}",
             "active_trunk_tree": "${{ steps.source.outputs.active_trunk_tree }}",
             "hopper_wifi_recovery_pr": ${{ steps.source.outputs.promotion_pr }},

@@ -32,11 +32,11 @@ jobs:
           # approved canonical merge/blob, requires the byte-identical public BoxBrain
           # projection plus green CI, and verifies the changed runtime evidence before
           # any production connection. Unchanged failed lanes are read, never rerun.
-          canonical_commit='d59d633ed531fe8efe2f13d3fc6d5622550e1355'
-          projection_commit='2517f03fcc3f13cb708d8efc959752a8beb110b8'
-          projection_main_commit='ab205663affa4357806bc53a50d0be1e57631f2c'
-          expected_blob='0b8d06d363b9804c9a7cca807dd6710876840c86'
-          projection_ci_run='33898414688'
+          canonical_commit='bc22f78d6f7cd02c1393ed8c352c870026762c52'
+          projection_commit='237594e235c9288fad548b11e58aa46e1d9e1329'
+          projection_main_commit='4cb006b0eaedc494ae2a41fee4f766070da0f96c'
+          expected_blob='76d90984cac4dc6e77e1807c434f8579b6d0b007'
+          projection_ci_run='33904068192'
 
           active_trunk_commit='51b39a5c9767efb1428fd48621c4855d76962acc'
           current_pc_run='33828601576'
@@ -45,6 +45,9 @@ jobs:
           hopper_status_run='33837892970'
           hopper_status_job='100914038192'
           hopper_snapshot_commit='a4674a918dbe74017778da39e2c88ad73d1f553c'
+          hopper_wifi_pr='214'
+          hopper_wifi_recovery_commit='11253220296fbc1013fb5b512cabeb7101f0c583'
+          hopper_wifi_recovery_vhl_run='33900381917'
           voice_mirror_run='33834801810'
           voice_mirror_receipt_commit='d4b80d95f834bc8c56e0cedad18c77bac25f3402'
           quantum_run='33837282240'
@@ -74,15 +77,18 @@ jobs:
           test "$blob" = "$expected_blob"
 
           for token in \
-            'AURUM_GENERATION_SEED_LADDER_V1_36_CANONICAL' \
+            'AURUM_GENERATION_SEED_LADDER_V1_37_CANONICAL' \
             "canonicalWebsiteRepo:'FormatX66/ClusterSites'" \
-            "componentRevision:'1.36'" \
+            "componentRevision:'1.37'" \
             "ACTIVE_TRUNK_COMMIT='$active_trunk_commit'" \
             "CURRENT_PC_IMAGE_RUN='$current_pc_run'" \
             "CURRENT_VHL_RUN='$current_vhl_run'" \
             "CURRENT_NATIVE_RUN='$current_native_run'" \
             "CURRENT_HOPPER_STATUS_RUN='$hopper_status_run'" \
             "CURRENT_HOPPER_STATUS_SNAPSHOT_COMMIT='$hopper_snapshot_commit'" \
+            "HOPPER_WIFI_RECOVERY_PR='$hopper_wifi_pr'" \
+            "HOPPER_WIFI_RECOVERY_COMMIT='$hopper_wifi_recovery_commit'" \
+            "HOPPER_WIFI_RECOVERY_VHL_RUN='$hopper_wifi_recovery_vhl_run'" \
             "FARMER_RUNTIME_PROOF_COMMIT='$farmer_runtime_proof_commit'" \
             "WORKLOAD_OBSERVER_SOURCE_COMMIT='$workload_source_commit'" \
             "WORKLOAD_OBSERVER_RUNTIME_PROOF_COMMIT='$workload_runtime_proof_commit'" \
@@ -112,6 +118,24 @@ jobs:
             'currentFourTargetConvergencePassed:false' \
             'currentNativeRunPassed:false' \
             "hopperStatusCurrentBlocker:'no-valid-endpoint-candidate'" \
+            'hopperWifiRecoveryCandidateOpen:true' \
+            'hopperWifiRecoveryPrePromotion:true' \
+            'hopperWifiRecoveryLocalVerificationReportedGreen:true' \
+            'hopperWifiRecoverySerializedConnectionOwnership:true' \
+            'hopperWifiRecoverySavedProfileHeldUntilVerified:true' \
+            'hopperWifiRecoveryIndependentServiceSupervision:true' \
+            'hopperWifiRecoveryGuiSingleFlight:true' \
+            'hopperWifiRecoveryWirelessSpecificProofRequired:true' \
+            'hopperWifiRecoveryEthernetCountsAsWirelessProof:false' \
+            'hopperWifiRecoveryVhlDockerX86Passed:true' \
+            'hopperWifiRecoveryVhlArm64Passed:true' \
+            'hopperWifiRecoveryVhlPi3Passed:true' \
+            'hopperWifiRecoveryVhlUefiImageBuilt:true' \
+            'hopperWifiRecoveryVhlUefiBootPassed:false' \
+            "hopperWifiRecoveryVhlFailureStep:'Boot PC image in QEMU UEFI'" \
+            'hopperWifiRecoveryPhysicalWifiProven:false' \
+            'hopperWifiRecoveryObservedRebootPersistenceProven:false' \
+            'hopperWifiRecoverySeedPromotionProven:false' \
             'voiceStaticMirrorVerified:true' \
             'quantumRunPassed:true' \
             "quantumSelectedPath:'current-release-flash-readback-proven-awaiting-physical-boot'" \
@@ -128,10 +152,9 @@ jobs:
             'Needs Work → Aurum/System:' \
             'Your Actions:' \
             'The unified workload observer is now verified in the protected Farmer runtime.' \
-            'Fresh corroborated local contention may reduce only the resident failure explorer budget; cloud/provider activity is advisory and never increases local capacity.' \
-            'Stale or missing observer evidence falls back to host-only budgeting.' \
-            'The feed grants no process-control or remote-execution authority.' \
-            'Finish runtime proof for workload-observer supervision before promoting it to live runtime truth.' \
+            'Hopper Wi-Fi ownership/recovery is now a real pre-promotion workstream.' \
+            'physical Wi-Fi, observed reboot persistence, and seed promotion are unproven.' \
+            'do not ask for extra human Wi-Fi manipulation from candidate evidence alone.' \
             'One genuine physical-only step is now proven necessary.' \
             'Do not choose install, erase, format, repair, or any destructive option.' \
             'ClusterSites remains canonical for website source.'; do
@@ -173,12 +196,20 @@ jobs:
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
             "https://raw.githubusercontent.com/FormatX66/BoxBrain/$projection_main_commit/Projects/AurumFarmer/Deploy/latest-windows-runtime-proof.json" -o "$RUNNER_TEMP/latest-runtime-proof.json"
 
-          python3 - "$RUNNER_TEMP" "$projection_commit" "$active_trunk_commit" "$projection_ci_run" "$current_pc_run" "$current_vhl_run" "$current_native_run" "$hopper_status_run" "$hopper_status_job" "$voice_mirror_run" "$quantum_run" "$workload_source_commit" <<'PY'
-          import json,pathlib,sys
+          python3 - "$RUNNER_TEMP" "$projection_commit" "$active_trunk_commit" "$projection_ci_run" "$current_pc_run" "$current_vhl_run" "$current_native_run" "$hopper_status_run" "$hopper_status_job" "$voice_mirror_run" "$quantum_run" "$workload_source_commit" "$hopper_wifi_pr" "$hopper_wifi_recovery_commit" "$hopper_wifi_recovery_vhl_run" <<'PY'
+          import json,pathlib,sys,urllib.request
           root=pathlib.Path(sys.argv[1])
-          projection,active,ci_id,pc_id,vhl_id,native_id,hopper_id,hopper_job,voice_id,quantum_id,workload_src=sys.argv[2:]
+          projection,active,ci_id,pc_id,vhl_id,native_id,hopper_id,hopper_job,voice_id,quantum_id,workload_src,wifi_pr,wifi_commit,wifi_vhl=sys.argv[2:]
           load=lambda n: json.loads((root/n).read_text(encoding='utf-8-sig'))
           ok=lambda n: load(n).get('status')=='completed' and load(n).get('conclusion')=='success'
+          def webjson(url):
+              request=urllib.request.Request(url,headers={'User-Agent':'aurum-command-center-carrier'})
+              with urllib.request.urlopen(request,timeout=30) as response:
+                  return json.load(response)
+          def webtext(url):
+              request=urllib.request.Request(url,headers={'User-Agent':'aurum-command-center-carrier'})
+              with urllib.request.urlopen(request,timeout=30) as response:
+                  return response.read().decode('utf-8')
 
           ci=load('projection-ci.json')
           assert ci.get('id')==int(ci_id) and ci.get('name')=='BoxBrain CI'
@@ -211,6 +242,49 @@ jobs:
           assert len(hmatch)==1 and hmatch[0].get('conclusion')=='success' and hmatch[0].get('runner_name')=='AURUM-HOPPER-STATUS-WSL'
           hs=load('hopper-status.json')
           assert hs.get('endpoint') is None and hs.get('reachable') is False and (hs.get('summary') or {}).get('health')=='no-endpoint-candidate'
+
+          wifi=webjson(f'https://api.github.com/repos/FormatX66/BoxBrain/pulls/{wifi_pr}')
+          assert wifi.get('state')=='open' and wifi.get('merged_at') is None and wifi.get('draft') is False
+          assert (wifi.get('base') or {}).get('ref')=='aurum/trunk-v0.01' and (wifi.get('base') or {}).get('sha')==active
+          wifi_head=(wifi.get('head') or {}).get('sha')
+          assert wifi_head
+          ancestry=webjson(f'https://api.github.com/repos/FormatX66/BoxBrain/compare/{wifi_commit}...{wifi_head}')
+          assert (ancestry.get('merge_base_commit') or {}).get('sha')==wifi_commit
+          assert ancestry.get('status') in ('ahead','identical')
+          body=wifi.get('body') or ''
+          for token in (
+              'Serialize native setup, HTML, console and boot connection transactions.',
+              'keep the saved profile until exact-SSID/interface connectivity is verified',
+              'Supervise Wi-Fi independently from the requesting GUI/console service',
+              'Keep GUI requests single-flight',
+              'instead of treating Ethernet or link-local addresses as Wi-Fi proof',
+              '264 tests, OK',
+              '35 passed',
+              'not evidence of physical Wi-Fi, reboot or seed promotion success'
+          ):
+              assert token in body,token
+          doc=webtext(f'https://raw.githubusercontent.com/FormatX66/BoxBrain/{wifi_head}/Projects/AurumPC/WIFI_RECOVERY.md')
+          for token in (
+              'All native setup, HTML GUI, console and boot connection operations share a',
+              'A new profile is committed only',
+              'The supplicant runs in an independent transient system service',
+              'Ethernet being online does not skip the saved Wi-Fi boot request.',
+              'These checks do not prove a physical WPA handshake',
+              'saved-profile persistence after reboot'
+          ):
+              assert token in doc,token
+          wrun=webjson(f'https://api.github.com/repos/FormatX66/BoxBrain/actions/runs/{wifi_vhl}')
+          assert wrun.get('name')=='Aurum Virtual Hardware Lab' and wrun.get('head_sha')==wifi_commit
+          assert wrun.get('status')=='completed' and wrun.get('conclusion')=='failure'
+          wjobs={j.get('name'):j for j in webjson(f'https://api.github.com/repos/FormatX66/BoxBrain/actions/runs/{wifi_vhl}/jobs?per_page=100').get('jobs',[])}
+          for name in ('Docker runtime x86_64','Docker runtime ARM64','QEMU Raspberry Pi 3B machine/runtime'):
+              assert (wjobs.get(name) or {}).get('conclusion')=='success',name
+          wuefi=wjobs.get('QEMU UEFI x86_64 PC') or {}
+          assert wuefi.get('conclusion')=='failure'
+          wsteps={s.get('name'):s.get('conclusion') for s in wuefi.get('steps',[])}
+          assert wsteps.get('Build PC ISO')=='success'
+          assert wsteps.get('Boot PC image in QEMU UEFI')=='failure'
+          assert (wjobs.get('Same-commit four-target convergence gate') or {}).get('conclusion')=='skipped'
 
           voice=load('voice-mirror.json')
           assert voice.get('id')==int(voice_id) and voice.get('conclusion')=='success'
@@ -249,7 +323,7 @@ jobs:
           assert '-RestartCount 3' in startup and '-RunLevel Limited' in startup and 'MultipleInstances IgnoreNew' in startup
           latest=load('latest-runtime-proof.json')
           assert latest.get('source_commit')==workload_src, 'supervision runtime proof boundary changed; reconcile before publish'
-          print('GENERATION_LADDER_V136_SOURCE_AND_EVIDENCE_OK')
+          print('GENERATION_LADDER_V137_SOURCE_AND_EVIDENCE_OK')
           PY
 
           echo "file=$projection" >> "$GITHUB_OUTPUT"
@@ -265,6 +339,9 @@ jobs:
           echo "hopper_status_run=$hopper_status_run" >> "$GITHUB_OUTPUT"
           echo "hopper_status_job=$hopper_status_job" >> "$GITHUB_OUTPUT"
           echo "hopper_snapshot_commit=$hopper_snapshot_commit" >> "$GITHUB_OUTPUT"
+          echo "hopper_wifi_pr=$hopper_wifi_pr" >> "$GITHUB_OUTPUT"
+          echo "hopper_wifi_recovery_commit=$hopper_wifi_recovery_commit" >> "$GITHUB_OUTPUT"
+          echo "hopper_wifi_recovery_vhl_run=$hopper_wifi_recovery_vhl_run" >> "$GITHUB_OUTPUT"
           echo "voice_mirror_run=$voice_mirror_run" >> "$GITHUB_OUTPUT"
           echo "voice_mirror_receipt_commit=$voice_mirror_receipt_commit" >> "$GITHUB_OUTPUT"
           echo "quantum_run=$quantum_run" >> "$GITHUB_OUTPUT"
@@ -278,7 +355,7 @@ jobs:
           echo "supervision_commit=$supervision_commit" >> "$GITHUB_OUTPUT"
           echo "supervision_boxbrain_ci=$supervision_boxbrain_ci" >> "$GITHUB_OUTPUT"
           echo "supervision_farmer_ci=$supervision_farmer_ci" >> "$GITHUB_OUTPUT"
-          echo 'CLUSTERSITES_CANONICAL_PROJECTION_V136_OK'
+          echo 'CLUSTERSITES_CANONICAL_PROJECTION_V137_OK'
 
       - name: Configure Bluehost SSH with bounded retry
         env:
@@ -334,7 +411,7 @@ jobs:
           import re,sys
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./generation-seed-ladder\.js(?:\?v=[^"]+)?"></script>\s*','',text)
-          tag='<script src="./generation-seed-ladder.js?v=136"></script>'
+          tag='<script src="./generation-seed-ladder.js?v=137"></script>'
           for pattern in (r'<script src="\./seed-lifecycle\.js(?:\?v=[^"]+)?"></script>',r'<script src="\./recovery-guardian\.js(?:\?v=[^"]+)?"></script>',r'</body>'):
               m=re.search(pattern,text)
               if m:
@@ -343,7 +420,7 @@ jobs:
           else: raise SystemExit('dashboard missing generation ladder injection point')
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './generation-seed-ladder.js?v=136' "$RUNNER_TEMP/index.html"
+          grep -Fq './generation-seed-ladder.js?v=137' "$RUNNER_TEMP/index.html"
 
       - name: Publish with bounded retries
         env:
@@ -367,13 +444,13 @@ jobs:
           page="$RUNNER_TEMP/live-index.html"; js="$RUNNER_TEMP/live-generation-seed-ladder.js"
           final_url="$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' \
-            'https://arkmatx.com/aurum/dashboard/generation-seed-ladder.js?rev=136' -o "$js"
-          grep -Fq './generation-seed-ladder.js?v=136' "$page"
+            'https://arkmatx.com/aurum/dashboard/generation-seed-ladder.js?rev=137' -o "$js"
+          grep -Fq './generation-seed-ladder.js?v=137' "$page"
           cmp -s "$js" "${{ steps.source.outputs.file }}"
           node --check "$js"
           for token in \
-            'AURUM_GENERATION_SEED_LADDER_V1_36_CANONICAL' \
-            "componentRevision:'1.36'" \
+            'AURUM_GENERATION_SEED_LADDER_V1_37_CANONICAL' \
+            "componentRevision:'1.37'" \
             "workloadObserverRuntime:'verified-read-only-feed'" \
             'workloadObserverReadOnly:true' \
             "workloadObserverBudgetAuthority:'resident-explorer-only'" \
@@ -388,6 +465,11 @@ jobs:
             "currentVirtualLabFailureStep:'Boot PC image in QEMU UEFI'" \
             'currentNativeRunPassed:false' \
             "hopperStatusCurrentBlocker:'no-valid-endpoint-candidate'" \
+            'hopperWifiRecoveryCandidateOpen:true' \
+            'hopperWifiRecoveryPrePromotion:true' \
+            'hopperWifiRecoveryPhysicalWifiProven:false' \
+            'hopperWifiRecoveryObservedRebootPersistenceProven:false' \
+            'hopperWifiRecoverySeedPromotionProven:false' \
             'humanActionInference:true' \
             "humanActionType:'physical-boot-proof'" \
             'humanActionDestructive:false' \
@@ -396,8 +478,8 @@ jobs:
             'Frontiers Advancing:' \
             'Needs Work → Aurum/System:' \
             'Your Actions:' \
-            'The unified workload observer is now verified in the protected Farmer runtime.' \
-            'Finish runtime proof for workload-observer supervision before promoting it to live runtime truth.' \
+            'Hopper Wi-Fi ownership/recovery is now a real pre-promotion workstream.' \
+            'do not ask for extra human Wi-Fi manipulation from candidate evidence alone.' \
             'Do not choose install, erase, format, repair, or any destructive option.'; do grep -Fq "$token" "$js"; done
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
 
@@ -433,7 +515,7 @@ jobs:
             "canonical_component_commit": "${{ steps.source.outputs.canonical_commit }}",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/generation-seed-ladder-v1.js",
             "deployment_carrier": "FormatX66/wetbeard-site",
-            "component_revision": "1.36",
+            "component_revision": "1.37",
             "approved_blob": "${{ steps.source.outputs.blob }}",
             "boxbrain_projection_commit": "${{ steps.source.outputs.projection_commit }}",
             "boxbrain_projection_main_commit": "${{ steps.source.outputs.projection_main_commit }}",
@@ -461,6 +543,26 @@ jobs:
             "hopper_status_current_run_passed": true,
             "hopper_status_current_blocker": "no-valid-endpoint-candidate",
             "hopper_equivalent_null_snapshot_is_evidence_health": true,
+            "hopper_wifi_recovery_pr": ${{ steps.source.outputs.hopper_wifi_pr }},
+            "hopper_wifi_recovery_commit": "${{ steps.source.outputs.hopper_wifi_recovery_commit }}",
+            "hopper_wifi_recovery_vhl_run": ${{ steps.source.outputs.hopper_wifi_recovery_vhl_run }},
+            "hopper_wifi_recovery_candidate_open": true,
+            "hopper_wifi_recovery_pre_promotion": true,
+            "hopper_wifi_recovery_local_verification_reported_green": true,
+            "hopper_wifi_recovery_serialized_connection_ownership": true,
+            "hopper_wifi_recovery_saved_profile_held_until_verified": true,
+            "hopper_wifi_recovery_independent_service_supervision": true,
+            "hopper_wifi_recovery_gui_single_flight": true,
+            "hopper_wifi_recovery_wireless_specific_proof_required": true,
+            "hopper_wifi_recovery_ethernet_counts_as_wireless_proof": false,
+            "hopper_wifi_recovery_vhl_docker_x86_passed": true,
+            "hopper_wifi_recovery_vhl_arm64_passed": true,
+            "hopper_wifi_recovery_vhl_pi3_passed": true,
+            "hopper_wifi_recovery_vhl_uefi_image_built": true,
+            "hopper_wifi_recovery_vhl_uefi_boot_passed": false,
+            "hopper_wifi_recovery_physical_wifi_proven": false,
+            "hopper_wifi_recovery_observed_reboot_persistence_proven": false,
+            "hopper_wifi_recovery_seed_promotion_proven": false,
             "voice_mirror_run": ${{ steps.source.outputs.voice_mirror_run }},
             "voice_mirror_receipt_commit": "${{ steps.source.outputs.voice_mirror_receipt_commit }}",
             "voice_static_mirror_verified": true,
@@ -511,6 +613,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-generation-seed-ladder-live.json
-          git commit -m 'Record Aurum generation seed ladder v1.36 live [skip ci]' || exit 0
+          git commit -m 'Record Aurum generation seed ladder v1.37 live [skip ci]' || exit 0
           git pull --rebase origin main
           git push origin HEAD:main

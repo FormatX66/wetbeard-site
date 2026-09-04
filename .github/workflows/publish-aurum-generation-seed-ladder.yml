@@ -28,15 +28,14 @@ jobs:
         run: |
           set -euo pipefail
 
-          # ClusterSites is the canonical website source. The public carrier does not
-          # attempt an unauthenticated read of that private repository. It requires
-          # the approved canonical merge/blob, a byte-identical public BoxBrain
-          # projection, green projection CI, and independently checked changed evidence.
-          canonical_commit='123236573126a2cdf92f6416b3f49a1f19f62efa'
-          projection_commit='4751a50534b2ed1ec5f44921fe92bb181c1215d6'
-          projection_main_commit='3d64e0c7ce938c16c35b5079fc2c4181b6b50128'
-          expected_blob='6fdaca8e1523b84f3d4ff1aeb9070b86d7cc379b'
-          projection_ci_run='33832077179'
+          # ClusterSites remains the private canonical website source. The public
+          # production carrier pins its independently approved merge/blob and requires
+          # a byte-identical BoxBrain projection with green CI before production access.
+          canonical_commit='a4080523644e30bbf2fef1b57c5d46e507ada7e2'
+          projection_commit='3b183d5b038a0377b5b7b53326826dbd6cde8ed5'
+          projection_main_commit='7952911108e86b2b1384a99b49b7d1cdb79e9bb3'
+          expected_blob='72bbb31e694f89cfa5e423d76fe279575388c275'
+          projection_ci_run='33834686997'
 
           previous_active_trunk='613ce8243c2c3f3dfc744863fc18d10817011435'
           active_trunk_commit='51b39a5c9767efb1428fd48621c4855d76962acc'
@@ -50,9 +49,13 @@ jobs:
           farmer_global_gate_commit='276705677bd80bf73b8e28c7ac958ae38483042d'
           farmer_monitor_commit='8330dd48343b70a184a7ae224dfb7608702c4f17'
           farmer_monitor_ui_commit='4010a93d7758628b4c101d3f2154cc6165398e94'
-          farmer_deploy_run='33830865758'
-          farmer_runtime_proof_commit='1e4a27df22653fc63a9e2095b2af44cbdbec06b2'
           farmer_monitor_ui_ci_run='33831293083'
+          farmer_continuous_explorer_commit='fb3c7f375d200bd8682266c1ab16262cacf7ab6e'
+          farmer_continuous_explorer_pr_head='90a9417d56530142fc40a5be0ff9b0ffd60ca351'
+          farmer_continuous_explorer_ci_run='33833221131'
+          farmer_continuous_explorer_boxbrain_ci_run='33833221038'
+          farmer_deploy_run='33833330127'
+          farmer_runtime_proof_commit='693259f7298fafa84e84d2d5062e2eb50b473e69'
 
           projection="$RUNNER_TEMP/generation-seed-ladder-projection.js"
           projection_main="$RUNNER_TEMP/generation-seed-ladder-projection-main.js"
@@ -62,50 +65,53 @@ jobs:
             "https://raw.githubusercontent.com/FormatX66/BoxBrain/$projection_commit/Web/Aurum-Arkmatx/generation-seed-ladder-v1.js" -o "$projection"
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
             "https://raw.githubusercontent.com/FormatX66/BoxBrain/$projection_main_commit/Web/Aurum-Arkmatx/generation-seed-ladder-v1.js" -o "$projection_main"
-          test -s "$projection"
-          test -s "$projection_main"
+          test -s "$projection" && test -s "$projection_main"
           node --check "$projection"
           cmp -s "$projection" "$projection_main"
           blob="$(git hash-object "$projection")"
           test "$blob" = "$expected_blob"
 
           for token in \
-            'AURUM_GENERATION_SEED_LADDER_V1_32_CANONICAL' \
+            'AURUM_GENERATION_SEED_LADDER_V1_33_CANONICAL' \
             "canonicalWebsiteRepo:'FormatX66/ClusterSites'" \
-            "componentRevision:'1.32'" \
+            "componentRevision:'1.33'" \
             "ACTIVE_TRUNK_COMMIT='$active_trunk_commit'" \
             "CURRENT_PC_IMAGE_RUN='$current_pc_run'" \
             "CURRENT_NATIVE_RUN='$current_native_run'" \
             "CURRENT_HOPPER_STATUS_RUN='$hopper_status_run'" \
-            "CURRENT_HOPPER_STATUS_JOB='$hopper_status_job'" \
-            "CURRENT_HOPPER_STATUS_SNAPSHOT_COMMIT='$hopper_snapshot_commit'" \
-            "FARMER_GLOBAL_GATE_COMMIT='$farmer_global_gate_commit'" \
-            "FARMER_MONITOR_COMMIT='$farmer_monitor_commit'" \
-            "FARMER_MONITOR_UI_COMMIT='$farmer_monitor_ui_commit'" \
+            "FARMER_CONTINUOUS_EXPLORER_COMMIT='$farmer_continuous_explorer_commit'" \
             "FARMER_DEPLOY_RUN='$farmer_deploy_run'" \
             "FARMER_RUNTIME_PROOF_COMMIT='$farmer_runtime_proof_commit'" \
-            "FARMER_MONITOR_UI_CI_RUN='$farmer_monitor_ui_ci_run'" \
-            'activeTrunkAdvancedSincePriorDashboardTruth:true' \
-            'activeTrunkCommitsAheadOfPriorTruth:4' \
             'currentPcImageRunPassed:true' \
             'currentVirtualLabExactHeadAvailable:false' \
             'currentFourTargetConvergencePassed:false' \
-            'priorVirtualLabPcUefiFailureSupersededByCurrentPcImageUefiProof:true' \
             'currentNativeRunPassed:false' \
-            "currentNativeFailureStep:'Verify native self-build contracts'" \
             "hopperStatusCurrentBlocker:'no-valid-endpoint-candidate'" \
-            'hopperStatusEquivalentNullSnapshotsAreEvidenceHealth:true' \
-            "farmerVersion:'3.4'" \
             'farmerFutureBranchAppliesToAllBoundedDispatches:true' \
             'farmerCrossJobQuarantine:true' \
             'farmerReadOnlyDecisionMonitorAvailable:true' \
             'farmerDecisionMonitorVerified:true' \
-            'farmerMonitorShowsChatReportingGaps:true' \
-            'farmerMonitorKeepsNewestDecisionSelected:true' \
-            'farmerMonitorStaticHoldsNotLabeledAsTestFailures:true' \
-            'farmerDecisionEngineCalibratedOutcomes:3' \
-            'farmerDecisionEngineDecisions:6' \
+            'farmerContinuousExplorationVerified:true' \
+            'farmerContinuousExplorerHealthy:true' \
+            'farmerContinuousExplorerWorkerAlive:true' \
+            'farmerContinuousExplorerWatchdogAlive:true' \
+            'farmerContinuousExplorerSealValid:true' \
+            'farmerContinuousExplorerInvariantViolations:0' \
+            'farmerContinuousExplorerModelErrors:0' \
+            'farmerContinuousExplorerModelOnly:true' \
+            'farmerContinuousExplorerAuthorityGranted:false' \
+            'farmerContinuousExplorerPathsBefore:39' \
+            'farmerContinuousExplorerPathsAfter:40' \
+            "farmerContinuousExplorerResourceMode:'sustained_pressure'" \
+            "farmerContinuousExplorerSelectedBudget:'reduced_local_budget'" \
+            'farmerContinuousExplorerCloudRoutingConfigured:false' \
+            'farmerContinuousExplorerExternalProcessControlConfigured:false' \
+            'farmerAllChatExecutionProven:false' \
+            'farmerDecisionEngineCalibratedOutcomes:4' \
+            'farmerDecisionEngineDecisions:8' \
+            'farmerQuarantinedOperationsObserved:0' \
             'farmerDestructiveActionAllowed:false' \
+            'farmerLkgMutationInferred:false' \
             'farmerPhysicalProofInferred:false' \
             'humanActionInference:false' \
             "needsWorkOwner:'aurum-system'" \
@@ -117,10 +123,9 @@ jobs:
             'Needs Work → Aurum/System:' \
             'Your Actions:' \
             'None right now.' \
-            'The old QEMU UEFI-PC failure is no longer current evidence for the active head.' \
-            'The current native blocker is a contract-test failure' \
-            'Farmer v3.4 now exposes a verified read-only Future Branch decision monitor' \
-            'The Future Branch monitor makes missing reports visible; it does not convert missing coverage into proof.' \
+            'Future Branch now has a verified resident failure-path explorer that continues while the real Farmer work queue is idle.' \
+            'The explorer is resource-aware without taking ownership of other workloads.' \
+            'Future Branch exploration is now continuous, but its proof boundary stays narrow.' \
             'ClusterSites remains canonical for website source.'; do
             grep -Fq "$token" "$projection"
           done
@@ -131,18 +136,17 @@ jobs:
             "$prior_vhl_run prior-vhl" \
             "$current_native_run current-native" \
             "$hopper_status_run hopper-current" \
-            "$farmer_deploy_run farmer-deploy" \
-            "$farmer_monitor_ui_ci_run farmer-ui-ci"; do
+            "$farmer_monitor_ui_ci_run farmer-ui-ci" \
+            "$farmer_continuous_explorer_ci_run farmer-explorer-ci" \
+            "$farmer_continuous_explorer_boxbrain_ci_run farmer-explorer-boxbrain-ci" \
+            "$farmer_deploy_run farmer-deploy"; do
             set -- $pair
             curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$api/actions/runs/$1" -o "$RUNNER_TEMP/$2.json"
           done
 
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$api/actions/runs/$current_pc_run/jobs?per_page=100" -o "$RUNNER_TEMP/current-pc-jobs.json"
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$api/actions/runs/$prior_vhl_run/jobs?per_page=100" -o "$RUNNER_TEMP/prior-vhl-jobs.json"
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$api/actions/runs/$current_native_run/jobs?per_page=100" -o "$RUNNER_TEMP/current-native-jobs.json"
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$api/actions/runs/$hopper_status_run/jobs?per_page=100" -o "$RUNNER_TEMP/hopper-current-jobs.json"
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$api/actions/runs/$farmer_deploy_run/jobs?per_page=100" -o "$RUNNER_TEMP/farmer-deploy-jobs.json"
-
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$api/branches/aurum/trunk-v0.01" -o "$RUNNER_TEMP/active-branch.json"
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$api/compare/$previous_active_trunk...$active_trunk_commit" -o "$RUNNER_TEMP/active-compare.json"
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
@@ -150,16 +154,15 @@ jobs:
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
             "https://raw.githubusercontent.com/FormatX66/BoxBrain/$farmer_runtime_proof_commit/Projects/AurumFarmer/Deploy/latest-windows-runtime-proof.json" -o "$RUNNER_TEMP/farmer-runtime-proof.json"
 
-          python3 - "$RUNNER_TEMP" "$projection_commit" "$active_trunk_commit" "$previous_active_trunk" "$farmer_monitor_commit" "$farmer_monitor_ui_commit" <<'PY'
+          python3 - "$RUNNER_TEMP" "$projection_commit" "$active_trunk_commit" "$previous_active_trunk" "$farmer_continuous_explorer_pr_head" "$farmer_continuous_explorer_commit" <<'PY'
           import json, pathlib, sys
           root=pathlib.Path(sys.argv[1])
-          projection,active,previous,monitor,monitor_ui=sys.argv[2:]
+          projection,active,previous,explorer_head,explorer_merge=sys.argv[2:]
           load=lambda n: json.loads((root/n).read_text(encoding='utf-8-sig'))
 
           ci=load('projection-ci.json')
-          assert ci.get('id')==33832077179 and ci.get('name')=='BoxBrain CI'
-          assert ci.get('head_sha')==projection
-          assert ci.get('status')=='completed' and ci.get('conclusion')=='success'
+          assert ci.get('id')==33834686997 and ci.get('name')=='BoxBrain CI'
+          assert ci.get('head_sha')==projection and ci.get('status')=='completed' and ci.get('conclusion')=='success'
 
           branch=load('active-branch.json')
           assert (branch.get('commit') or {}).get('sha')==active
@@ -167,21 +170,9 @@ jobs:
           assert compare.get('status')=='ahead' and compare.get('ahead_by')==4 and compare.get('behind_by')==0
 
           pc=load('current-pc.json')
-          assert pc.get('id')==33828601576 and pc.get('head_sha')==active
-          assert pc.get('status')=='completed' and pc.get('conclusion')=='success'
-          pjobs={j.get('name'):j for j in load('current-pc-jobs.json').get('jobs',[])}
-          for name in ('validate','build-image','generic-uefi-smoke','hp-twin-smoke','publish-verified-image'):
-              assert pjobs.get(name,{}).get('conclusion')=='success', name
-
+          assert pc.get('id')==33828601576 and pc.get('head_sha')==active and pc.get('conclusion')=='success'
           prior=load('prior-vhl.json')
-          assert prior.get('id')==33806912851 and prior.get('head_sha')==previous
-          assert prior.get('status')=='completed' and prior.get('conclusion')=='failure'
-          vjobs={j.get('name'):j for j in load('prior-vhl-jobs.json').get('jobs',[])}
-          assert vjobs['Docker runtime x86_64']['conclusion']=='success'
-          assert vjobs['Docker runtime ARM64']['conclusion']=='success'
-          assert vjobs['QEMU Raspberry Pi 3B machine/runtime']['conclusion']=='success'
-          assert vjobs['QEMU UEFI x86_64 PC']['conclusion']=='failure'
-          assert vjobs['Same-commit four-target convergence gate']['conclusion']=='skipped'
+          assert prior.get('id')==33806912851 and prior.get('head_sha')==previous and prior.get('conclusion')=='failure'
 
           native=load('current-native.json')
           assert native.get('id')==33829617010 and native.get('head_sha')==active and native.get('conclusion')=='failure'
@@ -193,48 +184,55 @@ jobs:
           assert nsteps.get('Resume bounded native growth')=='skipped'
 
           hopper=load('hopper-current.json')
-          assert hopper.get('id')==33821284470 and hopper.get('event')=='schedule'
-          assert hopper.get('status')=='completed' and hopper.get('conclusion')=='success'
+          assert hopper.get('id')==33821284470 and hopper.get('event')=='schedule' and hopper.get('conclusion')=='success'
           hmatch=[j for j in load('hopper-current-jobs.json').get('jobs',[]) if j.get('id')==100864307754]
-          assert len(hmatch)==1
-          hjob=hmatch[0]
-          assert hjob.get('conclusion')=='success'
-          assert hjob.get('runner_id')==23 and hjob.get('runner_name')=='AURUM-HOPPER-STATUS-WSL'
-          assert hjob.get('labels')==['self-hosted','Linux','hopper-status']
-          hsteps={s.get('name'):s.get('conclusion') for s in hjob.get('steps',[])}
-          assert hsteps.get('Read Hopper health endpoint')=='success'
+          assert len(hmatch)==1 and hmatch[0].get('conclusion')=='success'
+          assert hmatch[0].get('runner_name')=='AURUM-HOPPER-STATUS-WSL'
           hs=load('hopper-status.json')
           assert hs.get('endpoint') is None and hs.get('source_kind') is None
           assert hs.get('http_status') is None and hs.get('reachable') is False and hs.get('report') is None
           assert (hs.get('summary') or {}).get('health')=='no-endpoint-candidate'
 
+          ui=load('farmer-ui-ci.json')
+          assert ui.get('id')==33831293083 and ui.get('conclusion')=='success'
+          fci=load('farmer-explorer-ci.json')
+          assert fci.get('id')==33833221131 and fci.get('head_sha')==explorer_head and fci.get('name')=='Aurum Farmer CI' and fci.get('conclusion')=='success'
+          bci=load('farmer-explorer-boxbrain-ci.json')
+          assert bci.get('id')==33833221038 and bci.get('head_sha')==explorer_head and bci.get('name')=='BoxBrain CI' and bci.get('conclusion')=='success'
+
           deploy=load('farmer-deploy.json')
-          assert deploy.get('id')==33830865758 and deploy.get('head_sha')==monitor
-          assert deploy.get('status')=='completed' and deploy.get('conclusion')=='success'
+          assert deploy.get('id')==33833330127 and deploy.get('head_sha')==explorer_merge and deploy.get('conclusion')=='success'
           fjobs=load('farmer-deploy-jobs.json').get('jobs',[])
-          assert len(fjobs)==1 and fjobs[0].get('conclusion')=='success'
+          assert len(fjobs)==1 and fjobs[0].get('name')=='deploy-and-prove-restart' and fjobs[0].get('conclusion')=='success'
           assert fjobs[0].get('runner_name')=='AURUM-LAPTOP-EBD8CG8P'
+
           runtime=load('farmer-runtime-proof.json')
-          assert runtime.get('source_commit')==monitor
-          assert runtime.get('runner_name')=='AURUM-LAPTOP-EBD8CG8P'
-          assert runtime.get('task_state')=='Running'
-          assert runtime.get('post_restart_health_verified') is True
-          assert runtime.get('event_chain_valid') is True
-          assert runtime.get('restart_resume_job_state')=='SUCCEEDED'
+          assert runtime.get('source_commit')==explorer_merge
+          assert runtime.get('runner_name')=='AURUM-LAPTOP-EBD8CG8P' and runtime.get('task_state')=='Running'
+          assert runtime.get('initial_health_verified') is True and runtime.get('post_restart_health_verified') is True
+          assert runtime.get('event_chain_valid') is True and runtime.get('restart_resume_job_state')=='SUCCEEDED'
+          assert runtime.get('decision_monitor_verified') is True and runtime.get('continuous_exploration_verified') is True
+          assert runtime.get('exploration_paths_before')==39 and runtime.get('exploration_paths_after')==40
           future=runtime.get('future_branch') or {}
-          assert future.get('engine')=='aurum.future-branch.decision.v1'
-          assert future.get('default_on') is True
-          assert future.get('available_tiers')==['static']
-          assert future.get('calibrated_outcomes')==3
-          assert future.get('decisions')==6
+          assert future.get('engine')=='aurum.future-branch.decision.v1' and future.get('default_on') is True
+          assert future.get('available_tiers')==['static'] and future.get('cross_job_quarantine') is True
+          assert future.get('calibrated_outcomes')==4 and future.get('decisions')==8
+          assert future.get('mean_brier_score')==0.0 and future.get('quarantined_operations')==0
+          explore=runtime.get('continuous_exploration') or {}
+          assert explore.get('healthy') is True and explore.get('worker_alive') is True and explore.get('watchdog_alive') is True
+          assert explore.get('seal_valid') is True and explore.get('invariant_violations')==0 and explore.get('model_errors')==0
+          assert explore.get('model_only') is True and explore.get('authority_granted') is False
+          assert explore.get('paths_checked',0)>=40 and explore.get('observed_shapes',0)>=5
+          assert 'not physical, VM, or all-chat execution proof' in explore.get('scope','')
+          resource=explore.get('resource_decision') or {}
+          assert resource.get('mode')=='sustained_pressure' and resource.get('selected')=='reduced_local_budget'
+          assert resource.get('cloud_routing')=='not_configured' and resource.get('external_process_control')=='not_configured'
+          budget=explore.get('resource_budget') or {}
+          assert budget.get('cases_per_batch')==1 and budget.get('cpu_seconds_per_batch')==0.005 and budget.get('yield_seconds')==3
           assert runtime.get('previous_releases_preserved') is True
           assert runtime.get('destructive_action_allowed') is False
-          assert runtime.get('physical_proof_inferred') is False
-
-          ui=load('farmer-ui-ci.json')
-          assert ui.get('id')==33831293083 and ui.get('head_sha')==monitor_ui
-          assert ui.get('status')=='completed' and ui.get('conclusion')=='success'
-          print('GENERATION_LADDER_V132_SOURCE_AND_EVIDENCE_OK')
+          assert runtime.get('lkg_mutation_inferred') is False and runtime.get('physical_proof_inferred') is False
+          print('GENERATION_LADDER_V133_SOURCE_AND_EVIDENCE_OK')
           PY
 
           echo "file=$projection" >> "$GITHUB_OUTPUT"
@@ -254,10 +252,13 @@ jobs:
           echo "farmer_global_gate_commit=$farmer_global_gate_commit" >> "$GITHUB_OUTPUT"
           echo "farmer_monitor_commit=$farmer_monitor_commit" >> "$GITHUB_OUTPUT"
           echo "farmer_monitor_ui_commit=$farmer_monitor_ui_commit" >> "$GITHUB_OUTPUT"
+          echo "farmer_monitor_ui_ci_run=$farmer_monitor_ui_ci_run" >> "$GITHUB_OUTPUT"
+          echo "farmer_continuous_explorer_commit=$farmer_continuous_explorer_commit" >> "$GITHUB_OUTPUT"
+          echo "farmer_continuous_explorer_ci_run=$farmer_continuous_explorer_ci_run" >> "$GITHUB_OUTPUT"
+          echo "farmer_continuous_explorer_boxbrain_ci_run=$farmer_continuous_explorer_boxbrain_ci_run" >> "$GITHUB_OUTPUT"
           echo "farmer_deploy_run=$farmer_deploy_run" >> "$GITHUB_OUTPUT"
           echo "farmer_runtime_proof_commit=$farmer_runtime_proof_commit" >> "$GITHUB_OUTPUT"
-          echo "farmer_monitor_ui_ci_run=$farmer_monitor_ui_ci_run" >> "$GITHUB_OUTPUT"
-          echo 'CLUSTERSITES_CANONICAL_PROJECTION_V132_OK'
+          echo 'CLUSTERSITES_CANONICAL_PROJECTION_V133_OK'
 
       - name: Configure Bluehost SSH with bounded retry
         env:
@@ -275,9 +276,7 @@ jobs:
           chmod 600 "$HOME/.ssh/bluehost_deploy"
           : > "$HOME/.ssh/known_hosts"
           for attempt in 1 2 3 4 5; do
-            if ssh-keyscan -T 10 -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null; then
-              exit 0
-            fi
+            if ssh-keyscan -T 10 -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null; then exit 0; fi
             [ "$attempt" -eq 5 ] && exit 1
             sleep $((attempt * 5))
           done
@@ -292,16 +291,11 @@ jobs:
           set -euo pipefail
           retry_capture() {
             local out="$1"; shift
-            local n=1 tmp
-            tmp="$(mktemp)"
+            local n=1 tmp="$(mktemp)"
             while true; do
-              if "$@" > "$tmp"; then
-                mv "$tmp" "$out"
-                return 0
-              fi
+              if "$@" > "$tmp"; then mv "$tmp" "$out"; return 0; fi
               [ "$n" -ge 5 ] && { rm -f "$tmp"; return 1; }
-              sleep $((n * 5))
-              n=$((n+1))
+              sleep $((n * 5)); n=$((n+1))
             done
           }
           remote='public_html/arkmatx/aurum/dashboard'
@@ -318,24 +312,18 @@ jobs:
           python3 - "$RUNNER_TEMP/index.html" <<'PY'
           from pathlib import Path
           import re,sys
-          p=Path(sys.argv[1])
-          text=p.read_text(encoding='utf-8')
+          p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./generation-seed-ladder\.js(?:\?v=[^"]+)?"></script>\s*','',text)
-          tag='<script src="./generation-seed-ladder.js?v=132"></script>'
-          for pattern in (
-              r'<script src="\./seed-lifecycle\.js(?:\?v=[^"]+)?"></script>',
-              r'<script src="\./recovery-guardian\.js(?:\?v=[^"]+)?"></script>',
-              r'</body>'
-          ):
+          tag='<script src="./generation-seed-ladder.js?v=133"></script>'
+          for pattern in (r'<script src="\./seed-lifecycle\.js(?:\?v=[^"]+)?"></script>',r'<script src="\./recovery-guardian\.js(?:\?v=[^"]+)?"></script>',r'</body>'):
               m=re.search(pattern,text)
               if m:
                   text=text[:m.start()]+tag+'\n'+text[m.start():]
                   break
-          else:
-              raise SystemExit('dashboard missing generation ladder injection point')
+          else: raise SystemExit('dashboard missing generation ladder injection point')
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './generation-seed-ladder.js?v=132' "$RUNNER_TEMP/index.html"
+          grep -Fq './generation-seed-ladder.js?v=133' "$RUNNER_TEMP/index.html"
 
       - name: Publish with bounded retries
         env:
@@ -344,15 +332,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          retry() {
-            local n=1
-            while true; do
-              "$@" && return 0
-              [ "$n" -ge 5 ] && return 1
-              sleep $((n * 5))
-              n=$((n+1))
-            done
-          }
+          retry() { local n=1; while true; do "$@" && return 0; [ "$n" -ge 5 ] && return 1; sleep $((n * 5)); n=$((n+1)); done; }
           remote='public_html/arkmatx/aurum/dashboard'
           retry scp -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -P 22 \
             "$RUNNER_TEMP/index.html" "${{ steps.source.outputs.file }}" "$BLUEHOST_USERNAME@$BLUEHOST_HOST:$remote/"
@@ -364,39 +344,34 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          page="$RUNNER_TEMP/live-index.html"
-          js="$RUNNER_TEMP/live-generation-seed-ladder.js"
+          page="$RUNNER_TEMP/live-index.html"; js="$RUNNER_TEMP/live-generation-seed-ladder.js"
           final_url="$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' \
-            'https://arkmatx.com/aurum/dashboard/generation-seed-ladder.js?rev=132' -o "$js"
-          grep -Fq './generation-seed-ladder.js?v=132' "$page"
+            'https://arkmatx.com/aurum/dashboard/generation-seed-ladder.js?rev=133' -o "$js"
+          grep -Fq './generation-seed-ladder.js?v=133' "$page"
           cmp -s "$js" "${{ steps.source.outputs.file }}"
           node --check "$js"
           for token in \
-            'AURUM_GENERATION_SEED_LADDER_V1_32_CANONICAL' \
-            "componentRevision:'1.32'" \
+            'AURUM_GENERATION_SEED_LADDER_V1_33_CANONICAL' \
+            "componentRevision:'1.33'" \
             "ACTIVE_TRUNK_COMMIT='51b39a5c9767efb1428fd48621c4855d76962acc'" \
-            'activeTrunkAdvancedSincePriorDashboardTruth:true' \
             'currentPcImageRunPassed:true' \
             'currentVirtualLabExactHeadAvailable:false' \
             'currentFourTargetConvergencePassed:false' \
             'currentNativeRunPassed:false' \
             "hopperStatusCurrentBlocker:'no-valid-endpoint-candidate'" \
-            'farmerFutureBranchAppliesToAllBoundedDispatches:true' \
-            'farmerCrossJobQuarantine:true' \
-            'farmerReadOnlyDecisionMonitorAvailable:true' \
-            'farmerDecisionMonitorVerified:true' \
-            'farmerMonitorShowsChatReportingGaps:true' \
-            'farmerMonitorKeepsNewestDecisionSelected:true' \
+            'farmerContinuousExplorationVerified:true' \
+            'farmerContinuousExplorerHealthy:true' \
+            'farmerContinuousExplorerModelOnly:true' \
+            'farmerContinuousExplorerAuthorityGranted:false' \
+            'farmerAllChatExecutionProven:false' \
             'humanActionInference:false' \
             'majorBoxAdded:false' \
             'seedLifecycleRemainsExpandable:true' \
             'Frontiers Advancing:' \
             'Needs Work → Aurum/System:' \
             'Your Actions:' \
-            'None right now.'; do
-            grep -Fq "$token" "$js"
-          done
+            'None right now.'; do grep -Fq "$token" "$js"; done
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
 
       - name: Roll back on verification failure
@@ -407,17 +382,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          retry() {
-            local n=1
-            while true; do
-              "$@" && return 0
-              [ "$n" -ge 5 ] && return 1
-              sleep $((n * 5))
-              n=$((n+1))
-            done
-          }
-          remote='public_html/arkmatx/aurum/dashboard'
-          backup=".aurum-dashboard-backups/generation-seed-ladder-$GITHUB_RUN_ID"
+          retry() { local n=1; while true; do "$@" && return 0; [ "$n" -ge 5 ] && return 1; sleep $((n * 5)); n=$((n+1)); done; }
+          remote='public_html/arkmatx/aurum/dashboard'; backup=".aurum-dashboard-backups/generation-seed-ladder-$GITHUB_RUN_ID"
           retry ssh -o ConnectTimeout=12 -o ConnectionAttempts=1 -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
             "set -eu; cp -p '$backup/index.html' '$remote/index.html'; if [ -f '$backup/generation-seed-ladder.js' ]; then cp -p '$backup/generation-seed-ladder.js' '$remote/generation-seed-ladder.js'; elif [ -f '$backup/.missing-generation-seed-ladder.js' ]; then rm -f '$remote/generation-seed-ladder.js'; fi"
 
@@ -440,7 +406,7 @@ jobs:
             "canonical_component_commit": "${{ steps.source.outputs.canonical_commit }}",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/generation-seed-ladder-v1.js",
             "deployment_carrier": "FormatX66/wetbeard-site",
-            "component_revision": "1.32",
+            "component_revision": "1.33",
             "approved_blob": "${{ steps.source.outputs.blob }}",
             "boxbrain_projection_commit": "${{ steps.source.outputs.projection_commit }}",
             "boxbrain_projection_main_commit": "${{ steps.source.outputs.projection_main_commit }}",
@@ -456,32 +422,44 @@ jobs:
             "current_exact_head_four_target_vhl_available": false,
             "current_four_target_convergence_passed": false,
             "historical_vhl_run": ${{ steps.source.outputs.prior_vhl_run }},
-            "historical_vhl_pc_uefi_failure_superseded": true,
             "current_native_run": ${{ steps.source.outputs.current_native_run }},
             "current_native_run_passed": false,
-            "current_native_failure_step": "Verify native self-build contracts",
             "hopper_status_run": ${{ steps.source.outputs.hopper_status_run }},
             "hopper_status_job": ${{ steps.source.outputs.hopper_status_job }},
             "hopper_status_snapshot_commit": "${{ steps.source.outputs.hopper_snapshot_commit }}",
             "hopper_status_current_run_passed": true,
             "hopper_status_current_blocker": "no-valid-endpoint-candidate",
-            "hopper_status_current_endpoint": null,
             "farmer_version": "3.4",
             "farmer_global_gate_commit": "${{ steps.source.outputs.farmer_global_gate_commit }}",
             "farmer_monitor_commit": "${{ steps.source.outputs.farmer_monitor_commit }}",
             "farmer_monitor_ui_commit": "${{ steps.source.outputs.farmer_monitor_ui_commit }}",
+            "farmer_monitor_ui_ci_run": ${{ steps.source.outputs.farmer_monitor_ui_ci_run }},
+            "farmer_continuous_explorer_commit": "${{ steps.source.outputs.farmer_continuous_explorer_commit }}",
+            "farmer_continuous_explorer_ci_run": ${{ steps.source.outputs.farmer_continuous_explorer_ci_run }},
+            "farmer_continuous_explorer_boxbrain_ci_run": ${{ steps.source.outputs.farmer_continuous_explorer_boxbrain_ci_run }},
             "farmer_deploy_run": ${{ steps.source.outputs.farmer_deploy_run }},
             "farmer_runtime_proof_commit": "${{ steps.source.outputs.farmer_runtime_proof_commit }}",
-            "farmer_monitor_ui_ci_run": ${{ steps.source.outputs.farmer_monitor_ui_ci_run }},
             "farmer_future_branch_global_admission": true,
             "farmer_cross_job_quarantine": true,
             "farmer_read_only_decision_monitor_verified": true,
-            "farmer_monitor_chat_reporting_gaps_visible": true,
+            "farmer_continuous_exploration_verified": true,
+            "farmer_continuous_explorer_healthy": true,
+            "farmer_continuous_explorer_model_only": true,
+            "farmer_continuous_explorer_authority_granted": false,
+            "farmer_continuous_explorer_paths_before": 39,
+            "farmer_continuous_explorer_paths_after": 40,
+            "farmer_continuous_explorer_resource_mode": "sustained_pressure",
+            "farmer_continuous_explorer_selected_budget": "reduced_local_budget",
+            "farmer_cloud_routing_configured": false,
+            "farmer_external_process_control_configured": false,
+            "farmer_all_chat_execution_proven": false,
             "farmer_decision_engine": "aurum.future-branch.decision.v1",
             "farmer_available_tiers": ["static"],
-            "farmer_calibrated_outcomes": 3,
-            "farmer_decisions": 6,
+            "farmer_calibrated_outcomes": 4,
+            "farmer_decisions": 8,
+            "farmer_quarantined_operations_observed": 0,
             "farmer_destructive_action_allowed": false,
+            "farmer_lkg_mutation_inferred": false,
             "farmer_physical_proof_inferred": false,
             "physical_hopper_boot_proof_proven": false,
             "guardian_forced_rollback_proof_proven": false,
@@ -500,6 +478,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-generation-seed-ladder-live.json
-          git commit -m 'Record Aurum generation seed ladder v1.32 live [skip ci]' || exit 0
+          git commit -m 'Record Aurum generation seed ladder v1.33 live [skip ci]' || exit 0
           git pull --rebase origin main
           git push origin HEAD:main

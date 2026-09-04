@@ -27,22 +27,20 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # ClusterSites remains canonical. The public carrier does not unauthenticated-read
-          # the private canonical repo; it pins the independently approved canonical merge/blob
-          # and requires a byte-identical public projection plus changed-evidence proof.
-          canonical_commit='ee76a49d1e8600a2ffe74a40ea5373d51edf4406'
-          expected_blob='de885a6f6413ab89bef4e36946ea51c92d3c431a'
-          projection_commit='ef5305d2c765cd6c658d882545617a0ecf1e736c'
-          projection_main_commit='37da78261bbeb9f7766f0af6090931d3a7735b62'
-          projection_ci_run='33923229333'
-          active_trunk_commit='64eb1b87a9b489c662ef22d05946492ecbd77ae3'
-          active_trunk_tree='2300d12cf801186bedc97df60c52b68cc6c44d18'
-          previous_active_trunk_commit='ee421ab9d7332625585555a5ac8b2c5544a2df2c'
-          repair_pr='217'
-          repair_candidate='27bc9b9a542de55ba8ff67de62e4d7b81c84e43d'
-          repair_vhl_run='33920034095'
-          current_pc_run='33921819604'
-          current_pi3_run='33921819583'
+          canonical_commit='cea3ca5e7af847255def8fc42ebee1f451a4df0c'
+          expected_blob='11c7142847a3b7d27d52756ad91fb4de87620797'
+          projection_commit='fbe448896a7845897cf3cba8ff2ca77d846ca5dd'
+          projection_main_commit='21d43f0aebd92c6b09089068d6603e3e20d667e6'
+          projection_ci_run='33927566312'
+          active_trunk_commit='e4d1d79d4ffbde35ae95a4071607a3498f8931d6'
+          active_trunk_tree='bc7fcd57c8e780a6a396311199177a9544792fb4'
+          previous_active_trunk_commit='64eb1b87a9b489c662ef22d05946492ecbd77ae3'
+          boot_menu_pr='218'
+          boot_menu_candidate='3b59fe81d4ba67fed1a6c12e94a58e5681766861'
+          boot_menu_vhl_run='33924925898'
+          previous_vhl_failure_run='33923762383'
+          current_pc_run='33926519340'
+          current_pi3_run='33926519293'
           previous_native_run='33915328066'
           hopper_snapshot_commit='8c4a49f21a230709d7b7bca51d393a230ee69b5b'
 
@@ -63,29 +61,36 @@ jobs:
           cp "$projection" "$canonical"
 
           for token in \
-            'AURUM_GENERATION_SEED_LADDER_V1_40_CANONICAL' \
-            "componentRevision:'1.40'" \
+            'AURUM_GENERATION_SEED_LADDER_V1_41_CANONICAL' \
+            "componentRevision:'1.41'" \
             "canonicalWebsiteRepo:'FormatX66/ClusterSites'" \
             "ACTIVE_TRUNK_COMMIT='$active_trunk_commit'" \
             "ACTIVE_TRUNK_TREE='$active_trunk_tree'" \
             "PREVIOUS_ACTIVE_TRUNK_COMMIT='$previous_active_trunk_commit'" \
-            "REMOTE_REF_REPAIR_PR='$repair_pr'" \
-            "REMOTE_REF_REPAIR_CANDIDATE='$repair_candidate'" \
-            "REMOTE_REF_REPAIR_VHL_RUN='$repair_vhl_run'" \
+            "HOPPER_BOOT_MENU_PR='$boot_menu_pr'" \
+            "HOPPER_BOOT_MENU_CANDIDATE='$boot_menu_candidate'" \
+            "HOPPER_BOOT_MENU_VHL_RUN='$boot_menu_vhl_run'" \
+            "PREVIOUS_VHL_TIMING_FAILURE_RUN='$previous_vhl_failure_run'" \
             "CURRENT_PC_IMAGE_RUN='$current_pc_run'" \
             "CURRENT_PI3_IMAGE_RUN='$current_pi3_run'" \
             "PREVIOUS_NATIVE_RUN='$previous_native_run'" \
             "CURRENT_HOPPER_STATUS_SNAPSHOT_COMMIT='$hopper_snapshot_commit'" \
-            'remoteTrackingRefRepairMerged:true' \
-            'remoteTrackingRefRepairCodePromoted:true' \
-            'remoteTrackingRefRepairCandidateTreeEqualsActiveTrunkTree:true' \
-            'remoteTrackingRefRepairFourTargetConvergencePassed:true' \
-            'remoteTrackingRefRepairPhysicalApplicationProven:false' \
-            'remoteTrackingRefRepairRecreatedFromOriginOnPhysicalHopperProven:false' \
-            'currentPcImageRunPassed:true' \
+            'hopperBootMenuMerged:true' \
+            'hopperBootMenuCodePromoted:true' \
+            'hopperBootMenuCandidateTreeEqualsActiveTrunkTree:true' \
+            'hopperBootMenuFourTargetConvergencePassed:true' \
+            'hopperBootMenuEntryCount:2' \
+            'hopperBootMenuTimeoutSeconds:5' \
+            'hopperBootMenuHopperNormalBlacklistsNouveau:true' \
+            'hopperBootMenuRecoveryUsesNomodeset:true' \
+            'hopperBootMenuPhysicalTwoEntryObservationProven:false' \
+            'arcadeReadyMarkerGraceSeconds:5' \
+            'arcadeReadyGraceRequiresObservedMarker:true' \
+            'arcadeReadyGraceUnqualifiedExtensionAllowed:false' \
+            'previousVhlTimingFailureChangedBeforeRetry:true' \
+            'currentPcImageFinalResultPromoted:false' \
             'currentPi3ImageRunPassed:true' \
             'currentNativeResultObserved:false' \
-            'previousNativeRunHistorical:true' \
             "hopperStatusCurrentBlocker:'no-valid-endpoint-candidate'" \
             'hopperStatusEquivalentNullSnapshotsAreEvidenceHealth:true' \
             'humanActionInference:true' \
@@ -101,7 +106,7 @@ jobs:
             'Needs Work → Aurum/System:' \
             'Your Actions:' \
             'One genuine physical-only step is now proven necessary.' \
-            'No new Wi-Fi or Git-ref action is justified for you from code evidence alone.' \
+            'No new Hopper boot-menu, Wi-Fi, sync-ref or software action is justified for you from code evidence alone.' \
             'Do not choose install, erase, format, repair, or any destructive option.' \
             'ClusterSites remains canonical for website source.'; do
             grep -Fq "$token" "$canonical"
@@ -110,24 +115,24 @@ jobs:
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$bbapi/actions/runs/$projection_ci_run" -o "$RUNNER_TEMP/projection-ci.json"
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$bbapi/branches/aurum/trunk-v0.01" -o "$RUNNER_TEMP/active-branch.json"
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$bbapi/commits/$active_trunk_commit" -o "$RUNNER_TEMP/active-commit.json"
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$bbapi/commits/$repair_candidate" -o "$RUNNER_TEMP/candidate-commit.json"
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$bbapi/pulls/$repair_pr" -o "$RUNNER_TEMP/repair-pr.json"
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$bbapi/actions/runs/$repair_vhl_run" -o "$RUNNER_TEMP/repair-vhl.json"
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$bbapi/actions/runs/$repair_vhl_run/jobs?per_page=100" -o "$RUNNER_TEMP/repair-vhl-jobs.json"
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$bbapi/commits/$boot_menu_candidate" -o "$RUNNER_TEMP/candidate-commit.json"
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$bbapi/pulls/$boot_menu_pr" -o "$RUNNER_TEMP/boot-menu-pr.json"
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$bbapi/actions/runs/$boot_menu_vhl_run" -o "$RUNNER_TEMP/boot-menu-vhl.json"
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$bbapi/actions/runs/$boot_menu_vhl_run/jobs?per_page=100" -o "$RUNNER_TEMP/boot-menu-vhl-jobs.json"
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$bbapi/actions/runs/$previous_vhl_failure_run" -o "$RUNNER_TEMP/previous-vhl.json"
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$bbapi/actions/runs/$previous_vhl_failure_run/jobs?per_page=100" -o "$RUNNER_TEMP/previous-vhl-jobs.json"
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$bbapi/actions/runs/$current_pc_run" -o "$RUNNER_TEMP/current-pc.json"
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$bbapi/actions/runs/$current_pc_run/jobs?per_page=100" -o "$RUNNER_TEMP/current-pc-jobs.json"
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$bbapi/actions/runs/$current_pi3_run" -o "$RUNNER_TEMP/current-pi3.json"
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$bbapi/actions/runs/$previous_native_run" -o "$RUNNER_TEMP/previous-native.json"
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "$bbapi/actions/runs/$previous_native_run/jobs?per_page=100" -o "$RUNNER_TEMP/previous-native-jobs.json"
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
             "https://raw.githubusercontent.com/FormatX66/BoxBrain/$hopper_snapshot_commit/Web/Aurum-Arkmatx/hopper-status.json" -o "$RUNNER_TEMP/hopper-status.json"
 
-          python3 - "$RUNNER_TEMP" "$projection_commit" "$projection_ci_run" "$active_trunk_commit" "$active_trunk_tree" "$previous_active_trunk_commit" "$repair_candidate" "$repair_vhl_run" "$current_pc_run" "$current_pi3_run" "$previous_native_run" <<'PY'
-          import json,pathlib,sys
+          python3 - "$RUNNER_TEMP" "$projection_commit" "$projection_ci_run" "$active_trunk_commit" "$active_trunk_tree" "$previous_active_trunk_commit" "$boot_menu_candidate" "$boot_menu_vhl_run" "$previous_vhl_failure_run" "$current_pc_run" "$current_pi3_run" "$previous_native_run" <<'PY'
+          import json, pathlib, sys
           root=pathlib.Path(sys.argv[1])
-          projection,ci_id,active,active_tree,previous,candidate,vhl_id,pc_id,pi3_id,native_id=sys.argv[2:]
+          projection,ci_id,active,active_tree,previous,candidate,vhl_id,old_vhl_id,pc_id,pi3_id,native_id=sys.argv[2:]
           load=lambda n: json.loads((root/n).read_text(encoding='utf-8-sig'))
-          def steps(job): return {s.get('name'):s.get('conclusion') for s in job.get('steps',[])}
+          steps=lambda job:{s.get('name'):s.get('conclusion') for s in job.get('steps',[])}
 
           ci=load('projection-ci.json')
           assert ci.get('id')==int(ci_id) and ci.get('name')=='BoxBrain CI'
@@ -138,46 +143,47 @@ jobs:
           assert (ac.get('commit') or {}).get('tree',{}).get('sha')==active_tree
           assert (cc.get('commit') or {}).get('tree',{}).get('sha')==active_tree
 
-          pr=load('repair-pr.json')
+          pr=load('boot-menu-pr.json')
           assert pr.get('state')=='closed' and pr.get('merged_at') and pr.get('merge_commit_sha')==active
           assert (pr.get('head') or {}).get('sha')==candidate and (pr.get('base') or {}).get('ref')=='aurum/trunk-v0.01'
           body=pr.get('body') or ''
-          assert 'Physical application remains separate' in body
-          assert 'cannot fetch this commit until its broken disposable tracking ref is repaired through an authorized local/recovery path' in body
+          for token in (
+              'regenerate, rather than append, exactly two installed boot choices',
+              'keep a five-second automatic normal boot timeout while leaving recovery reachable',
+              'no partition, filesystem, NVRAM, or live Hopper change occurs in this PR',
+              'the current installed state and LKG remain untouched until a separately verified recovery image is used',
+          ):
+              assert token in body, token
 
-          vhl=load('repair-vhl.json')
+          vhl=load('boot-menu-vhl.json')
           assert vhl.get('id')==int(vhl_id) and vhl.get('head_sha')==candidate
           assert vhl.get('status')=='completed' and vhl.get('conclusion')=='success'
-          vjobs={j.get('name'):j for j in load('repair-vhl-jobs.json').get('jobs',[])}
+          vjobs={j.get('name'):j for j in load('boot-menu-vhl-jobs.json').get('jobs',[])}
           for name in ('Docker runtime x86_64','Docker runtime ARM64','QEMU Raspberry Pi 3B machine/runtime','QEMU UEFI x86_64 PC','Same-commit four-target convergence gate'):
-              assert (vjobs.get(name) or {}).get('conclusion')=='success',name
+              assert (vjobs.get(name) or {}).get('conclusion')=='success', name
           assert steps(vjobs['QEMU UEFI x86_64 PC']).get('Boot PC image in QEMU UEFI')=='success'
+          assert steps(vjobs['Same-commit four-target convergence gate']).get('Verify exact targets, commit, and evidence labels')=='success'
+
+          old=load('previous-vhl.json')
+          assert old.get('id')==int(old_vhl_id) and old.get('head_sha')==previous
+          assert old.get('status')=='completed' and old.get('conclusion')=='failure'
+          oldjobs={j.get('name'):j for j in load('previous-vhl-jobs.json').get('jobs',[])}
+          assert (oldjobs.get('QEMU UEFI x86_64 PC') or {}).get('conclusion')=='failure'
+          assert steps(oldjobs['QEMU UEFI x86_64 PC']).get('Boot PC image in QEMU UEFI')=='failure'
 
           pc=load('current-pc.json')
           assert pc.get('id')==int(pc_id) and pc.get('head_sha')==active
-          assert pc.get('status')=='completed' and pc.get('conclusion')=='success'
-          pjobs={j.get('name'):j for j in load('current-pc-jobs.json').get('jobs',[])}
-          for name in ('validate','build-image','generic-uefi-smoke','hp-twin-smoke','publish-verified-image'):
-              assert (pjobs.get(name) or {}).get('conclusion')=='success',name
-          assert steps(pjobs['generic-uefi-smoke']).get('Generic low-memory UEFI install reboot and self-build smoke')=='success'
-          assert steps(pjobs['generic-uefi-smoke']).get('Legacy BIOS install and installed-boot smoke')=='success'
-          assert steps(pjobs['hp-twin-smoke']).get('Hopper HP topology and offline-recovery twin')=='success'
-
           pi3=load('current-pi3.json')
           assert pi3.get('id')==int(pi3_id) and pi3.get('head_sha')==active
           assert pi3.get('status')=='completed' and pi3.get('conclusion')=='success'
-
           native=load('previous-native.json')
-          assert native.get('id')==int(native_id) and native.get('head_sha')==previous
+          assert native.get('id')==int(native_id)
+          assert native.get('head_sha') not in (active, previous)
           assert native.get('status')=='completed' and native.get('conclusion')=='failure'
-          njobs=[j for j in load('previous-native-jobs.json').get('jobs',[]) if j.get('name')=='Resume verified native growth']
-          assert len(njobs)==1 and steps(njobs[0]).get('Verify native self-build contracts')=='failure'
-
           hs=load('hopper-status.json')
           assert hs.get('endpoint') is None and hs.get('http_status') is None and hs.get('reachable') is False and hs.get('report') is None
-          assert hs.get('observed_at')=='2026-09-04T21:35:40Z'
           assert (hs.get('summary') or {}).get('health')=='no-endpoint-candidate'
-          print('GENERATION_LADDER_V140_SOURCE_AND_EVIDENCE_OK')
+          print('GENERATION_LADDER_V141_SOURCE_AND_EVIDENCE_OK')
           PY
 
           echo "file=$canonical" >> "$GITHUB_OUTPUT"
@@ -189,14 +195,15 @@ jobs:
           echo "active_trunk_commit=$active_trunk_commit" >> "$GITHUB_OUTPUT"
           echo "active_trunk_tree=$active_trunk_tree" >> "$GITHUB_OUTPUT"
           echo "previous_active_trunk_commit=$previous_active_trunk_commit" >> "$GITHUB_OUTPUT"
-          echo "repair_pr=$repair_pr" >> "$GITHUB_OUTPUT"
-          echo "repair_candidate=$repair_candidate" >> "$GITHUB_OUTPUT"
-          echo "repair_vhl_run=$repair_vhl_run" >> "$GITHUB_OUTPUT"
+          echo "boot_menu_pr=$boot_menu_pr" >> "$GITHUB_OUTPUT"
+          echo "boot_menu_candidate=$boot_menu_candidate" >> "$GITHUB_OUTPUT"
+          echo "boot_menu_vhl_run=$boot_menu_vhl_run" >> "$GITHUB_OUTPUT"
+          echo "previous_vhl_failure_run=$previous_vhl_failure_run" >> "$GITHUB_OUTPUT"
           echo "current_pc_run=$current_pc_run" >> "$GITHUB_OUTPUT"
           echo "current_pi3_run=$current_pi3_run" >> "$GITHUB_OUTPUT"
           echo "previous_native_run=$previous_native_run" >> "$GITHUB_OUTPUT"
           echo "hopper_snapshot_commit=$hopper_snapshot_commit" >> "$GITHUB_OUTPUT"
-          echo 'CLUSTERSITES_CANONICAL_PROJECTION_V140_OK'
+          echo 'CLUSTERSITES_CANONICAL_PROJECTION_V141_OK'
 
       - name: Configure Bluehost SSH with bounded retry
         env:
@@ -244,7 +251,7 @@ jobs:
           import re,sys
           p=Path(sys.argv[1]); text=p.read_text(encoding='utf-8')
           text=re.sub(r'<script src="\./generation-seed-ladder\.js(?:\?v=[^"]+)?"></script>\s*','',text)
-          tag='<script src="./generation-seed-ladder.js?v=140"></script>'
+          tag='<script src="./generation-seed-ladder.js?v=141"></script>'
           for pattern in (r'<script src="\./seed-lifecycle\.js(?:\?v=[^"]+)?"></script>',r'<script src="\./recovery-guardian\.js(?:\?v=[^"]+)?"></script>',r'</body>'):
               m=re.search(pattern,text)
               if m:
@@ -253,7 +260,7 @@ jobs:
           else: raise SystemExit('dashboard missing generation ladder injection point')
           p.write_text(text,encoding='utf-8')
           PY
-          grep -Fq './generation-seed-ladder.js?v=140' "$RUNNER_TEMP/index.html"
+          grep -Fq './generation-seed-ladder.js?v=141' "$RUNNER_TEMP/index.html"
 
       - name: Publish with bounded retries
         env:
@@ -277,19 +284,20 @@ jobs:
           page="$RUNNER_TEMP/live-index.html"; js="$RUNNER_TEMP/live-generation-seed-ladder.js"
           final_url="$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' \
-            'https://arkmatx.com/aurum/dashboard/generation-seed-ladder.js?rev=140' -o "$js"
-          grep -Fq './generation-seed-ladder.js?v=140' "$page"
+            'https://arkmatx.com/aurum/dashboard/generation-seed-ladder.js?rev=141' -o "$js"
+          grep -Fq './generation-seed-ladder.js?v=141' "$page"
           cmp -s "$js" "${{ steps.source.outputs.file }}"
           node --check "$js"
           for token in \
-            'AURUM_GENERATION_SEED_LADDER_V1_40_CANONICAL' \
-            "componentRevision:'1.40'" \
-            'remoteTrackingRefRepairMerged:true' \
-            'remoteTrackingRefRepairPhysicalApplicationProven:false' \
-            'currentPcImageRunPassed:true' \
+            'AURUM_GENERATION_SEED_LADDER_V1_41_CANONICAL' \
+            "componentRevision:'1.41'" \
+            'hopperBootMenuMerged:true' \
+            'hopperBootMenuFourTargetConvergencePassed:true' \
+            'hopperBootMenuPhysicalTwoEntryObservationProven:false' \
+            'previousVhlTimingFailureChangedBeforeRetry:true' \
+            'currentPcImageFinalResultPromoted:false' \
             'currentPi3ImageRunPassed:true' \
             'currentNativeResultObserved:false' \
-            'previousNativeRunHistorical:true' \
             "hopperStatusCurrentBlocker:'no-valid-endpoint-candidate'" \
             'humanActionInference:true' \
             "humanActionType:'physical-boot-proof'" \
@@ -300,7 +308,7 @@ jobs:
             'Frontiers Advancing:' \
             'Needs Work → Aurum/System:' \
             'Your Actions:' \
-            'No new Wi-Fi or Git-ref action is justified for you from code evidence alone.' \
+            'No new Hopper boot-menu, Wi-Fi, sync-ref or software action is justified for you from code evidence alone.' \
             'Do not choose install, erase, format, repair, or any destructive option.'; do
             grep -Fq "$token" "$js"
           done
@@ -338,7 +346,7 @@ jobs:
             "canonical_component_commit": "${{ steps.source.outputs.canonical_commit }}",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/generation-seed-ladder-v1.js",
             "deployment_carrier": "FormatX66/wetbeard-site",
-            "component_revision": "1.40",
+            "component_revision": "1.41",
             "approved_blob": "${{ steps.source.outputs.blob }}",
             "boxbrain_projection_commit": "${{ steps.source.outputs.projection_commit }}",
             "boxbrain_projection_main_commit": "${{ steps.source.outputs.projection_main_commit }}",
@@ -349,24 +357,28 @@ jobs:
             "active_trunk_commit": "${{ steps.source.outputs.active_trunk_commit }}",
             "active_trunk_tree": "${{ steps.source.outputs.active_trunk_tree }}",
             "previous_active_trunk_commit": "${{ steps.source.outputs.previous_active_trunk_commit }}",
-            "hopper_remote_ref_repair_pr": ${{ steps.source.outputs.repair_pr }},
-            "hopper_remote_ref_repair_merged": true,
-            "hopper_remote_ref_repair_code_promoted": true,
-            "hopper_remote_ref_repair_physical_application_proven": false,
-            "hopper_remote_ref_repair_origin_recreated_on_physical_hopper_proven": false,
-            "repair_candidate_commit": "${{ steps.source.outputs.repair_candidate }}",
-            "repair_vhl_run": ${{ steps.source.outputs.repair_vhl_run }},
-            "repair_candidate_same_tree_as_active": true,
-            "repair_candidate_four_target_convergence_passed": true,
+            "hopper_boot_menu_pr": ${{ steps.source.outputs.boot_menu_pr }},
+            "hopper_boot_menu_merged": true,
+            "hopper_boot_menu_code_promoted": true,
+            "hopper_boot_menu_candidate": "${{ steps.source.outputs.boot_menu_candidate }}",
+            "hopper_boot_menu_vhl_run": ${{ steps.source.outputs.boot_menu_vhl_run }},
+            "hopper_boot_menu_candidate_same_tree_as_active": true,
+            "hopper_boot_menu_four_target_convergence_passed": true,
+            "hopper_boot_menu_entry_count": 2,
+            "hopper_boot_menu_timeout_seconds": 5,
+            "hopper_boot_menu_hopper_normal_blacklists_nouveau": true,
+            "hopper_boot_menu_recovery_uses_nomodeset": true,
+            "hopper_boot_menu_physical_two_entry_observation_proven": false,
+            "previous_vhl_timing_failure_run": ${{ steps.source.outputs.previous_vhl_failure_run }},
+            "previous_vhl_timing_failure_historical": true,
+            "previous_vhl_timing_failure_changed_before_retry": true,
             "current_pc_image_run": ${{ steps.source.outputs.current_pc_run }},
-            "current_pc_image_run_passed": true,
+            "current_pc_image_final_result_promoted": false,
             "current_pi3_image_run": ${{ steps.source.outputs.current_pi3_run }},
             "current_pi3_image_run_passed": true,
             "current_native_result_observed": false,
             "previous_native_run": ${{ steps.source.outputs.previous_native_run }},
             "previous_native_run_historical": true,
-            "previous_native_run_passed": false,
-            "previous_native_failure_step": "Verify native self-build contracts",
             "hopper_status_snapshot_commit": "${{ steps.source.outputs.hopper_snapshot_commit }}",
             "hopper_status_current_blocker": "no-valid-endpoint-candidate",
             "hopper_equivalent_null_snapshot_is_evidence_health": true,
@@ -391,6 +403,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-generation-seed-ladder-live.json
-          git commit -m 'Record Aurum generation seed ladder v1.40 live [skip ci]' || exit 0
+          git commit -m 'Record Aurum generation seed ladder v1.41 live [skip ci]' || exit 0
           git pull --rebase origin main
           git push origin HEAD:main

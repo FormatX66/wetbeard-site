@@ -27,11 +27,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          canonical_commit='3053596ace0376ab2ffc5b9efbe973141eac17c1'
-          expected_blob='138ec183950dd23be505609d250465928aae6c1c'
-          projection_commit='02e57d85e053c4d2d3597e51ccf28e12c69c7ef2'
-          projection_main_commit='1f68b932edf25818c93d928318c59333024568fb'
-          projection_ci_run='33948284075'
+          canonical_commit='dea25ef96743f26b8f618270828c19eeccda17e3'
+          expected_blob='3f533f2c203e3cbcf670df5ee7b6cc1c398a7fb9'
+          projection_commit='23e2b9264a5219e050ced43c92167d4103229e1a'
+          projection_main_commit='6066075ae4c74e33f2a2d1f9e102c4bac92115ba'
+          projection_ci_run='33961888850'
           active='0c77f715c8ceeabc7a6cbd714086db67c0375412'
           tree='722824cd9a9068b85c0efef31ecc4d6538741cb7'
           previous_active='958f3a9de28b9e4baa95fabfc8dbf9af1af3d4ea'
@@ -48,6 +48,7 @@ jobs:
           pi3='33938121968'
           compute='33938121722'
           native='33938908591'
+          physical_watch='33957592775'
           hopper='90420651044fe15a53c5086adf6d0ced3cddd2de'
           canonical="$RUNNER_TEMP/canonical.js"
           projection="$RUNNER_TEMP/projection.js"
@@ -64,12 +65,13 @@ jobs:
           cp "$projection" "$canonical"
 
           for token in \
-            'AURUM_GENERATION_SEED_LADDER_V1_49_CANONICAL' \
-            "componentRevision:'1.49'" \
+            'AURUM_GENERATION_SEED_LADDER_V1_50_CANONICAL' \
+            "componentRevision:'1.50'" \
             "canonicalWebsiteRepo:'FormatX66/ClusterSites'" \
             "ACTIVE_TRUNK_COMMIT='$active'" \
             "ACTIVE_TRUNK_TREE='$tree'" \
             "CURRENT_VHL_RUN='$current_vhl'" \
+            "PHYSICAL_PREREQ_WATCH_RUN='$physical_watch'" \
             "browserPromptSeedGatePromotionState:'code-promoted-corrected-vhl-green-exact-active-head-images-green'" \
             'browserPromptSeedGateMerged:true' \
             'browserPromptSeedGateCandidateTreeEqualsActiveTrunkTree:true' \
@@ -89,6 +91,18 @@ jobs:
             'currentNativeRunPassed:false' \
             "currentNativeFailureStep:'Verify native self-build contracts'" \
             'currentNativeFailureOutsideBrowserPromptDiff:true' \
+            'currentNativePersistentStateChecked:true' \
+            'currentNativeCompletedGenerations:65' \
+            "currentNativeLatestCompletedGap:'adaptive_shell_gui_live_trial'" \
+            "currentNativePersistentBlockedReason:'external-prerequisite-blocked'" \
+            "currentNativePersistentBlockedOutput:'blocked-candidate-verified'" \
+            "currentNativePersistentNextGap:'adaptive_shell_gui_live_trial'" \
+            'currentNativeExternalEvidenceApplied:false' \
+            "currentNativeExternalEvidenceReason:'gui-live-trial-evidence-expired'" \
+            'currentNativeFailedAttemptPresent:false' \
+            'currentNativeRetryRequiresMaterialEvidenceChange:true' \
+            'physicalPrerequisiteWatchPassed:true' \
+            'physicalPrerequisiteIsCurrentNativeBlocker:false' \
             'wifiOwnerRepairFourTargetVhlPassed:true' \
             'wifiOwnerRepairPhysicalWifiProven:false' \
             "hopperStatusCurrentBlocker:'no-valid-endpoint-candidate'" \
@@ -107,6 +121,9 @@ jobs:
             'Frontiers Advancing:' \
             'Needs Work → Aurum/System:' \
             'Your Actions:' \
+            '65 verified generations' \
+            'Physical presence is not the current native recovery requirement.' \
+            'Do not manufacture a heartbeat' \
             'One genuine physical-only step is now proven necessary.' \
             'Do not choose install, erase, format, repair, or any destructive option.' \
             'ClusterSites remains canonical for website source.'; do
@@ -133,16 +150,19 @@ jobs:
           get "$api/actions/runs/$compute" "$RUNNER_TEMP/compute.json"
           get "$api/actions/runs/$native" "$RUNNER_TEMP/native.json"
           get "$api/actions/runs/$native/jobs?per_page=100" "$RUNNER_TEMP/native-jobs.json"
+          get "https://raw.githubusercontent.com/FormatX66/BoxBrain/$active/Projects/Codelation/autobuild/native_chain_state.json" "$RUNNER_TEMP/native-state.json"
+          get "$api/actions/runs/$physical_watch" "$RUNNER_TEMP/physical-watch.json"
+          get "$api/actions/runs/$physical_watch/jobs?per_page=100" "$RUNNER_TEMP/physical-watch-jobs.json"
           get "$api/compare/$previous_active...$active" "$RUNNER_TEMP/active-compare.json"
           get "$api/pulls/$wifi_pr" "$RUNNER_TEMP/wifi-pr.json"
           get "$api/actions/runs/$wifi_vhl" "$RUNNER_TEMP/wifi-vhl.json"
           get "$api/actions/runs/$wifi_vhl/jobs?per_page=100" "$RUNNER_TEMP/wifi-vhl-jobs.json"
           get "https://raw.githubusercontent.com/FormatX66/BoxBrain/$hopper/Web/Aurum-Arkmatx/hopper-status.json" "$RUNNER_TEMP/hopper.json"
 
-          python3 - "$RUNNER_TEMP" "$projection_commit" "$projection_ci_run" "$active" "$tree" "$previous_active" "$browser_previous_candidate" "$browser_candidate" "$browser_previous_vhl" "$browser_vhl" "$current_vhl" "$pc" "$pi3" "$compute" "$native" "$wifi_vhl" <<'PY'
+          python3 - "$RUNNER_TEMP" "$projection_commit" "$projection_ci_run" "$active" "$tree" "$previous_active" "$browser_previous_candidate" "$browser_candidate" "$browser_previous_vhl" "$browser_vhl" "$current_vhl" "$pc" "$pi3" "$compute" "$native" "$physical_watch" "$wifi_vhl" <<'PY'
           import json,pathlib,sys
           r=pathlib.Path(sys.argv[1])
-          projection,ci_id,active,tree,previous_active,bprev,bc,bold_id,bvhl_id,current_vhl_id,pc_id,pi3_id,compute_id,native_id,wifi_vhl_id=sys.argv[2:]
+          projection,ci_id,active,tree,previous_active,bprev,bc,bold_id,bvhl_id,current_vhl_id,pc_id,pi3_id,compute_id,native_id,physical_watch_id,wifi_vhl_id=sys.argv[2:]
           load=lambda n:json.loads((r/n).read_text(encoding='utf-8-sig'))
           steps=lambda j:{s.get('name'):s.get('conclusion') for s in j.get('steps',[])}
 
@@ -194,6 +214,27 @@ jobs:
           changed_active={f['filename'] for f in ad.get('files',[])}
           assert changed_active and not any(p.startswith('Projects/Codelation/') for p in changed_active),changed_active
 
+          chain=load('native-state.json')
+          assert chain['schema']=='aurum-native-autonomous-chain-v6'
+          assert chain['completed_generations']==65
+          assert chain['latest_completed_gap']=='adaptive_shell_gui_live_trial'
+          assert chain['blocked_reason']=='external-prerequisite-blocked'
+          assert chain['blocked_output']=='blocked-candidate-verified'
+          assert chain['next_gap']=='adaptive_shell_gui_live_trial'
+          assert chain['failed_attempt'] is None
+          assert chain['external_evidence']['applied'] is False
+          assert chain['external_evidence']['reason']=='gui-live-trial-evidence-expired'
+          latest=chain['generations'][-1]
+          assert latest['generation']==65 and latest['gap']=='adaptive_shell_gui_live_trial' and latest['state']=='verified'
+          assert latest['invocation_output']=='blocked-candidate-verified' and latest['authority_granted'] is False and latest['external_evidence'] is None
+
+          watch=load('physical-watch.json')
+          assert watch['id']==int(physical_watch_id) and watch['status']=='completed' and watch['conclusion']=='success'
+          pwj={j['name']:j for j in load('physical-watch-jobs.json')['jobs']}['watch']; pws=steps(pwj)
+          assert pwj['conclusion']=='success'
+          assert pws.get('Resolve fresh BBPI4 physical-presence evidence read-only')=='success'
+          assert pws.get('Publish fresh evidence to the Aurum branch')=='success'
+
           wpr=load('wifi-pr.json')
           assert wpr['state']=='closed' and wpr.get('merged_at')
           wv=load('wifi-vhl.json')
@@ -203,7 +244,7 @@ jobs:
               assert wj[n]['conclusion']=='success',n
           h=load('hopper.json')
           assert h['endpoint'] is None and h['reachable'] is False and h['summary']['health']=='no-endpoint-candidate'
-          print('GENERATION_LADDER_V149_SOURCE_AND_EVIDENCE_OK')
+          print('GENERATION_LADDER_V150_SOURCE_AND_EVIDENCE_OK')
           PY
 
           echo "file=$canonical" >> "$GITHUB_OUTPUT"
@@ -225,6 +266,7 @@ jobs:
           echo "pi3=$pi3" >> "$GITHUB_OUTPUT"
           echo "compute=$compute" >> "$GITHUB_OUTPUT"
           echo "native=$native" >> "$GITHUB_OUTPUT"
+          echo "physical_watch=$physical_watch" >> "$GITHUB_OUTPUT"
           echo "hopper=$hopper" >> "$GITHUB_OUTPUT"
 
       - name: Configure Bluehost SSH with bounded retry
@@ -265,14 +307,14 @@ jobs:
           import re,sys
           p=Path(sys.argv[1]); t=p.read_text(encoding='utf-8')
           t=re.sub(r'<script src="\./generation-seed-ladder\.js(?:\?v=[^"]+)?"></script>\s*','',t)
-          tag='<script src="./generation-seed-ladder.js?v=149"></script>'
+          tag='<script src="./generation-seed-ladder.js?v=150"></script>'
           for pat in (r'<script src="\./seed-lifecycle\.js(?:\?v=[^"]+)?"></script>',r'<script src="\./recovery-guardian\.js(?:\?v=[^"]+)?"></script>',r'</body>'):
               m=re.search(pat,t)
               if m: t=t[:m.start()]+tag+'\n'+t[m.start():]; break
           else: raise SystemExit('dashboard missing generation ladder injection point')
           p.write_text(t,encoding='utf-8')
           PY
-          grep -Fq './generation-seed-ladder.js?v=149' "$RUNNER_TEMP/index.html"
+          grep -Fq './generation-seed-ladder.js?v=150' "$RUNNER_TEMP/index.html"
 
       - name: Publish with bounded retries
         env:
@@ -293,11 +335,11 @@ jobs:
           set -euo pipefail
           page="$RUNNER_TEMP/live-index.html"; js="$RUNNER_TEMP/live-generation-seed-ladder.js"
           final_url="$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/generation-seed-ladder.js?rev=149' -o "$js"
-          grep -Fq './generation-seed-ladder.js?v=149' "$page"
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/generation-seed-ladder.js?rev=150' -o "$js"
+          grep -Fq './generation-seed-ladder.js?v=150' "$page"
           cmp -s "$js" "${{ steps.source.outputs.file }}"
           node --check "$js"
-          for token in 'AURUM_GENERATION_SEED_LADDER_V1_49_CANONICAL' "componentRevision:'1.49'" 'browserPromptSeedGateMerged:true' 'browserPromptSeedGateVhlPassed:true' 'browserPromptSeedGateFourTargetVhlPassed:true' 'currentVhlExactHead:true' 'currentVhlRunPassed:true' 'currentVhlFourTargetConvergencePassed:true' 'currentPcImageRunPassed:true' 'currentPi3ImageRunPassed:true' 'computeWeaveRunPassed:true' 'currentNativeResultObserved:true' 'currentNativeRunPassed:false' 'currentNativeFailureOutsideBrowserPromptDiff:true' 'wifiOwnerRepairPhysicalWifiProven:false' "hopperStatusCurrentBlocker:'no-valid-endpoint-candidate'" 'humanActionInference:true' 'humanActionDestructive:false' 'majorBoxAdded:false' 'seedLifecycleRemainsExpandable:true' 'generationLadderRemainsExpandable:true' 'Frontiers Advancing:' 'Needs Work → Aurum/System:' 'Your Actions:' 'Do not choose install, erase, format, repair, or any destructive option.'; do grep -Fq "$token" "$js"; done
+          for token in 'AURUM_GENERATION_SEED_LADDER_V1_50_CANONICAL' "componentRevision:'1.50'" 'browserPromptSeedGateMerged:true' 'browserPromptSeedGateVhlPassed:true' 'browserPromptSeedGateFourTargetVhlPassed:true' 'currentVhlExactHead:true' 'currentVhlRunPassed:true' 'currentVhlFourTargetConvergencePassed:true' 'currentPcImageRunPassed:true' 'currentPi3ImageRunPassed:true' 'computeWeaveRunPassed:true' 'currentNativeResultObserved:true' 'currentNativeRunPassed:false' 'currentNativeFailureOutsideBrowserPromptDiff:true' 'currentNativePersistentStateChecked:true' 'currentNativeCompletedGenerations:65' "currentNativePersistentBlockedOutput:'blocked-candidate-verified'" "currentNativeExternalEvidenceReason:'gui-live-trial-evidence-expired'" 'currentNativeFailedAttemptPresent:false' 'physicalPrerequisiteWatchPassed:true' 'physicalPrerequisiteIsCurrentNativeBlocker:false' 'wifiOwnerRepairPhysicalWifiProven:false' "hopperStatusCurrentBlocker:'no-valid-endpoint-candidate'" 'humanActionInference:true' 'humanActionDestructive:false' 'majorBoxAdded:false' 'seedLifecycleRemainsExpandable:true' 'generationLadderRemainsExpandable:true' 'Frontiers Advancing:' 'Needs Work → Aurum/System:' 'Your Actions:' 'Physical presence is not the current native recovery requirement.' 'Do not manufacture a heartbeat' 'Do not choose install, erase, format, repair, or any destructive option.'; do grep -Fq "$token" "$js"; done
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
 
       - name: Roll back on verification failure
@@ -329,7 +371,7 @@ jobs:
             "canonical_component_commit": "${{ steps.source.outputs.canonical_commit }}",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/generation-seed-ladder-v1.js",
             "deployment_carrier": "FormatX66/wetbeard-site",
-            "component_revision": "1.49",
+            "component_revision": "1.50",
             "approved_blob": "${{ steps.source.outputs.blob }}",
             "boxbrain_projection_commit": "${{ steps.source.outputs.projection_commit }}",
             "boxbrain_projection_main_commit": "${{ steps.source.outputs.projection_main_commit }}",
@@ -369,6 +411,18 @@ jobs:
             "current_native_run_passed": false,
             "current_native_failure_step": "Verify native self-build contracts",
             "current_native_failure_outside_browser_prompt_diff": true,
+            "current_native_persistent_state_checked": true,
+            "current_native_completed_generations": 65,
+            "current_native_latest_completed_gap": "adaptive_shell_gui_live_trial",
+            "current_native_persistent_blocked_reason": "external-prerequisite-blocked",
+            "current_native_persistent_blocked_output": "blocked-candidate-verified",
+            "current_native_external_evidence_applied": false,
+            "current_native_external_evidence_reason": "gui-live-trial-evidence-expired",
+            "current_native_failed_attempt_present": false,
+            "current_native_retry_requires_material_evidence_change": true,
+            "physical_prerequisite_watch_run": ${{ steps.source.outputs.physical_watch }},
+            "physical_prerequisite_watch_passed": true,
+            "physical_prerequisite_is_current_native_blocker": false,
             "hopper_status_snapshot_commit": "${{ steps.source.outputs.hopper }}",
             "hopper_status_current_blocker": "no-valid-endpoint-candidate",
             "hopper_equivalent_null_snapshot_is_evidence_health": true,
@@ -392,6 +446,6 @@ jobs:
           EOF_RECEIPT
           git config user.name 'github-actions[bot]'; git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-generation-seed-ladder-live.json
-          git commit -m 'Record Aurum generation seed ladder v1.49 live [skip ci]' || exit 0
+          git commit -m 'Record Aurum generation seed ladder v1.50 live [skip ci]' || exit 0
           git pull --rebase origin main
           git push origin HEAD:main

@@ -27,11 +27,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          canonical_commit='2fb7b26c39376ed6fab684b848550208be1ebee3'
-          expected_blob='85f6f5e5ff7cc86a8f5e3ba19959f2043de07425'
-          projection_commit='3ddcaa96088812361edeb4b17bde88e19a50efcd'
-          projection_main_commit='ff9f369fc9d9a18a26d509448e71a35b09717b59'
-          projection_ci_run='33936135042'
+          canonical_commit='16d80cc29b89e69a7f56adc9d625f2c1df9e8b43'
+          expected_blob='299f88ae57f7f431f0b11478aad1c45e9cdd1470'
+          projection_commit='1fe489586b075748a461c952cc20401e918ca991'
+          projection_main_commit='d74025a40ad2b6635a0f4a38c81246773e7c5c93'
+          projection_ci_run='33937277920'
           active='958f3a9de28b9e4baa95fabfc8dbf9af1af3d4ea'
           tree='aa0cc44e524a53b884493a4f9b09c4332ab1b78e'
           wifi_pr='223'
@@ -41,8 +41,10 @@ jobs:
           pi3='33934510499'
           compute='33934510651'
           browser_pr='222'
-          browser_candidate='1e3bf9c3a265058b8c55e456668f156259b05069'
-          browser_vhl='33934946010'
+          browser_previous_candidate='1e3bf9c3a265058b8c55e456668f156259b05069'
+          browser_candidate='29ab0da5e8741a2f370a775c5fbf9c01b1b40a1a'
+          browser_previous_vhl='33934946010'
+          browser_vhl='33936783197'
           browser_candidate_pc='33934957544'
           hopper='90420651044fe15a53c5086adf6d0ced3cddd2de'
           canonical="$RUNNER_TEMP/canonical.js"
@@ -60,8 +62,8 @@ jobs:
           cp "$projection" "$canonical"
 
           for token in \
-            'AURUM_GENERATION_SEED_LADDER_V1_46_CANONICAL' \
-            "componentRevision:'1.46'" \
+            'AURUM_GENERATION_SEED_LADDER_V1_47_CANONICAL' \
+            "componentRevision:'1.47'" \
             "canonicalWebsiteRepo:'FormatX66/ClusterSites'" \
             "ACTIVE_TRUNK_COMMIT='$active'" \
             "ACTIVE_TRUNK_TREE='$tree'" \
@@ -72,13 +74,21 @@ jobs:
             'currentPcImageRunPassed:true' \
             'currentPi3ImageRunPassed:true' \
             'computeWeaveRunPassed:true' \
-            "browserPromptSeedGatePromotionState:'pre-promotion-rebased-vhl-retest-running-candidate-pc-green'" \
-            'browserPromptSeedGateCandidatePcFinalResultObserved:true' \
+            "browserPromptSeedGatePromotionState:'pre-promotion-corrected-vhl-retest-active-no-terminal-result-promoted'" \
+            'browserPromptSeedGateChangedBeforeRetry:true' \
             'browserPromptSeedGateCandidatePcRunPassed:true' \
-            'browserPromptSeedGateCandidatePcVerifiedPublicationPassed:true' \
-            'browserPromptSeedGateCandidatePcPromotesSeed:false' \
-            'browserPromptSeedGateVhlFinalResultObserved:false' \
+            'browserPromptSeedGateCandidatePcProofAppliesToPreviousCandidate:true' \
+            'browserPromptSeedGateCurrentCandidateHarnessOnlyDelta:true' \
+            'browserPromptSeedGateCurrentCandidateImageRuntimeSourceChanged:false' \
+            'browserPromptSeedGatePreviousVhlFinalResultObserved:true' \
+            'browserPromptSeedGatePreviousVhlFinalPassed:false' \
+            'browserPromptSeedGatePreviousVhlPcIsoBuildPassed:true' \
+            'browserPromptSeedGatePreviousVhlUefiProbeRaceFailed:true' \
+            'browserPromptSeedGateProbeIntervalChangedFromSeconds:5' \
+            'browserPromptSeedGateProbeIntervalChangedToSeconds:10' \
+            'browserPromptSeedGateOverallAcceptanceBoundSeconds:450' \
             'browserPromptSeedGateVhlFinalResultPromoted:false' \
+            'browserPromptSeedGateVhlTerminalResultRequiresReconciliation:true' \
             "hopperStatusCurrentBlocker:'no-valid-endpoint-candidate'" \
             'hopperStatusEquivalentNullSnapshotsAreEvidenceHealth:true' \
             'currentNativeResultObserved:false' \
@@ -116,16 +126,20 @@ jobs:
           get "$api/actions/runs/$pi3" "$RUNNER_TEMP/pi3.json"
           get "$api/actions/runs/$compute" "$RUNNER_TEMP/compute.json"
           get "$api/pulls/$browser_pr" "$RUNNER_TEMP/browser-pr.json"
+          get "$api/actions/runs/$browser_previous_vhl" "$RUNNER_TEMP/browser-previous-vhl.json"
+          get "$api/actions/runs/$browser_previous_vhl/jobs?per_page=100" "$RUNNER_TEMP/browser-previous-vhl-jobs.json"
           get "$api/actions/runs/$browser_vhl" "$RUNNER_TEMP/browser-vhl.json"
           get "$api/actions/runs/$browser_vhl/jobs?per_page=100" "$RUNNER_TEMP/browser-vhl-jobs.json"
           get "$api/actions/runs/$browser_candidate_pc" "$RUNNER_TEMP/browser-candidate-pc.json"
           get "$api/actions/runs/$browser_candidate_pc/jobs?per_page=100" "$RUNNER_TEMP/browser-candidate-pc-jobs.json"
+          get "$api/compare/$browser_previous_candidate...$browser_candidate" "$RUNNER_TEMP/browser-compare.json"
+          get "https://raw.githubusercontent.com/FormatX66/BoxBrain/$browser_candidate/Projects/AurumVirtualLab/qemu-pc-smoke.sh" "$RUNNER_TEMP/qemu-pc-smoke.sh"
           get "https://raw.githubusercontent.com/FormatX66/BoxBrain/$hopper/Web/Aurum-Arkmatx/hopper-status.json" "$RUNNER_TEMP/hopper.json"
 
-          python3 - "$RUNNER_TEMP" "$projection_commit" "$projection_ci_run" "$active" "$tree" "$wifi_candidate" "$wifi_vhl" "$pc" "$pi3" "$compute" "$browser_candidate" "$browser_vhl" "$browser_candidate_pc" <<'PY'
+          python3 - "$RUNNER_TEMP" "$projection_commit" "$projection_ci_run" "$active" "$tree" "$wifi_candidate" "$wifi_vhl" "$pc" "$pi3" "$compute" "$browser_previous_candidate" "$browser_candidate" "$browser_previous_vhl" "$browser_vhl" "$browser_candidate_pc" <<'PY'
           import json,pathlib,sys
           r=pathlib.Path(sys.argv[1])
-          projection,ci_id,active,tree,wifi_candidate,wifi_vhl_id,pc_id,pi3_id,compute_id,browser_candidate,browser_vhl_id,browser_pc_id=sys.argv[2:]
+          projection,ci_id,active,tree,wifi_candidate,wifi_vhl_id,pc_id,pi3_id,compute_id,browser_previous_candidate,browser_candidate,browser_previous_vhl_id,browser_vhl_id,browser_pc_id=sys.argv[2:]
           load=lambda n:json.loads((r/n).read_text(encoding='utf-8-sig'))
           steps=lambda j:{s.get('name'):s.get('conclusion') for s in j.get('steps',[])}
 
@@ -154,19 +168,34 @@ jobs:
 
           bpr=load('browser-pr.json')
           assert bpr['state']=='open' and bpr['draft'] is True and bpr['head']['sha']==browser_candidate and bpr['base']['sha']==active and bpr.get('mergeable') is True
+
+          old=load('browser-previous-vhl.json')
+          assert old['id']==int(browser_previous_vhl_id) and old['head_sha']==browser_previous_candidate and old['status']=='completed' and old['conclusion']=='failure'
+          oldj={j['name']:j for j in load('browser-previous-vhl-jobs.json')['jobs']}
+          oq=oldj['QEMU UEFI x86_64 PC']; os=steps(oq)
+          assert oq['conclusion']=='failure' and os.get('Build PC ISO')=='success' and os.get('Boot PC image in QEMU UEFI')=='failure'
+
+          cmp=load('browser-compare.json')
+          assert cmp['status']=='ahead' and cmp['ahead_by']==1 and cmp['behind_by']==0
+          changed={f['filename'] for f in cmp.get('files',[])}
+          assert changed=={'Projects/AurumPC/tests/test_build_iso_contract.py','Projects/AurumVirtualLab/qemu-pc-smoke.sh'},changed
+          smoke=(r/'qemu-pc-smoke.sh').read_text(encoding='utf-8')
+          primary=smoke.split('wait_for_primary_gui() {',1)[1].split('wait_for_install()',1)[0]
+          assert 'for _ in $(seq 1 45)' in primary and 'for _ in $(seq 1 10)' in primary and '450-second overall acceptance bound' in primary
+
           bv=load('browser-vhl.json')
           assert bv['id']==int(browser_vhl_id) and bv['head_sha']==browser_candidate and bv['status']=='in_progress' and bv['conclusion'] is None
           bj={j['name']:j for j in load('browser-vhl-jobs.json')['jobs']}
-          assert bj['Docker runtime x86_64']['conclusion']=='success' and bj['Docker runtime ARM64']['conclusion']=='success'
-
+          for n in ('Docker runtime x86_64','Docker runtime ARM64','QEMU Raspberry Pi 3B machine/runtime'):
+              assert bj[n]['conclusion']=='success',n
           bpc=load('browser-candidate-pc.json')
-          assert bpc['id']==int(browser_pc_id) and bpc['head_sha']==browser_candidate and bpc['status']=='completed' and bpc['conclusion']=='success'
+          assert bpc['id']==int(browser_pc_id) and bpc['head_sha']==browser_previous_candidate and bpc['status']=='completed' and bpc['conclusion']=='success'
           bpcj={j['name']:j for j in load('browser-candidate-pc-jobs.json')['jobs']}
           for n in ('validate','build-image','generic-uefi-smoke','hp-twin-smoke','publish-verified-image'):
               assert bpcj[n]['conclusion']=='success',n
           h=load('hopper.json')
           assert h['endpoint'] is None and h['reachable'] is False and h['summary']['health']=='no-endpoint-candidate'
-          print('GENERATION_LADDER_V146_SOURCE_AND_EVIDENCE_OK')
+          print('GENERATION_LADDER_V147_SOURCE_AND_EVIDENCE_OK')
           PY
 
           echo "file=$canonical" >> "$GITHUB_OUTPUT"
@@ -182,7 +211,9 @@ jobs:
           echo "pc=$pc" >> "$GITHUB_OUTPUT"
           echo "pi3=$pi3" >> "$GITHUB_OUTPUT"
           echo "compute=$compute" >> "$GITHUB_OUTPUT"
+          echo "browser_previous_candidate=$browser_previous_candidate" >> "$GITHUB_OUTPUT"
           echo "browser_candidate=$browser_candidate" >> "$GITHUB_OUTPUT"
+          echo "browser_previous_vhl=$browser_previous_vhl" >> "$GITHUB_OUTPUT"
           echo "browser_vhl=$browser_vhl" >> "$GITHUB_OUTPUT"
           echo "browser_candidate_pc=$browser_candidate_pc" >> "$GITHUB_OUTPUT"
           echo "hopper=$hopper" >> "$GITHUB_OUTPUT"
@@ -225,14 +256,14 @@ jobs:
           import re,sys
           p=Path(sys.argv[1]); t=p.read_text(encoding='utf-8')
           t=re.sub(r'<script src="\./generation-seed-ladder\.js(?:\?v=[^"]+)?"></script>\s*','',t)
-          tag='<script src="./generation-seed-ladder.js?v=146"></script>'
+          tag='<script src="./generation-seed-ladder.js?v=147"></script>'
           for pat in (r'<script src="\./seed-lifecycle\.js(?:\?v=[^"]+)?"></script>',r'<script src="\./recovery-guardian\.js(?:\?v=[^"]+)?"></script>',r'</body>'):
               m=re.search(pat,t)
               if m: t=t[:m.start()]+tag+'\n'+t[m.start():]; break
           else: raise SystemExit('dashboard missing generation ladder injection point')
           p.write_text(t,encoding='utf-8')
           PY
-          grep -Fq './generation-seed-ladder.js?v=146' "$RUNNER_TEMP/index.html"
+          grep -Fq './generation-seed-ladder.js?v=147' "$RUNNER_TEMP/index.html"
 
       - name: Publish with bounded retries
         env:
@@ -253,11 +284,11 @@ jobs:
           set -euo pipefail
           page="$RUNNER_TEMP/live-index.html"; js="$RUNNER_TEMP/live-generation-seed-ladder.js"
           final_url="$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/generation-seed-ladder.js?rev=146' -o "$js"
-          grep -Fq './generation-seed-ladder.js?v=146' "$page"
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/generation-seed-ladder.js?rev=147' -o "$js"
+          grep -Fq './generation-seed-ladder.js?v=147' "$page"
           cmp -s "$js" "${{ steps.source.outputs.file }}"
           node --check "$js"
-          for token in 'AURUM_GENERATION_SEED_LADDER_V1_46_CANONICAL' "componentRevision:'1.46'" 'currentPcImageRunPassed:true' 'browserPromptSeedGateCandidatePcRunPassed:true' 'browserPromptSeedGateCandidatePcPromotesSeed:false' 'browserPromptSeedGateVhlFinalResultPromoted:false' 'wifiOwnerRepairPhysicalWifiProven:false' 'currentNativeResultObserved:false' "hopperStatusCurrentBlocker:'no-valid-endpoint-candidate'" 'humanActionInference:true' 'humanActionDestructive:false' 'majorBoxAdded:false' 'seedLifecycleRemainsExpandable:true' 'generationLadderRemainsExpandable:true' 'Frontiers Advancing:' 'Needs Work → Aurum/System:' 'Your Actions:' 'Do not choose install, erase, format, repair, or any destructive option.'; do grep -Fq "$token" "$js"; done
+          for token in 'AURUM_GENERATION_SEED_LADDER_V1_47_CANONICAL' "componentRevision:'1.47'" 'currentPcImageRunPassed:true' 'browserPromptSeedGateCandidatePcRunPassed:true' 'browserPromptSeedGateCurrentCandidateHarnessOnlyDelta:true' 'browserPromptSeedGatePreviousVhlFinalPassed:false' 'browserPromptSeedGateVhlFinalResultPromoted:false' 'wifiOwnerRepairPhysicalWifiProven:false' 'currentNativeResultObserved:false' "hopperStatusCurrentBlocker:'no-valid-endpoint-candidate'" 'humanActionInference:true' 'humanActionDestructive:false' 'majorBoxAdded:false' 'seedLifecycleRemainsExpandable:true' 'generationLadderRemainsExpandable:true' 'Frontiers Advancing:' 'Needs Work → Aurum/System:' 'Your Actions:' 'Do not choose install, erase, format, repair, or any destructive option.'; do grep -Fq "$token" "$js"; done
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
 
       - name: Roll back on verification failure
@@ -289,7 +320,7 @@ jobs:
             "canonical_component_commit": "${{ steps.source.outputs.canonical_commit }}",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/generation-seed-ladder-v1.js",
             "deployment_carrier": "FormatX66/wetbeard-site",
-            "component_revision": "1.46",
+            "component_revision": "1.47",
             "approved_blob": "${{ steps.source.outputs.blob }}",
             "boxbrain_projection_commit": "${{ steps.source.outputs.projection_commit }}",
             "boxbrain_projection_main_commit": "${{ steps.source.outputs.projection_main_commit }}",
@@ -310,13 +341,20 @@ jobs:
             "current_pi3_image_run_passed": true,
             "computeweave_run": ${{ steps.source.outputs.compute }},
             "computeweave_run_passed": true,
+            "browser_prompt_previous_candidate": "${{ steps.source.outputs.browser_previous_candidate }}",
             "browser_prompt_candidate": "${{ steps.source.outputs.browser_candidate }}",
+            "browser_prompt_previous_vhl_run": ${{ steps.source.outputs.browser_previous_vhl }},
+            "browser_prompt_previous_vhl_final_result_observed": true,
+            "browser_prompt_previous_vhl_passed": false,
+            "browser_prompt_probe_race_changed_before_retry": true,
+            "browser_prompt_current_candidate_harness_only_delta": true,
+            "browser_prompt_current_candidate_image_runtime_source_changed": false,
             "browser_prompt_vhl_run": ${{ steps.source.outputs.browser_vhl }},
             "browser_prompt_vhl_final_result_promoted": false,
             "browser_prompt_candidate_pc_run": ${{ steps.source.outputs.browser_candidate_pc }},
             "browser_prompt_candidate_pc_final_result_observed": true,
             "browser_prompt_candidate_pc_run_passed": true,
-            "browser_prompt_candidate_pc_promotes_seed": false,
+            "browser_prompt_candidate_pc_proof_applies_to_previous_candidate": true,
             "hopper_status_snapshot_commit": "${{ steps.source.outputs.hopper }}",
             "hopper_status_current_blocker": "no-valid-endpoint-candidate",
             "hopper_equivalent_null_snapshot_is_evidence_health": true,
@@ -341,6 +379,6 @@ jobs:
           EOF_RECEIPT
           git config user.name 'github-actions[bot]'; git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-generation-seed-ladder-live.json
-          git commit -m 'Record Aurum generation seed ladder v1.46 live [skip ci]' || exit 0
+          git commit -m 'Record Aurum generation seed ladder v1.47 live [skip ci]' || exit 0
           git pull --rebase origin main
           git push origin HEAD:main

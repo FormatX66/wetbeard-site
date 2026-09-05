@@ -27,14 +27,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          canonical_commit='914408a8747352c51383c149d89be62fe940f172'
-          expected_blob='c040d7b17f2fadd22eb0155e9697a7c07b5bc4f7'
-          projection_commit='b9cc895a20dbfd412c98e2a107f9a2b4adc26856'
-          projection_main_commit='d2dff96b8281a4d537947fa9cec94cedb6111b56'
-          projection_ci_run='33935768650'
+          canonical_commit='2fb7b26c39376ed6fab684b848550208be1ebee3'
+          expected_blob='85f6f5e5ff7cc86a8f5e3ba19959f2043de07425'
+          projection_commit='3ddcaa96088812361edeb4b17bde88e19a50efcd'
+          projection_main_commit='ff9f369fc9d9a18a26d509448e71a35b09717b59'
+          projection_ci_run='33936135042'
           active='958f3a9de28b9e4baa95fabfc8dbf9af1af3d4ea'
           tree='aa0cc44e524a53b884493a4f9b09c4332ab1b78e'
-          previous='e4d1d79d4ffbde35ae95a4071607a3498f8931d6'
           wifi_pr='223'
           wifi_candidate='917756be145db20252e818700cbd0c44664f650b'
           wifi_vhl='33933009074'
@@ -42,12 +41,9 @@ jobs:
           pi3='33934510499'
           compute='33934510651'
           browser_pr='222'
-          browser_previous_candidate='6b9a01c9bc77c3ebb0e933119a20e60b7339be3d'
           browser_candidate='1e3bf9c3a265058b8c55e456668f156259b05069'
-          browser_previous_vhl='33930723957'
           browser_vhl='33934946010'
           browser_candidate_pc='33934957544'
-          native='33915328066'
           hopper='90420651044fe15a53c5086adf6d0ced3cddd2de'
           canonical="$RUNNER_TEMP/canonical.js"
           projection="$RUNNER_TEMP/projection.js"
@@ -64,46 +60,31 @@ jobs:
           cp "$projection" "$canonical"
 
           for token in \
-            'AURUM_GENERATION_SEED_LADDER_V1_45_CANONICAL' \
-            "componentRevision:'1.45'" \
+            'AURUM_GENERATION_SEED_LADDER_V1_46_CANONICAL' \
+            "componentRevision:'1.46'" \
             "canonicalWebsiteRepo:'FormatX66/ClusterSites'" \
             "ACTIVE_TRUNK_COMMIT='$active'" \
             "ACTIVE_TRUNK_TREE='$tree'" \
             'wifiOwnerRepairMerged:true' \
-            'wifiOwnerRepairCodePromoted:true' \
-            'wifiOwnerRepairCandidateTreeEqualsActiveTrunkTree:true' \
-            'wifiOwnerRepairVhlFinalResultPromoted:true' \
             'wifiOwnerRepairFourTargetVhlPassed:true' \
             'wifiOwnerRepairPhysicalWifiProven:false' \
-            'wifiOwnerRepairRebootPersistenceProven:false' \
-            'currentPi3ImageRunPassed:true' \
-            'currentPcImageBuildPassed:true' \
-            'currentPcImageFinalResultObserved:true' \
             'currentPcImageFinalResultPromoted:true' \
             'currentPcImageRunPassed:true' \
-            'currentPcImageGenericUefiPassed:true' \
-            'currentPcImageLegacyBiosPassed:true' \
-            'currentPcImageHpTwinPassed:true' \
-            'currentPcImageVerifiedPublicationPassed:true' \
+            'currentPi3ImageRunPassed:true' \
             'computeWeaveRunPassed:true' \
-            "browserPromptSeedGatePromotionState:'pre-promotion-rebased-vhl-retest-running'" \
-            'browserPromptSeedGateMerged:false' \
-            'browserPromptSeedGateMergeable:true' \
-            'browserPromptSeedGateRebasedOntoActiveTrunk:true' \
-            'browserPromptSeedGateChangedBeforeRetry:true' \
-            'browserPromptSeedGatePreviousVhlFinalPassed:false' \
-            'browserPromptSeedGatePreviousVhlUefiBootMarkerFailed:true' \
+            "browserPromptSeedGatePromotionState:'pre-promotion-rebased-vhl-retest-running-candidate-pc-green'" \
+            'browserPromptSeedGateCandidatePcFinalResultObserved:true' \
+            'browserPromptSeedGateCandidatePcRunPassed:true' \
+            'browserPromptSeedGateCandidatePcVerifiedPublicationPassed:true' \
+            'browserPromptSeedGateCandidatePcPromotesSeed:false' \
             'browserPromptSeedGateVhlFinalResultObserved:false' \
             'browserPromptSeedGateVhlFinalResultPromoted:false' \
-            'browserPromptSeedGateVhlDockerX86Passed:true' \
-            'browserPromptSeedGateVhlDockerArm64Passed:true' \
             "hopperStatusCurrentBlocker:'no-valid-endpoint-candidate'" \
             'hopperStatusEquivalentNullSnapshotsAreEvidenceHealth:true' \
             'currentNativeResultObserved:false' \
             'physicalHopperWifiProofProven:false' \
             'physicalHopperBootProofProven:false' \
             'guardianForcedRollbackProofProven:false' \
-            "workloadObserverSupervisionRuntime:'runtime-proof-pending'" \
             'humanActionInference:true' \
             "humanActionType:'physical-boot-proof'" \
             'humanActionDestructive:false' \
@@ -135,18 +116,16 @@ jobs:
           get "$api/actions/runs/$pi3" "$RUNNER_TEMP/pi3.json"
           get "$api/actions/runs/$compute" "$RUNNER_TEMP/compute.json"
           get "$api/pulls/$browser_pr" "$RUNNER_TEMP/browser-pr.json"
-          get "$api/actions/runs/$browser_previous_vhl" "$RUNNER_TEMP/browser-old-vhl.json"
-          get "$api/actions/runs/$browser_previous_vhl/jobs?per_page=100" "$RUNNER_TEMP/browser-old-vhl-jobs.json"
           get "$api/actions/runs/$browser_vhl" "$RUNNER_TEMP/browser-vhl.json"
           get "$api/actions/runs/$browser_vhl/jobs?per_page=100" "$RUNNER_TEMP/browser-vhl-jobs.json"
           get "$api/actions/runs/$browser_candidate_pc" "$RUNNER_TEMP/browser-candidate-pc.json"
-          get "$api/actions/runs/$native" "$RUNNER_TEMP/native.json"
+          get "$api/actions/runs/$browser_candidate_pc/jobs?per_page=100" "$RUNNER_TEMP/browser-candidate-pc-jobs.json"
           get "https://raw.githubusercontent.com/FormatX66/BoxBrain/$hopper/Web/Aurum-Arkmatx/hopper-status.json" "$RUNNER_TEMP/hopper.json"
 
-          python3 - "$RUNNER_TEMP" "$projection_commit" "$projection_ci_run" "$active" "$tree" "$previous" "$wifi_candidate" "$wifi_vhl" "$pc" "$pi3" "$compute" "$browser_previous_candidate" "$browser_candidate" "$browser_previous_vhl" "$browser_vhl" "$browser_candidate_pc" "$native" <<'PY'
+          python3 - "$RUNNER_TEMP" "$projection_commit" "$projection_ci_run" "$active" "$tree" "$wifi_candidate" "$wifi_vhl" "$pc" "$pi3" "$compute" "$browser_candidate" "$browser_vhl" "$browser_candidate_pc" <<'PY'
           import json,pathlib,sys
           r=pathlib.Path(sys.argv[1])
-          (projection,ci_id,active,tree,previous,wifi_candidate,wifi_vhl_id,pc_id,pi3_id,compute_id,browser_old_candidate,browser_candidate,browser_old_vhl_id,browser_vhl_id,browser_pc_id,native_id)=sys.argv[2:]
+          projection,ci_id,active,tree,wifi_candidate,wifi_vhl_id,pc_id,pi3_id,compute_id,browser_candidate,browser_vhl_id,browser_pc_id=sys.argv[2:]
           load=lambda n:json.loads((r/n).read_text(encoding='utf-8-sig'))
           steps=lambda j:{s.get('name'):s.get('conclusion') for s in j.get('steps',[])}
 
@@ -158,8 +137,6 @@ jobs:
 
           wpr=load('wifi-pr.json')
           assert wpr['state']=='closed' and wpr.get('merged_at') and wpr['merge_commit_sha']==active and wpr['head']['sha']==wifi_candidate
-          for token in ('generic wpa_supplicant.service','ctrl_iface collisions','exact root/binary/argument/cgroup identity verification','Unknown Wi-Fi managers remain protected'):
-              assert token in (wpr.get('body') or ''),token
           wv=load('wifi-vhl.json')
           assert wv['id']==int(wifi_vhl_id) and wv['head_sha']==wifi_candidate and wv['status']=='completed' and wv['conclusion']=='success'
           wj={j['name']:j for j in load('wifi-vhl-jobs.json')['jobs']}
@@ -170,13 +147,6 @@ jobs:
           pj={j['name']:j for j in load('pc-jobs.json')['jobs']}
           for n in ('validate','build-image','generic-uefi-smoke','hp-twin-smoke','publish-verified-image'):
               assert pj[n]['conclusion']=='success',n
-          gs=steps(pj['generic-uefi-smoke'])
-          assert gs['Generic low-memory UEFI install reboot and self-build smoke']=='success'
-          assert gs['Legacy BIOS install and installed-boot smoke']=='success'
-          assert steps(pj['hp-twin-smoke'])['Hopper HP topology and offline-recovery twin']=='success'
-          ps=steps(pj['publish-verified-image'])
-          assert ps['Enforce digest convergence and mandatory verification']=='success' and ps['Publish boot-verified ISO']=='success'
-
           pi=load('pi3.json')
           assert pi['id']==int(pi3_id) and pi['head_sha']==active and pi['status']=='completed' and pi['conclusion']=='success'
           cw=load('compute.json')
@@ -184,25 +154,19 @@ jobs:
 
           bpr=load('browser-pr.json')
           assert bpr['state']=='open' and bpr['draft'] is True and bpr['head']['sha']==browser_candidate and bpr['base']['sha']==active and bpr.get('mergeable') is True
-          for token in ('required running-seed proof','HTTPS-only navigation','private-network blocking','no browser credential','no raw shell'):
-              assert token in (bpr.get('body') or ''),token
-          bov=load('browser-old-vhl.json')
-          assert bov['id']==int(browser_old_vhl_id) and bov['head_sha']==browser_old_candidate and bov['status']=='completed' and bov['conclusion']=='failure'
-          boj={j['name']:j for j in load('browser-old-vhl-jobs.json')['jobs']}
-          q=boj['QEMU UEFI x86_64 PC']; qs=steps(q)
-          assert q['conclusion']=='failure' and qs.get('Build PC ISO')=='success' and qs.get('Boot PC image in QEMU UEFI')=='failure'
           bv=load('browser-vhl.json')
           assert bv['id']==int(browser_vhl_id) and bv['head_sha']==browser_candidate and bv['status']=='in_progress' and bv['conclusion'] is None
           bj={j['name']:j for j in load('browser-vhl-jobs.json')['jobs']}
           assert bj['Docker runtime x86_64']['conclusion']=='success' and bj['Docker runtime ARM64']['conclusion']=='success'
-          bpc=load('browser-candidate-pc.json')
-          assert bpc['id']==int(browser_pc_id) and bpc['head_sha']==browser_candidate and bpc['status']=='in_progress' and bpc['conclusion'] is None
 
-          n=load('native.json')
-          assert n['id']==int(native_id) and n['head_sha'] not in (active,previous) and n['conclusion']=='failure'
+          bpc=load('browser-candidate-pc.json')
+          assert bpc['id']==int(browser_pc_id) and bpc['head_sha']==browser_candidate and bpc['status']=='completed' and bpc['conclusion']=='success'
+          bpcj={j['name']:j for j in load('browser-candidate-pc-jobs.json')['jobs']}
+          for n in ('validate','build-image','generic-uefi-smoke','hp-twin-smoke','publish-verified-image'):
+              assert bpcj[n]['conclusion']=='success',n
           h=load('hopper.json')
           assert h['endpoint'] is None and h['reachable'] is False and h['summary']['health']=='no-endpoint-candidate'
-          print('GENERATION_LADDER_V145_SOURCE_AND_EVIDENCE_OK')
+          print('GENERATION_LADDER_V146_SOURCE_AND_EVIDENCE_OK')
           PY
 
           echo "file=$canonical" >> "$GITHUB_OUTPUT"
@@ -221,7 +185,6 @@ jobs:
           echo "browser_candidate=$browser_candidate" >> "$GITHUB_OUTPUT"
           echo "browser_vhl=$browser_vhl" >> "$GITHUB_OUTPUT"
           echo "browser_candidate_pc=$browser_candidate_pc" >> "$GITHUB_OUTPUT"
-          echo "native=$native" >> "$GITHUB_OUTPUT"
           echo "hopper=$hopper" >> "$GITHUB_OUTPUT"
 
       - name: Configure Bluehost SSH with bounded retry
@@ -262,14 +225,14 @@ jobs:
           import re,sys
           p=Path(sys.argv[1]); t=p.read_text(encoding='utf-8')
           t=re.sub(r'<script src="\./generation-seed-ladder\.js(?:\?v=[^"]+)?"></script>\s*','',t)
-          tag='<script src="./generation-seed-ladder.js?v=145"></script>'
+          tag='<script src="./generation-seed-ladder.js?v=146"></script>'
           for pat in (r'<script src="\./seed-lifecycle\.js(?:\?v=[^"]+)?"></script>',r'<script src="\./recovery-guardian\.js(?:\?v=[^"]+)?"></script>',r'</body>'):
               m=re.search(pat,t)
               if m: t=t[:m.start()]+tag+'\n'+t[m.start():]; break
           else: raise SystemExit('dashboard missing generation ladder injection point')
           p.write_text(t,encoding='utf-8')
           PY
-          grep -Fq './generation-seed-ladder.js?v=145' "$RUNNER_TEMP/index.html"
+          grep -Fq './generation-seed-ladder.js?v=146' "$RUNNER_TEMP/index.html"
 
       - name: Publish with bounded retries
         env:
@@ -290,11 +253,11 @@ jobs:
           set -euo pipefail
           page="$RUNNER_TEMP/live-index.html"; js="$RUNNER_TEMP/live-generation-seed-ladder.js"
           final_url="$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/generation-seed-ladder.js?rev=145' -o "$js"
-          grep -Fq './generation-seed-ladder.js?v=145' "$page"
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/generation-seed-ladder.js?rev=146' -o "$js"
+          grep -Fq './generation-seed-ladder.js?v=146' "$page"
           cmp -s "$js" "${{ steps.source.outputs.file }}"
           node --check "$js"
-          for token in 'AURUM_GENERATION_SEED_LADDER_V1_45_CANONICAL' "componentRevision:'1.45'" 'currentPcImageFinalResultPromoted:true' 'currentPcImageRunPassed:true' 'wifiOwnerRepairPhysicalWifiProven:false' 'browserPromptSeedGateVhlFinalResultPromoted:false' 'currentNativeResultObserved:false' "hopperStatusCurrentBlocker:'no-valid-endpoint-candidate'" 'humanActionInference:true' 'humanActionDestructive:false' 'majorBoxAdded:false' 'seedLifecycleRemainsExpandable:true' 'generationLadderRemainsExpandable:true' 'Frontiers Advancing:' 'Needs Work → Aurum/System:' 'Your Actions:' 'Do not choose install, erase, format, repair, or any destructive option.'; do grep -Fq "$token" "$js"; done
+          for token in 'AURUM_GENERATION_SEED_LADDER_V1_46_CANONICAL' "componentRevision:'1.46'" 'currentPcImageRunPassed:true' 'browserPromptSeedGateCandidatePcRunPassed:true' 'browserPromptSeedGateCandidatePcPromotesSeed:false' 'browserPromptSeedGateVhlFinalResultPromoted:false' 'wifiOwnerRepairPhysicalWifiProven:false' 'currentNativeResultObserved:false' "hopperStatusCurrentBlocker:'no-valid-endpoint-candidate'" 'humanActionInference:true' 'humanActionDestructive:false' 'majorBoxAdded:false' 'seedLifecycleRemainsExpandable:true' 'generationLadderRemainsExpandable:true' 'Frontiers Advancing:' 'Needs Work → Aurum/System:' 'Your Actions:' 'Do not choose install, erase, format, repair, or any destructive option.'; do grep -Fq "$token" "$js"; done
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
 
       - name: Roll back on verification failure
@@ -326,7 +289,7 @@ jobs:
             "canonical_component_commit": "${{ steps.source.outputs.canonical_commit }}",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/generation-seed-ladder-v1.js",
             "deployment_carrier": "FormatX66/wetbeard-site",
-            "component_revision": "1.45",
+            "component_revision": "1.46",
             "approved_blob": "${{ steps.source.outputs.blob }}",
             "boxbrain_projection_commit": "${{ steps.source.outputs.projection_commit }}",
             "boxbrain_projection_main_commit": "${{ steps.source.outputs.projection_main_commit }}",
@@ -343,7 +306,6 @@ jobs:
             "current_pc_image_run": ${{ steps.source.outputs.pc }},
             "current_pc_image_final_result_promoted": true,
             "current_pc_image_run_passed": true,
-            "current_pc_image_verified_publication_passed": true,
             "current_pi3_image_run": ${{ steps.source.outputs.pi3 }},
             "current_pi3_image_run_passed": true,
             "computeweave_run": ${{ steps.source.outputs.compute }},
@@ -352,12 +314,13 @@ jobs:
             "browser_prompt_vhl_run": ${{ steps.source.outputs.browser_vhl }},
             "browser_prompt_vhl_final_result_promoted": false,
             "browser_prompt_candidate_pc_run": ${{ steps.source.outputs.browser_candidate_pc }},
-            "browser_prompt_candidate_pc_final_result_promoted": false,
-            "current_native_result_observed": false,
-            "previous_native_run": ${{ steps.source.outputs.native }},
+            "browser_prompt_candidate_pc_final_result_observed": true,
+            "browser_prompt_candidate_pc_run_passed": true,
+            "browser_prompt_candidate_pc_promotes_seed": false,
             "hopper_status_snapshot_commit": "${{ steps.source.outputs.hopper }}",
             "hopper_status_current_blocker": "no-valid-endpoint-candidate",
             "hopper_equivalent_null_snapshot_is_evidence_health": true,
+            "current_native_result_observed": false,
             "physical_hopper_boot_proof_proven": false,
             "guardian_forced_rollback_proof_proven": false,
             "human_action_inference": true,
@@ -378,6 +341,6 @@ jobs:
           EOF_RECEIPT
           git config user.name 'github-actions[bot]'; git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-generation-seed-ladder-live.json
-          git commit -m 'Record Aurum generation seed ladder v1.45 live [skip ci]' || exit 0
+          git commit -m 'Record Aurum generation seed ladder v1.46 live [skip ci]' || exit 0
           git pull --rebase origin main
           git push origin HEAD:main

@@ -27,11 +27,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          canonical_commit='9656e630b7b67c5d0bf8aa48ae746d39ae9f1e2c'
-          expected_blob='45de6c9b887aebc22699fb8034313844931dd4fa'
-          projection_commit='e12851c0426e615130500ce4db2a33d013623986'
-          projection_main_commit='b1f73d926a809afcf60661ef9f1e59d9af002099'
-          projection_ci_run='33940184497'
+          canonical_commit='3053596ace0376ab2ffc5b9efbe973141eac17c1'
+          expected_blob='138ec183950dd23be505609d250465928aae6c1c'
+          projection_commit='02e57d85e053c4d2d3597e51ccf28e12c69c7ef2'
+          projection_main_commit='1f68b932edf25818c93d928318c59333024568fb'
+          projection_ci_run='33948284075'
           active='0c77f715c8ceeabc7a6cbd714086db67c0375412'
           tree='722824cd9a9068b85c0efef31ecc4d6538741cb7'
           previous_active='958f3a9de28b9e4baa95fabfc8dbf9af1af3d4ea'
@@ -43,6 +43,7 @@ jobs:
           browser_candidate='29ab0da5e8741a2f370a775c5fbf9c01b1b40a1a'
           browser_previous_vhl='33934946010'
           browser_vhl='33936783197'
+          current_vhl='33944472698'
           pc='33938121980'
           pi3='33938121968'
           compute='33938121722'
@@ -63,11 +64,12 @@ jobs:
           cp "$projection" "$canonical"
 
           for token in \
-            'AURUM_GENERATION_SEED_LADDER_V1_48_CANONICAL' \
-            "componentRevision:'1.48'" \
+            'AURUM_GENERATION_SEED_LADDER_V1_49_CANONICAL' \
+            "componentRevision:'1.49'" \
             "canonicalWebsiteRepo:'FormatX66/ClusterSites'" \
             "ACTIVE_TRUNK_COMMIT='$active'" \
             "ACTIVE_TRUNK_TREE='$tree'" \
+            "CURRENT_VHL_RUN='$current_vhl'" \
             "browserPromptSeedGatePromotionState:'code-promoted-corrected-vhl-green-exact-active-head-images-green'" \
             'browserPromptSeedGateMerged:true' \
             'browserPromptSeedGateCandidateTreeEqualsActiveTrunkTree:true' \
@@ -76,6 +78,10 @@ jobs:
             'browserPromptSeedGateVhlPassed:true' \
             'browserPromptSeedGateFourTargetVhlPassed:true' \
             'browserPromptSeedGatePhysicalProofProven:false' \
+            'currentVhlExactHead:true' \
+            'currentVhlFinalResultObserved:true' \
+            'currentVhlRunPassed:true' \
+            'currentVhlFourTargetConvergencePassed:true' \
             'currentPcImageRunPassed:true' \
             'currentPi3ImageRunPassed:true' \
             'computeWeaveRunPassed:true' \
@@ -117,6 +123,8 @@ jobs:
           get "$api/actions/runs/$browser_previous_vhl/jobs?per_page=100" "$RUNNER_TEMP/browser-previous-vhl-jobs.json"
           get "$api/actions/runs/$browser_vhl" "$RUNNER_TEMP/browser-vhl.json"
           get "$api/actions/runs/$browser_vhl/jobs?per_page=100" "$RUNNER_TEMP/browser-vhl-jobs.json"
+          get "$api/actions/runs/$current_vhl" "$RUNNER_TEMP/current-vhl.json"
+          get "$api/actions/runs/$current_vhl/jobs?per_page=100" "$RUNNER_TEMP/current-vhl-jobs.json"
           get "$api/compare/$browser_previous_candidate...$browser_candidate" "$RUNNER_TEMP/browser-compare.json"
           get "https://raw.githubusercontent.com/FormatX66/BoxBrain/$browser_candidate/Projects/AurumVirtualLab/qemu-pc-smoke.sh" "$RUNNER_TEMP/qemu-pc-smoke.sh"
           get "$api/actions/runs/$pc" "$RUNNER_TEMP/pc.json"
@@ -131,10 +139,10 @@ jobs:
           get "$api/actions/runs/$wifi_vhl/jobs?per_page=100" "$RUNNER_TEMP/wifi-vhl-jobs.json"
           get "https://raw.githubusercontent.com/FormatX66/BoxBrain/$hopper/Web/Aurum-Arkmatx/hopper-status.json" "$RUNNER_TEMP/hopper.json"
 
-          python3 - "$RUNNER_TEMP" "$projection_commit" "$projection_ci_run" "$active" "$tree" "$previous_active" "$browser_previous_candidate" "$browser_candidate" "$browser_previous_vhl" "$browser_vhl" "$pc" "$pi3" "$compute" "$native" "$wifi_vhl" <<'PY'
+          python3 - "$RUNNER_TEMP" "$projection_commit" "$projection_ci_run" "$active" "$tree" "$previous_active" "$browser_previous_candidate" "$browser_candidate" "$browser_previous_vhl" "$browser_vhl" "$current_vhl" "$pc" "$pi3" "$compute" "$native" "$wifi_vhl" <<'PY'
           import json,pathlib,sys
           r=pathlib.Path(sys.argv[1])
-          projection,ci_id,active,tree,previous_active,bprev,bc,bold_id,bvhl_id,pc_id,pi3_id,compute_id,native_id,wifi_vhl_id=sys.argv[2:]
+          projection,ci_id,active,tree,previous_active,bprev,bc,bold_id,bvhl_id,current_vhl_id,pc_id,pi3_id,compute_id,native_id,wifi_vhl_id=sys.argv[2:]
           load=lambda n:json.loads((r/n).read_text(encoding='utf-8-sig'))
           steps=lambda j:{s.get('name'):s.get('conclusion') for s in j.get('steps',[])}
 
@@ -167,6 +175,11 @@ jobs:
           bj={j['name']:j for j in load('browser-vhl-jobs.json')['jobs']}
           for n in ('Docker runtime x86_64','Docker runtime ARM64','QEMU Raspberry Pi 3B machine/runtime','QEMU UEFI x86_64 PC','Same-commit four-target convergence gate'):
               assert bj[n]['conclusion']=='success',n
+          cv=load('current-vhl.json')
+          assert cv['id']==int(current_vhl_id) and cv['head_sha']==active and cv['status']=='completed' and cv['conclusion']=='success'
+          cj={j['name']:j for j in load('current-vhl-jobs.json')['jobs']}
+          for n in ('Docker runtime x86_64','Docker runtime ARM64','QEMU Raspberry Pi 3B machine/runtime','QEMU UEFI x86_64 PC','Same-commit four-target convergence gate'):
+              assert cj[n]['conclusion']=='success',n
           for name,run_id in (('pc.json',pc_id),('pi3.json',pi3_id),('compute.json',compute_id)):
               x=load(name)
               assert x['id']==int(run_id) and x['head_sha']==active and x['status']=='completed' and x['conclusion']=='success',name
@@ -190,7 +203,7 @@ jobs:
               assert wj[n]['conclusion']=='success',n
           h=load('hopper.json')
           assert h['endpoint'] is None and h['reachable'] is False and h['summary']['health']=='no-endpoint-candidate'
-          print('GENERATION_LADDER_V148_SOURCE_AND_EVIDENCE_OK')
+          print('GENERATION_LADDER_V149_SOURCE_AND_EVIDENCE_OK')
           PY
 
           echo "file=$canonical" >> "$GITHUB_OUTPUT"
@@ -207,6 +220,7 @@ jobs:
           echo "browser_candidate=$browser_candidate" >> "$GITHUB_OUTPUT"
           echo "browser_previous_vhl=$browser_previous_vhl" >> "$GITHUB_OUTPUT"
           echo "browser_vhl=$browser_vhl" >> "$GITHUB_OUTPUT"
+          echo "current_vhl=$current_vhl" >> "$GITHUB_OUTPUT"
           echo "pc=$pc" >> "$GITHUB_OUTPUT"
           echo "pi3=$pi3" >> "$GITHUB_OUTPUT"
           echo "compute=$compute" >> "$GITHUB_OUTPUT"
@@ -251,14 +265,14 @@ jobs:
           import re,sys
           p=Path(sys.argv[1]); t=p.read_text(encoding='utf-8')
           t=re.sub(r'<script src="\./generation-seed-ladder\.js(?:\?v=[^"]+)?"></script>\s*','',t)
-          tag='<script src="./generation-seed-ladder.js?v=148"></script>'
+          tag='<script src="./generation-seed-ladder.js?v=149"></script>'
           for pat in (r'<script src="\./seed-lifecycle\.js(?:\?v=[^"]+)?"></script>',r'<script src="\./recovery-guardian\.js(?:\?v=[^"]+)?"></script>',r'</body>'):
               m=re.search(pat,t)
               if m: t=t[:m.start()]+tag+'\n'+t[m.start():]; break
           else: raise SystemExit('dashboard missing generation ladder injection point')
           p.write_text(t,encoding='utf-8')
           PY
-          grep -Fq './generation-seed-ladder.js?v=148' "$RUNNER_TEMP/index.html"
+          grep -Fq './generation-seed-ladder.js?v=149' "$RUNNER_TEMP/index.html"
 
       - name: Publish with bounded retries
         env:
@@ -279,11 +293,11 @@ jobs:
           set -euo pipefail
           page="$RUNNER_TEMP/live-index.html"; js="$RUNNER_TEMP/live-generation-seed-ladder.js"
           final_url="$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$page" -w '%{url_effective}' 'https://arkmatx.com/aurum/dashboard/')"
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/generation-seed-ladder.js?rev=148' -o "$js"
-          grep -Fq './generation-seed-ladder.js?v=148' "$page"
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' 'https://arkmatx.com/aurum/dashboard/generation-seed-ladder.js?rev=149' -o "$js"
+          grep -Fq './generation-seed-ladder.js?v=149' "$page"
           cmp -s "$js" "${{ steps.source.outputs.file }}"
           node --check "$js"
-          for token in 'AURUM_GENERATION_SEED_LADDER_V1_48_CANONICAL' "componentRevision:'1.48'" 'browserPromptSeedGateMerged:true' 'browserPromptSeedGateVhlPassed:true' 'browserPromptSeedGateFourTargetVhlPassed:true' 'currentPcImageRunPassed:true' 'currentPi3ImageRunPassed:true' 'computeWeaveRunPassed:true' 'currentNativeResultObserved:true' 'currentNativeRunPassed:false' 'currentNativeFailureOutsideBrowserPromptDiff:true' 'wifiOwnerRepairPhysicalWifiProven:false' "hopperStatusCurrentBlocker:'no-valid-endpoint-candidate'" 'humanActionInference:true' 'humanActionDestructive:false' 'majorBoxAdded:false' 'seedLifecycleRemainsExpandable:true' 'generationLadderRemainsExpandable:true' 'Frontiers Advancing:' 'Needs Work → Aurum/System:' 'Your Actions:' 'Do not choose install, erase, format, repair, or any destructive option.'; do grep -Fq "$token" "$js"; done
+          for token in 'AURUM_GENERATION_SEED_LADDER_V1_49_CANONICAL' "componentRevision:'1.49'" 'browserPromptSeedGateMerged:true' 'browserPromptSeedGateVhlPassed:true' 'browserPromptSeedGateFourTargetVhlPassed:true' 'currentVhlExactHead:true' 'currentVhlRunPassed:true' 'currentVhlFourTargetConvergencePassed:true' 'currentPcImageRunPassed:true' 'currentPi3ImageRunPassed:true' 'computeWeaveRunPassed:true' 'currentNativeResultObserved:true' 'currentNativeRunPassed:false' 'currentNativeFailureOutsideBrowserPromptDiff:true' 'wifiOwnerRepairPhysicalWifiProven:false' "hopperStatusCurrentBlocker:'no-valid-endpoint-candidate'" 'humanActionInference:true' 'humanActionDestructive:false' 'majorBoxAdded:false' 'seedLifecycleRemainsExpandable:true' 'generationLadderRemainsExpandable:true' 'Frontiers Advancing:' 'Needs Work → Aurum/System:' 'Your Actions:' 'Do not choose install, erase, format, repair, or any destructive option.'; do grep -Fq "$token" "$js"; done
           echo "url=$final_url" >> "$GITHUB_OUTPUT"
 
       - name: Roll back on verification failure
@@ -315,7 +329,7 @@ jobs:
             "canonical_component_commit": "${{ steps.source.outputs.canonical_commit }}",
             "public_projection": "FormatX66/BoxBrain:Web/Aurum-Arkmatx/generation-seed-ladder-v1.js",
             "deployment_carrier": "FormatX66/wetbeard-site",
-            "component_revision": "1.48",
+            "component_revision": "1.49",
             "approved_blob": "${{ steps.source.outputs.blob }}",
             "boxbrain_projection_commit": "${{ steps.source.outputs.projection_commit }}",
             "boxbrain_projection_main_commit": "${{ steps.source.outputs.projection_main_commit }}",
@@ -340,6 +354,10 @@ jobs:
             "browser_prompt_vhl_passed": true,
             "browser_prompt_four_target_convergence_passed": true,
             "browser_prompt_code_promoted": true,
+            "current_vhl_run": ${{ steps.source.outputs.current_vhl }},
+            "current_vhl_exact_active_head": true,
+            "current_vhl_run_passed": true,
+            "current_vhl_four_target_convergence_passed": true,
             "current_pc_image_run": ${{ steps.source.outputs.pc }},
             "current_pc_image_run_passed": true,
             "current_pi3_image_run": ${{ steps.source.outputs.pi3 }},
@@ -374,6 +392,6 @@ jobs:
           EOF_RECEIPT
           git config user.name 'github-actions[bot]'; git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add deployments/aurum-generation-seed-ladder-live.json
-          git commit -m 'Record Aurum generation seed ladder v1.48 live [skip ci]' || exit 0
+          git commit -m 'Record Aurum generation seed ladder v1.49 live [skip ci]' || exit 0
           git pull --rebase origin main
           git push origin HEAD:main

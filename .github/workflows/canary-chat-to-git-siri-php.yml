@@ -20,21 +20,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Fetch exact canonical candidate and verify expected files
+      - name: Fetch exact approved public projection and verify canonical provenance
         shell: bash
-        env:
-          CLUSTERSITES_READ_TOKEN: ${{ secrets.CLUSTERSITES_READ_TOKEN }}
         run: |
           set -euo pipefail
           stage="$RUNNER_TEMP/candidate"; mkdir -p "$stage"
-          api='https://api.github.com/repos/FormatX66/ClusterSites/contents/services/chat-to-git-webhook'
-          test -n "${CLUSTERSITES_READ_TOKEN:-}" || { echo 'CLUSTERSITES_READ_TOKEN is not configured; refusing private-source canary' >&2; exit 1; }
-          auth=(-H "Authorization: Bearer $CLUSTERSITES_READ_TOKEN")
-          for file in index.php lib.php siri.php .htaccess; do
-            curl --fail-with-body --silent --show-error --location               -H 'Accept: application/vnd.github.raw+json' "${auth[@]}"               "$api/$file?ref=$CANDIDATE_SHA" -o "$stage/$file"
+          projection_commit='258374df50601eaa24388c33c4aaeb73627dbff0'
+          base="https://raw.githubusercontent.com/FormatX66/BoxBrain/$projection_commit/Web/Aurum-Arkmatx/chat-to-git-projection"
+          for file in index.php lib.php siri.php .htaccess provenance.json; do
+            curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 "$base/$file" -o "$stage/$file"
             test -s "$stage/$file"
           done
           php -l "$stage/index.php"; php -l "$stage/lib.php"; php -l "$stage/siri.php"
+          python3 - "$stage" <<'PY'
+          import json, pathlib, subprocess, sys
+          root=pathlib.Path(sys.argv[1]); p=json.loads((root/'provenance.json').read_text())
+          assert p['schema']=='chat-to-git-public-projection-v1'
+          assert p['canonical_repository']=='FormatX66/ClusterSites'
+          assert p['canonical_commit']=='876dfe90464daf6de709b06738c782f0a0e0331d'
+          assert p['contains_secrets'] is False
+          expected=p['files']
+          for name in ('index.php','lib.php','siri.php','.htaccess'):
+              actual=subprocess.check_output(['git','hash-object',str(root/name)],text=True).strip()
+              assert actual==expected[name], (name,actual,expected[name])
+          PY
           grep -Fq 'PIPELINE_SIRI_CHALLENGE_TTL = 120' "$stage/siri.php"
           grep -Fq "siri-ingress-not-configured" "$stage/index.php"
           echo "stage=$stage" >> "$GITHUB_ENV"

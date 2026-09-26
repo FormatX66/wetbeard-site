@@ -1,0 +1,31 @@
+name: Arm Chat-to-Git Shortcut Enrollment
+
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/arm-chat-to-git-shortcut-enrollment.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  arm:
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 5
+    steps:
+      - name: Configure Bluehost SSH
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+          BLUEHOST_SSH_PRIVATE_KEY: ${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$BLUEHOST_SSH_PRIVATE_KEY" > "$HOME/.ssh/bluehost_deploy"
+          chmod 600 "$HOME/.ssh/bluehost_deploy"
+          ssh-keyscan -T 10 -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts"
+          expires=$(( $(date +%s) + 1800 ))
+          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" \
+            "set -eu; d=/home1/madmorri/.local/state/chat-to-git/shortcut; mkdir -p \"\$d\"; chmod 700 \"\$d\"; printf '%s' '{\"code_hash\":\"1ff624ec8e5fb688239e7a2ed7d3856e330506d78070eb6fd58ad12b4c128b15\",\"expires_at\":'$expires'}' > \"\$d/enrollment.json\"; chmod 600 \"\$d/enrollment.json\""
+          echo 'ENROLLMENT_ARMED ttl_seconds=1800 code_not_logged=true'

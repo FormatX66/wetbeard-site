@@ -28,8 +28,8 @@ jobs:
           set -euo pipefail
           stage="$RUNNER_TEMP/candidate"; mkdir -p "$stage"
           api='https://api.github.com/repos/FormatX66/ClusterSites/contents/services/chat-to-git-webhook'
-          auth=()
-          if [ -n "${CLUSTERSITES_READ_TOKEN:-}" ]; then auth=(-H "Authorization: Bearer $CLUSTERSITES_READ_TOKEN"); fi
+          test -n "${CLUSTERSITES_READ_TOKEN:-}" || { echo 'CLUSTERSITES_READ_TOKEN is not configured; refusing private-source canary' >&2; exit 1; }
+          auth=(-H "Authorization: Bearer $CLUSTERSITES_READ_TOKEN")
           for file in index.php lib.php siri.php .htaccess; do
             curl --fail-with-body --silent --show-error --location               -H 'Accept: application/vnd.github.raw+json' "${auth[@]}"               "$api/$file?ref=$CANDIDATE_SHA" -o "$stage/$file"
             test -s "$stage/$file"

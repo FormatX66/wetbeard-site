@@ -4,6 +4,13 @@
   "status": "LIVE",
   "open_prs": [
     {
+      "number": 155,
+      "title": "Add reversible Chat-to-Git Siri PHP canary carrier",
+      "draft": true,
+      "updated_at": "2026-09-26T21:05:40Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/pull/155"
+    },
+    {
       "number": 34,
       "title": "Ignore documentation in workflow-v2 path guardrail",
       "draft": true,
@@ -19,6 +26,12 @@
     }
   ],
   "recent_commits": [
+    {
+      "sha": "71ac78d4",
+      "message": "Refresh ArkmatX GitHub status [skip ci]",
+      "date": "2026-09-26T16:23:46Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/71ac78d4c7901f473f2e88b92fae5efcba59973a"
+    },
     {
       "sha": "815b48ec",
       "message": "Refresh ArkmatX GitHub status [skip ci]",
@@ -60,13 +73,7 @@
       "message": "Refresh ArkmatX GitHub status [skip ci]",
       "date": "2026-09-24T21:31:05Z",
       "html_url": "https://github.com/FormatX66/wetbeard-site/commit/ea2b1c8a4e3ee0e660fdb15765547e238de79dc4"
-    },
-    {
-      "sha": "3fdab0a7",
-      "message": "Refresh ArkmatX GitHub status [skip ci]",
-      "date": "2026-09-24T17:11:18Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/3fdab0a7b5745fc8bb0d6439ac0c9e4e5e5113bf"
     }
   ],
-  "updated_at": "2026-09-26T16:23:46Z"
+  "updated_at": "2026-09-26T21:10:25Z"
 }

@@ -1,0 +1,129 @@
+name: Canary Chat-to-Git Siri PHP
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: chat-to-git-siri-canary
+  cancel-in-progress: false
+
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 12
+    env:
+      CANDIDATE_SHA: '876dfe90464daf6de709b06738c782f0a0e0331d'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch exact canonical candidate and verify expected files
+        shell: bash
+        env:
+          CLUSTERSITES_READ_TOKEN: ${{ secrets.CLUSTERSITES_READ_TOKEN }}
+        run: |
+          set -euo pipefail
+          stage="$RUNNER_TEMP/candidate"; mkdir -p "$stage"
+          api='https://api.github.com/repos/FormatX66/ClusterSites/contents/services/chat-to-git-webhook'
+          auth=()
+          if [ -n "${CLUSTERSITES_READ_TOKEN:-}" ]; then auth=(-H "Authorization: Bearer $CLUSTERSITES_READ_TOKEN"); fi
+          for file in index.php lib.php siri.php .htaccess; do
+            curl --fail-with-body --silent --show-error --location               -H 'Accept: application/vnd.github.raw+json' "${auth[@]}"               "$api/$file?ref=$CANDIDATE_SHA" -o "$stage/$file"
+            test -s "$stage/$file"
+          done
+          php -l "$stage/index.php"; php -l "$stage/lib.php"; php -l "$stage/siri.php"
+          grep -Fq 'PIPELINE_SIRI_CHALLENGE_TTL = 120' "$stage/siri.php"
+          grep -Fq "siri-ingress-not-configured" "$stage/index.php"
+          echo "stage=$stage" >> "$GITHUB_ENV"
+
+      - name: Configure existing Bluehost SSH carrier
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+          BLUEHOST_SSH_PRIVATE_KEY: ${{ secrets.BLUEHOST_SSH_PRIVATE_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$BLUEHOST_HOST"; test -n "$BLUEHOST_USERNAME"; test -n "$BLUEHOST_SSH_PRIVATE_KEY"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$BLUEHOST_SSH_PRIVATE_KEY" > "$HOME/.ssh/bluehost_deploy"; chmod 600 "$HOME/.ssh/bluehost_deploy"
+          ssh-keyscan -T 10 -p 22 -H "$BLUEHOST_HOST" >> "$HOME/.ssh/known_hosts"
+
+      - name: Back up LKG and stage candidate outside public_html
+        id: backup
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote='/home1/madmorri/public_html/arkmatx/aurum/chat-to-git'
+          backup="/home1/madmorri/.deploy-rollbacks/chat-to-git/$GITHUB_RUN_ID"
+          candidate="/home1/madmorri/.deploy-candidates/chat-to-git/$GITHUB_RUN_ID"
+          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST"             "set -eu; test -d '$remote'; mkdir -p '$backup' '$candidate'; cp -a '$remote/.' '$backup/'; test -f '$backup/index.php'; test -f '$backup/lib.php'; test -f '$backup/.htaccess'"
+          tar -C "$stage" -czf - index.php lib.php siri.php .htaccess |             ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST" "tar -xzf - -C '$candidate'"
+          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST"             "set -eu; php -l '$candidate/index.php'; php -l '$candidate/lib.php'; php -l '$candidate/siri.php'; test -f /home1/madmorri/.config/chat-to-git/config.php; test -d /home1/madmorri/.local/state/chat-to-git"
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+          echo "backup=$backup" >> "$GITHUB_OUTPUT"
+          echo "candidate=$candidate" >> "$GITHUB_OUTPUT"
+
+      - name: Promote candidate atomically without enrollment
+        id: promote
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote='/home1/madmorri/public_html/arkmatx/aurum/chat-to-git'
+          previous="/home1/madmorri/.deploy-rollbacks/chat-to-git/pre-canary-$GITHUB_RUN_ID"
+          candidate='${{ steps.backup.outputs.candidate }}'
+          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST"             "set -eu; mv '$remote' '$previous'; mv '$candidate' '$remote'; chmod 755 '$remote'; chmod 644 '$remote/index.php' '$remote/lib.php' '$remote/siri.php' '$remote/.htaccess'"
+          echo "previous=$previous" >> "$GITHUB_OUTPUT"
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+
+      - name: Verify live LKG compatibility and unconfigured Siri hold
+        id: verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='https://aurum.arkmatx.com/chat-to-git'
+          health="$(mktemp)"; code="$(curl --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -o "$health" -w '%{http_code}' "$base/health")"
+          test "$code" = 200
+          python3 - "$health" <<'PY'
+          import json,sys
+          x=json.load(open(sys.argv[1]))
+          assert x['status']=='ok' and x['service']=='chat-to-git-webhook'
+          assert x['github_configured'] is True and x['authentication_configured'] is True and x['storage_writable'] is True
+          assert x.get('siri_configured') is False
+          PY
+          legacy="$(mktemp)"; legacy_code="$(curl --silent --show-error -o "$legacy" -w '%{http_code}' -X POST -H 'Content-Type: application/json' --data '{}' "$base/webhook/voice")"
+          test "$legacy_code" = 401
+          grep -Fq '"unauthorized"' "$legacy"
+          siri="$(mktemp)"; siri_code="$(curl --silent --show-error -o "$siri" -w '%{http_code}' -X POST -H 'Content-Type: application/json' --data '{"device_id":"bruce-iphone"}' "$base/siri/challenge")"
+          test "$siri_code" = 503
+          grep -Fq '"siri-ingress-not-configured"' "$siri"
+          echo 'CANARY_OK health=200 legacy_unauth=401 siri_unconfigured=503'
+
+      - name: Roll back on any post-backup failure
+        if: ${{ failure() && steps.backup.outputs.ready == 'true' }}
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USERNAME: ${{ secrets.BLUEHOST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote='/home1/madmorri/public_html/arkmatx/aurum/chat-to-git'
+          backup='${{ steps.backup.outputs.backup }}'
+          failed="/home1/madmorri/.deploy-rollbacks/chat-to-git/failed-$GITHUB_RUN_ID"
+          ssh -i "$HOME/.ssh/bluehost_deploy" -p 22 "$BLUEHOST_USERNAME@$BLUEHOST_HOST"             "set -eu; if [ -d '$remote' ]; then mv '$remote' '$failed'; fi; mkdir -p '$remote'; cp -a '$backup/.' '$remote/'"
+          curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 2 'https://aurum.arkmatx.com/chat-to-git/health' >/dev/null
+          echo 'ROLLBACK_VERIFIED'
+
+      - name: Record canary boundary
+        if: success()
+        run: |
+          echo 'Canary deployed without Siri device enrollment. Existing webhook LKG compatibility verified. Public-key enrollment and signed round trip remain separate gates.' >> "$GITHUB_STEP_SUMMARY"

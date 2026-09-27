@@ -5,6 +5,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: chat-to-git-enrollment-canary
@@ -22,11 +23,17 @@ jobs:
 
       - name: Fetch exact validated ClusterSites artifact
         shell: bash
+        env:
+          CLUSTERSITES_ARTIFACT_URL: 'https://api.github.com/repos/FormatX66/ClusterSites/actions/artifacts/10918706930/zip'
+          CLUSTERSITES_READ_TOKEN: ${{ secrets.CLUSTERSITES_READ_TOKEN }}
         run: |
           set -euo pipefail
+          test -n "${CLUSTERSITES_READ_TOKEN:-}" || { echo 'Dedicated ClusterSites artifact read token is not configured' >&2; exit 1; }
           stage="$RUNNER_TEMP/candidate"; mkdir -p "$stage"
-          artifact_url='https://sdmntprcentralus.oaiusercontent.com/files/00000000-a3dc-81f5-9cd2-71a2f851a1ee/raw?se=2026-09-26T23%3A49%3A27Z&sp=r&sv=2026-02-06&sr=b&scid=3f066f85-5721-59c8-a2ea-837eb514dda3&skoid=38550de5-1fab-49d1-9ebb-83af5557cc43&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-26T11%3A27%3A11Z&ske=2026-09-27T11%3A27%3A11Z&sks=b&skv=2026-02-06&sig=Ygl9B7uoN3nM5N882lNph%2BQr2epz7PsixceLorUshnA%3D'
-          curl --fail-with-body --silent --show-error --location "$artifact_url" -o "$RUNNER_TEMP/runtime.zip"
+          curl --fail-with-body --silent --show-error --location \
+            -H "Authorization: Bearer $CLUSTERSITES_READ_TOKEN" \
+            -H 'Accept: application/vnd.github+json' \
+            "$CLUSTERSITES_ARTIFACT_URL" -o "$RUNNER_TEMP/runtime.zip"
           echo '86ed55e5e7fc704148f274ce3e188a58046554e73565bd08fb2d1f302a3178d2  '"$RUNNER_TEMP/runtime.zip" | sha256sum -c -
           unzip -q "$RUNNER_TEMP/runtime.zip" -d "$RUNNER_TEMP/unpacked"
           src="$RUNNER_TEMP/unpacked/services/chat-to-git-webhook"

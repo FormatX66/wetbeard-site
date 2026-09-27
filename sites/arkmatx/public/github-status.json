@@ -27,6 +27,12 @@
   ],
   "recent_commits": [
     {
+      "sha": "8186b763",
+      "message": "Refresh ArkmatX GitHub status [skip ci]",
+      "date": "2026-09-27T12:02:46Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/8186b7635f3615bd689edb9b804287c4f077d488"
+    },
+    {
       "sha": "6dd095ed",
       "message": "Refresh ArkmatX GitHub status [skip ci]",
       "date": "2026-09-27T05:18:35Z",
@@ -67,13 +73,7 @@
       "message": "Add reversible Shortcut PHP canary launcher",
       "date": "2026-09-26T22:55:04Z",
       "html_url": "https://github.com/FormatX66/wetbeard-site/commit/7b93a16a74a2621de09c98adf3f49c9447ca6805"
-    },
-    {
-      "sha": "51353e4a",
-      "message": "Expose manual reversible Chat-to-Git Siri canary launcher",
-      "date": "2026-09-26T22:37:15Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/51353e4ad74568a2da7399b2f2e7cbf01c486946"
     }
   ],
-  "updated_at": "2026-09-27T12:02:46Z"
+  "updated_at": "2026-09-27T16:57:55Z"
 }

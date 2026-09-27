@@ -1,0 +1,23 @@
+name: Probe ClusterSites Artifact Read
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/probe-clustersites-artifact-read.yml']
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 5
+    steps:
+      - name: Probe private artifact metadata without exposing credential
+        env:
+          TOKEN: ${{ secrets.CLUSTERSITES_READ_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${TOKEN:-}" ]; then echo 'ARTIFACT_READ_AUTH=missing'; exit 2; fi
+          code=$(curl -sS -o /tmp/meta -w '%{http_code}' -H "Authorization: Bearer $TOKEN" -H 'Accept: application/vnd.github+json' https://api.github.com/repos/FormatX66/ClusterSites/actions/artifacts/10918706930)
+          test "$code" = 200
+          jq -e '.id==10918706930 and .expired==false and .workflow_run.id==36280305946' /tmp/meta >/dev/null
+          echo 'ARTIFACT_READ_AUTH=verified'

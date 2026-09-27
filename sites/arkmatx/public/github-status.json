@@ -27,6 +27,12 @@
   ],
   "recent_commits": [
     {
+      "sha": "e30ac663",
+      "message": "Refresh ArkmatX GitHub status [skip ci]",
+      "date": "2026-09-27T16:57:55Z",
+      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/e30ac6635e00565d9a4c1abf15c6601ecacdb24c"
+    },
+    {
       "sha": "8186b763",
       "message": "Refresh ArkmatX GitHub status [skip ci]",
       "date": "2026-09-27T12:02:46Z",
@@ -67,13 +73,7 @@
       "message": "Add reversible Shortcut self-enrollment canary launcher",
       "date": "2026-09-26T23:16:40Z",
       "html_url": "https://github.com/FormatX66/wetbeard-site/commit/f13b223bc30078c704623f81938af9705287394d"
-    },
-    {
-      "sha": "7b93a16a",
-      "message": "Add reversible Shortcut PHP canary launcher",
-      "date": "2026-09-26T22:55:04Z",
-      "html_url": "https://github.com/FormatX66/wetbeard-site/commit/7b93a16a74a2621de09c98adf3f49c9447ca6805"
     }
   ],
-  "updated_at": "2026-09-27T16:57:55Z"
+  "updated_at": "2026-09-27T21:21:09Z"
 }

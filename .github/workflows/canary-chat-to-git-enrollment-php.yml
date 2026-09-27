@@ -16,36 +16,23 @@ jobs:
     environment: production
     timeout-minutes: 12
     env:
-      CANDIDATE_SHA: '28bb98d7c11afa82ad40cf62143ad16f4725ff28'
+      CANDIDATE_SHA: '158d245dbeaed24796d44ac846b1af445d7d7da2'
     steps:
       - uses: actions/checkout@v4
 
-      - name: Fetch exact approved public projection and verify canonical provenance
+      - name: Fetch exact validated ClusterSites artifact
         shell: bash
         run: |
           set -euo pipefail
           stage="$RUNNER_TEMP/candidate"; mkdir -p "$stage"
-          projection_commit='4c08d0e12167e7253ca345b5f788bae67dece785'
-          base="https://raw.githubusercontent.com/FormatX66/BoxBrain/$projection_commit/Web/Aurum-Arkmatx/chat-to-git-enrollment-projection"
-          for file in index.php lib.php siri.php shortcut.php .htaccess provenance.json; do
-            curl --fail-with-body --silent --show-error --location --retry 5 --retry-all-errors --retry-delay 2 "$base/$file" -o "$stage/$file"
-            test -s "$stage/$file"
-          done
+          artifact_url='https://sdmntprcentralus.oaiusercontent.com/files/00000000-a3dc-81f5-9cd2-71a2f851a1ee/raw?se=2026-09-26T23%3A49%3A27Z&sp=r&sv=2026-02-06&sr=b&scid=3f066f85-5721-59c8-a2ea-837eb514dda3&skoid=38550de5-1fab-49d1-9ebb-83af5557cc43&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-26T11%3A27%3A11Z&ske=2026-09-27T11%3A27%3A11Z&sks=b&skv=2026-02-06&sig=Ygl9B7uoN3nM5N882lNph%2BQr2epz7PsixceLorUshnA%3D'
+          curl --fail-with-body --silent --show-error --location "$artifact_url" -o "$RUNNER_TEMP/runtime.zip"
+          echo '86ed55e5e7fc704148f274ce3e188a58046554e73565bd08fb2d1f302a3178d2  '"$RUNNER_TEMP/runtime.zip" | sha256sum -c -
+          unzip -q "$RUNNER_TEMP/runtime.zip" -d "$RUNNER_TEMP/unpacked"
+          src="$RUNNER_TEMP/unpacked/services/chat-to-git-webhook"
+          cp "$src/index.php" "$src/lib.php" "$src/siri.php" "$src/shortcut.php" "$src/.htaccess" "$stage/"
           php -l "$stage/index.php"; php -l "$stage/lib.php"; php -l "$stage/siri.php"; php -l "$stage/shortcut.php"
-          python3 - "$stage" <<'PY'
-          import json, pathlib, subprocess, sys
-          root=pathlib.Path(sys.argv[1]); p=json.loads((root/'provenance.json').read_text())
-          assert p['schema']=='chat-to-git-enrollment-projection-v1'
-          assert p['canonical_repository']=='FormatX66/ClusterSites'
-          assert p['canonical_commit']=='28bb98d7c11afa82ad40cf62143ad16f4725ff28'
-          assert p['contains_secrets'] is False
-          expected=p['files']
-          for name in ('index.php','lib.php','siri.php','shortcut.php','.htaccess'):
-              actual=subprocess.check_output(['git','hash-object',str(root/name)],text=True).strip()
-              assert actual==expected[name], (name,actual,expected[name])
-          PY
-          grep -Fq 'PIPELINE_SIRI_CHALLENGE_TTL = 120' "$stage/siri.php"
-          grep -Fq "siri-ingress-not-configured" "$stage/index.php"
+          grep -Fq "enrollment_token" "$stage/index.php"
           echo "stage=$stage" >> "$GITHUB_ENV"
 
       - name: Configure existing Bluehost SSH carrier

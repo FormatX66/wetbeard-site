@@ -198,11 +198,27 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p deployments
-          deployed_at_utc="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
-          printf '{\n  "site": "uber",\n  "url": "https://madmorrigan.com/uber/",\n  "commit_sha": "%s",\n  "verified_at_utc": "%s",\n  "status": "verified-live"\n}\n' "$GITHUB_SHA" "$deployed_at_utc" > deployments/uber-live.json
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add deployments/uber-live.json
-          git commit -m 'Record Übercorp live deployment [skip ci]'
-          git push
+          for attempt in 1 2 3; do
+            git fetch origin main
+            status_dir="$(mktemp -d "$RUNNER_TEMP/uber-deploy-status.XXXXXX")"
+            git worktree add --detach "$status_dir" origin/main
+            if (
+              cd "$status_dir"
+              mkdir -p deployments
+              deployed_at_utc="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+              printf '{\n  "site": "uber",\n  "url": "https://madmorrigan.com/uber/",\n  "commit_sha": "%s",\n  "verified_at_utc": "%s",\n  "status": "verified-live"\n}\n' "$GITHUB_SHA" "$deployed_at_utc" > deployments/uber-live.json
+              git config user.name 'github-actions[bot]'
+              git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+              git add deployments/uber-live.json
+              git commit -m 'Record Übercorp live deployment [skip ci]'
+              git push origin HEAD:main
+            ); then
+              git worktree remove --force "$status_dir"
+              exit 0
+            fi
+            git worktree remove --force "$status_dir" || true
+            echo "main changed while recording deployment status; retrying ($attempt/3)"
+            sleep "$((attempt * 2))"
+          done
+          echo 'Unable to record deployment status after 3 attempts.' >&2
+          exit 1
